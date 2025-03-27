@@ -1,8 +1,14 @@
-# Akashic Records 
+# Akashic Records
 
 ## Description
 
 Akashic Records is a mobile application designed to organize and present meaningful data, drawing inspiration from the concept of the Akashic Records as a repository of universal knowledge. The app offers offline access to data, features from various web sources, and tools to personalize the reading experience.
+
+[![Release](https://img.shields.io/github/release/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/releases)
+[![License](https://img.shields.io/github/license/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/SeuUsuario/AkashicRecords/pulls)
 
 ## Features
 
@@ -72,4 +78,8 @@ The name "Akashic Records" reflects the app's purpose of serving as a knowledge 
 *   **Flutter:** For building a cross-platform mobile application (iOS and Android, linux, windows).
 *   **Dart:** The programming language used with Flutter.
 *   **SQLite:** For local data storage.
-*   **Provider:** For state management within the Flutter application. 
+*   **Provider:** For state management within the Flutter application.
+
+## Contributing
+
+[Contribution Guidelines](Contribution.md)
