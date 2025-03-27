@@ -4,11 +4,11 @@
 
 Akashic Records is a mobile application designed to organize and present meaningful data, drawing inspiration from the concept of the Akashic Records as a repository of universal knowledge. The app offers offline access to data, features from various web sources, and tools to personalize the reading experience.
 
-[![Release](https://img.shields.io/github/release/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/releases)
-[![License](https://img.shields.io/github/license/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/blob/main/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/commits/main)
-[![GitHub issues](https://img.shields.io/github/issues/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/issues)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/pulls)
+[![Release](https://img.shields.io/github/release/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/releases)
+[![License](https://img.shields.io/github/license/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AkashicRecordsApp/akashic_records/pulls)
 
 ## Features
 
@@ -61,12 +61,14 @@ Akashic Records is a mobile application designed to organize and present meaning
 
 ## Screenshots
 
-*   ![Screenshot 1](lib/src/screenshots/scs1.png)
-*   ![Screenshot 2](lib/src/screenshots/scs2.png)
-*   ![Screenshot 3](lib/src/screenshots/scs3.png)
-*   ![Screenshot 4](lib/src/screenshots/scs4.png)
-*   ![Screenshot 5](lib/src/screenshots/scs5.png)
-*   ![Screenshot 6](lib/src/screenshots/scs6.png)
+<div align="center">
+    <img src="lib/src/screenshots/scs1.png" alt="Screenshot 1" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs2.png" alt="Screenshot 2" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs3.png" alt="Screenshot 3" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs4.png" alt="Screenshot 4" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs5.png" alt="Screenshot 5" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs6.png" alt="Screenshot 6" width="30%" style="display: inline-block; margin: 5px;">
+</div>
 
 
 ## About the Name: Akashic Records
