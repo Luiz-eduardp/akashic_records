@@ -4,11 +4,11 @@
 
 Akashic Records is a mobile application designed to organize and present meaningful data, drawing inspiration from the concept of the Akashic Records as a repository of universal knowledge. The app offers offline access to data, features from various web sources, and tools to personalize the reading experience.
 
-[![Release](https://img.shields.io/github/release/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/releases)
-[![License](https://img.shields.io/github/license/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/blob/main/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/commits/main)
-[![GitHub issues](https://img.shields.io/github/issues/SeuUsuario/AkashicRecords.svg)](https://github.com/SeuUsuario/AkashicRecords/issues)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/SeuUsuario/AkashicRecords/pulls)
+[![Release](https://img.shields.io/github/release/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/releases)
+[![License](https://img.shields.io/github/license/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/AkashicRecordsApp/AkashicRecords.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AkashicRecordsApp/AkashicRecords/pulls)
 
 ## Features
 
