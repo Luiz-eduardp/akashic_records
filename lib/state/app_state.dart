@@ -9,7 +9,6 @@ class AppState with ChangeNotifier {
     'NovelMania',
     'Tsundoku',
     'CentralNovels',
-    'LightNovelPub',
   };
 
   ThemeMode get themeMode => _themeMode;

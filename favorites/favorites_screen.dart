@@ -7,11 +7,11 @@ import 'package:akashic_records/screens/favorites/favorite_grid_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/novel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/services/plugins/novelmania_service.dart';
-import 'package:akashic_records/services/plugins/tsundoku_service.dart';
+import 'package:akashic_records/services/plugins/ptbr/novelmania_service.dart';
+import 'package:akashic_records/services/plugins/ptbr/tsundoku_service.dart';
 //import 'package:akashic_records/widgets/novel_card.dart'; // Não precisa mais aqui
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
-import 'package:akashic_records/services/plugins/centralnovel_service.dart';
+import 'package:akashic_records/services/plugins/ptbr/centralnovel_service.dart';
 import 'package:akashic_records/screens/favorites/favorites_screen.dart'; // Importa o novo widget
 import 'package:akashic_records/widgets/loading_indicator_widget.dart'; // Importa o widget de loading
 import 'package:akashic_records/widgets/error_message_widget.dart';  // Importa o widget de erro

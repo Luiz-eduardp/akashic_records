@@ -2,10 +2,10 @@ import 'package:akashic_records/models/novel.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/screens/library/novel_grid_widget.dart';
-import 'package:akashic_records/services/plugins/centralnovel_service.dart';
+import 'package:akashic_records/services/plugins/ptbr/centralnovel_service.dart';
 import 'package:flutter/material.dart';
-import 'package:akashic_records/services/plugins/novelmania_service.dart';
-import 'package:akashic_records/services/plugins/tsundoku_service.dart';
+import 'package:akashic_records/services/plugins/ptbr/novelmania_service.dart';
+import 'package:akashic_records/services/plugins/ptbr/tsundoku_service.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/library/novel_filter_sort_widget.dart';
@@ -103,6 +103,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           currentPage,
           filters: _filters,
         );
+        print('novelManiaNovels: $novelManiaNovels');
         newNovels.addAll(novelManiaNovels);
       }
       if (appState.selectedPlugins.contains('Tsundoku')) {
@@ -129,8 +130,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (mounted) {
         setState(() {
           if (search) {
-            novels =
-                allNovels
+            novels = allNovels
                     .where(
                       (novel) => novel.title.toLowerCase().contains(
                         _searchTerm.toLowerCase(),
@@ -209,13 +209,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => NovelDetailsScreen(
-              novelId: novel.id,
-              pluginId: pluginId,
-              selectedPlugins:
-                  Provider.of<AppState>(context, listen: false).selectedPlugins,
-            ),
+        builder: (context) => NovelDetailsScreen(
+          novelId: novel.id,
+          pluginId: pluginId,
+          selectedPlugins: Provider.of<AppState>(context, listen: false).selectedPlugins,
+        ),
       ),
     );
   }

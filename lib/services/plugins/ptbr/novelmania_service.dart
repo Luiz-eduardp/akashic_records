@@ -2,8 +2,8 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/novel.dart';
 import 'package:akashic_records/models/chapter.dart';
+import 'package:akashic_records/models/novel_status.dart';
 
-import '../../models/novel_status.dart';
 
 class NovelMania {
   final String id = 'novelmania.com.br';
