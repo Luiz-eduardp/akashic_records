@@ -1,4 +1,4 @@
-# Akashic Records - A Knowledge Repository App
+# Akashic Records 
 
 ## Description
 
