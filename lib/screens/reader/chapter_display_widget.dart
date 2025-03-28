@@ -7,13 +7,11 @@ import 'package:html/parser.dart' as htmlParser;
 class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
   final ReaderSettings readerSettings;
-  final ScrollController scrollController;
 
   const ChapterDisplay({
     super.key,
     required this.chapterContent,
     required this.readerSettings,
-    required this.scrollController,
   });
 
   @override
@@ -77,7 +75,6 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      controller: widget.scrollController,
       padding: const EdgeInsets.all(16.0),
       child:
           _cleanedContent != null && _cleanedContent!.isNotEmpty

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:akashic_records/models/novel.dart';
+import 'package:akashic_records/models/model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/services/plugins/ptbr/novelmania_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/tsundoku_service.dart';

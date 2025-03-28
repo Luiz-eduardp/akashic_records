@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:akashic_records/models/novel.dart';
+import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/widgets/novel_card.dart';
 
 class FavoriteGridWidget extends StatelessWidget {

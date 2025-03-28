@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:akashic_records/models/chapter.dart';
-import 'package:akashic_records/models/novel.dart';
+import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/services/plugins/ptbr/novelmania_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/tsundoku_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,8 +41,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   String? _lastReadChapterId;
   bool _mounted = false;
   ReaderSettings _readerSettings = ReaderSettings();
-  final ScrollController _scrollController = ScrollController();
-  bool _isFetchingNextChapter = false;
+  final bool _isFetchingNextChapter = false;
 
   bool _isUiVisible = true;
 
@@ -52,17 +51,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void initState() {
     super.initState();
     _initSharedPreferences();
-    _scrollController.addListener(_onScroll);
 
     _startUiHideTimer();
   }
 
-
   @override
   void dispose() {
     _mounted = false;
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     _hideUiTimer?.cancel();
     super.dispose();
   }
@@ -206,6 +201,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         isLoading = false;
       });
       _saveLastReadChapter(currentChapter!.id);
+      _addToHistory();
     } catch (e) {
       setState(() {
         if (!_mounted) return;
@@ -234,77 +230,22 @@ class _ReaderScreenState extends State<ReaderScreen> {
     );
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
-      _loadNextChapterIfPossible();
-    }
-
-    _resetUiHideTimer();
-  }
-
-  Future<void> _loadNextChapterIfPossible() async {
-    if (_isFetchingNextChapter ||
-        isLoading ||
-        (novel?.chapters.isEmpty ?? true) ||
-        currentChapterIndex >= (novel?.chapters.length ?? 0) - 1) {
-      return;
-    }
-
-    setState(() {
-      _isFetchingNextChapter = true;
-    });
-
-    try {
-      final nextChapterIndex = currentChapterIndex + 1;
-
-      if (novel != null && nextChapterIndex < novel!.chapters.length) {
-        final nextChapter = novel!.chapters[nextChapterIndex];
-
-        String content;
-        if (widget.pluginId == 'NovelMania') {
-          content = await novelMania.parseChapter(nextChapter.id);
-        } else if (widget.pluginId == 'Tsundoku') {
-          content = await tsundoku.parseChapter(nextChapter.id);
-        } else if (widget.pluginId == centralNovel.id) {
-          content = await centralNovel.parseChapter(nextChapter.id);
-        } else {
-          setState(() {
-            errorMessage = 'Erro: Plugin inválido.';
-            isLoading = false;
-          });
-          return;
-        }
-
-        setState(() {
-          currentChapter = Chapter(
-            id: nextChapter.id,
-            title: nextChapter.title,
-            content: content,
-            releaseDate: '',
-            chapterNumber: null,
-            order: 0,
-          );
-          currentChapterIndex = nextChapterIndex;
-          _saveLastReadChapter(currentChapter!.id);
-        });
-      }
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Erro ao carregar próximo capítulo: $e';
-      });
-    } finally {
-      setState(() {
-        _isFetchingNextChapter = false;
-      });
-    }
-  }
-
   void _goToPreviousChapter() {
     if (novel != null && currentChapterIndex > 0) {
       setState(() {
         isLoading = true;
         currentChapterIndex--;
+        currentChapter = novel!.chapters[currentChapterIndex];
+      });
+      _loadChapterContent();
+    }
+  }
+
+  void _goToNextChapter() {
+    if (novel != null && currentChapterIndex < novel!.chapters.length - 1) {
+      setState(() {
+        isLoading = true;
+        currentChapterIndex++;
         currentChapter = novel!.chapters[currentChapterIndex];
       });
       _loadChapterContent();
@@ -331,11 +272,42 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
   }
 
-  void _resetUiHideTimer() {
-    _hideUiTimer?.cancel();
-    if (_isUiVisible) {
-      _startUiHideTimer();
+  Future<void> _addToHistory() async {
+    if (novel == null || currentChapter == null) return;
+
+    final historyKey = 'history_${widget.novelId}';
+    final historyString = _prefs.getString(historyKey) ?? '[]';
+    List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+
+    final newItem = {
+      'novelId': widget.novelId,
+      'novelTitle': novel!.title,
+      'chapterId': currentChapter!.id,
+      'chapterTitle': currentChapter!.title,
+      'pluginId': widget.pluginId,
+    };
+
+    int existingIndex = history.indexWhere(
+      (item) => item['chapterId'] == newItem['chapterId'],
+    );
+
+    if (existingIndex != -1) {
+      history[existingIndex] = {
+        ...newItem,
+        'lastRead': history[existingIndex]['lastRead'],
+      };
+    } else {
+      history.insert(0, {
+        ...newItem,
+        'lastRead': DateTime.now().toIso8601String(),
+      });
     }
+
+    if (history.length > 10) {
+      history = history.sublist(0, 10);
+    }
+
+    await _prefs.setString(historyKey, jsonEncode(history));
   }
 
   @override
@@ -368,14 +340,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       child: ChapterDisplay(
                         chapterContent: currentChapter?.content,
                         readerSettings: _readerSettings,
-                        scrollController: _scrollController,
                       ),
                     ),
 
                     if (_isUiVisible)
                       ChapterNavigation(
                         onPreviousChapter: _goToPreviousChapter,
-                        onNextChapter: _loadNextChapterIfPossible,
+                        onNextChapter: _goToNextChapter,
                         isLoading: isLoading || _isFetchingNextChapter,
                         readerSettings: _readerSettings,
                       ),

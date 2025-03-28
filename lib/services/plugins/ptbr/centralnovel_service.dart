@@ -1,11 +1,8 @@
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
-import 'package:akashic_records/models/novel.dart';
-import 'package:akashic_records/models/chapter.dart';
-
-import 'package:akashic_records/models/novel_status.dart';
+import 'package:akashic_records/models/model.dart';
+import 'package:akashic_records/models/plugin_service.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -16,9 +13,97 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-class CentralNovel {
+class CentralNovel implements PluginService {
+  @override
+  String get name => 'CentralNovel';
+
+  @override
+  Map<String, dynamic> get filters => {
+    'order': {
+      'label': 'Ordenar por',
+      'value': 'default',
+      'options': [
+        {'label': 'Padrão', 'value': 'default'},
+        {'label': 'A-Z', 'value': 'a-z'},
+        {'label': 'Z-A', 'value': 'z-a'},
+        {'label': 'Últ. Att', 'value': 'latest-update'},
+        {'label': 'Últ. Add', 'value': 'latest-added'},
+        {'label': 'Populares', 'value': 'popular'},
+      ],
+    },
+    'status': {
+      'label': 'Status',
+      'value': 'all',
+      'options': [
+        {'label': 'Todos', 'value': 'all'},
+        {'label': 'Em andamento', 'value': 'ongoing'},
+        {'label': 'Hiato', 'value': 'on-hiatus'},
+        {'label': 'Completo', 'value': 'completed'},
+      ],
+    },
+    'types': {
+      'label': 'Tipos',
+      'value': [],
+      'options': [
+        {'label': 'Light Novel', 'value': 'light-novel'},
+        {'label': 'Novel Chinesa', 'value': 'novel-chinesa'},
+        {'label': 'Novel Coreana', 'value': 'novel-coreana'},
+        {'label': 'Novel Japonesa', 'value': 'novel-japonesa'},
+        {'label': 'Novel Ocidental', 'value': 'novel-ocidental'},
+        {'label': 'Webnovel', 'value': 'webnovel'},
+      ],
+    },
+    'genres': {
+      'label': 'Gêneros',
+      'value': [],
+      'options': [
+        {'label': 'Ação', 'value': 'acao'},
+        {'label': 'Adulto', 'value': 'adulto'},
+        {'label': 'Adventure', 'value': 'adventure'},
+        {'label': 'Artes Marciais', 'value': 'artes-marciais'},
+        {'label': 'Aventura', 'value': 'aventura'},
+        {'label': 'Comédia', 'value': 'comedia'},
+        {'label': 'Comedy', 'value': 'comedy'},
+        {'label': 'Cotidiano', 'value': 'cotidiano'},
+        {'label': 'Cultivo', 'value': 'cultivo'},
+        {'label': 'Drama', 'value': 'drama'},
+        {'label': 'Ecchi', 'value': 'ecchi'},
+        {'label': 'Escolar', 'value': 'escolar'},
+        {'label': 'Esportes', 'value': 'esportes'},
+        {'label': 'Fantasia', 'value': 'fantasia'},
+        {'label': 'Ficção Científica', 'value': 'ficcao-cientifica'},
+        {'label': 'Harém', 'value': 'harem'},
+        {'label': 'Isekai', 'value': 'isekai'},
+        {'label': 'Magia', 'value': 'magia'},
+        {'label': 'Mecha', 'value': 'mecha'},
+        {'label': 'Medieval', 'value': 'medieval'},
+        {'label': 'Mistério', 'value': 'misterio'},
+        {'label': 'Mitologia', 'value': 'mitologia'},
+        {'label': 'Monstros', 'value': 'monstros'},
+        {'label': 'Pet', 'value': 'pet'},
+        {'label': 'Protagonista Feminina', 'value': 'protagonista-feminina'},
+        {'label': 'Protagonista Maligno', 'value': 'protagonista-maligno'},
+        {'label': 'Psicológico', 'value': 'psicologico'},
+        {'label': 'Reencarnação', 'value': 'reencarnacao'},
+        {'label': 'Romance', 'value': 'romance'},
+        {'label': 'Seinen', 'value': 'seinen'},
+        {'label': 'Shounen', 'value': 'shounen'},
+        {'label': 'Sistema', 'value': 'sistema'},
+        {'label': 'Sistema de Jogo', 'value': 'sistema-de-jogo'},
+        {'label': 'Slice of Life', 'value': 'slice-of-life'},
+        {'label': 'Sobrenatural', 'value': 'sobrenatural'},
+        {'label': 'Supernatural', 'value': 'supernatural'},
+        {'label': 'Tragédia', 'value': 'tragedia'},
+        {'label': 'Vida Escolar', 'value': 'vida-escolar'},
+        {'label': 'VRMMO', 'value': 'vrmmo'},
+        {'label': 'Xianxia', 'value': 'xianxia'},
+        {'label': 'Xuanhuan', 'value': 'xuanhuan'},
+      ],
+    },
+  };
+
   final String id = 'CentralNovel';
-  final String name = 'Central Novel';
+  final String nameService = 'Central Novel';
   final String baseURL = 'https://centralnovel.com';
   final String imageURL =
       'https://centralnovel.com/wp-content/uploads/2021/06/CENTRAL-NOVEL-LOGO-DARK-.png';
@@ -79,6 +164,7 @@ class CentralNovel {
             chapters: [],
             artist: '',
             statusString: '',
+            pluginId: name,
           ),
         );
       }
@@ -86,6 +172,7 @@ class CentralNovel {
     return novels;
   }
 
+  @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
@@ -102,6 +189,7 @@ class CentralNovel {
     return await _parseList(url);
   }
 
+  @override
   Future<Novel> parseNovel(String novelPath) async {
     final body = await _fetchApi(_expandURL(novelPath));
     final document = parse(body);
@@ -125,6 +213,7 @@ class CentralNovel {
       artist: '',
       statusString: '',
       author: '',
+      pluginId: name,
     );
     final statusElement = document.querySelector('div.spe > span');
     final statusString = statusElement?.text.replaceAll('Status:', '').trim();
@@ -167,6 +256,7 @@ class CentralNovel {
     return novel;
   }
 
+  @override
   Future<String> parseChapter(String chapterPath) async {
     final body = await _fetchApi(_expandURL(chapterPath));
     final document = parse(body);
@@ -188,6 +278,7 @@ class CentralNovel {
     return chapterContent;
   }
 
+  @override
   Future<List<Novel>> searchNovels(
     String searchTerm,
     int pageNo, {
@@ -341,88 +432,4 @@ class CentralNovel {
     };
     return filterTypesValues[key] ?? key;
   }
-
-  Map<String, dynamic> get filters => {
-    'order': {
-      'label': 'Ordenar por',
-      'value': 'default',
-      'options': [
-        {'label': 'Padrão', 'value': 'default'},
-        {'label': 'A-Z', 'value': 'a-z'},
-        {'label': 'Z-A', 'value': 'z-a'},
-        {'label': 'Últ. Att', 'value': 'latest-update'},
-        {'label': 'Últ. Add', 'value': 'latest-added'},
-        {'label': 'Populares', 'value': 'popular'},
-      ],
-    },
-    'status': {
-      'label': 'Status',
-      'value': 'all',
-      'options': [
-        {'label': 'Todos', 'value': 'all'},
-        {'label': 'Em andamento', 'value': 'ongoing'},
-        {'label': 'Hiato', 'value': 'on-hiatus'},
-        {'label': 'Completo', 'value': 'completed'},
-      ],
-    },
-    'types': {
-      'label': 'Tipos',
-      'value': [],
-      'options': [
-        {'label': 'Light Novel', 'value': 'light-novel'},
-        {'label': 'Novel Chinesa', 'value': 'novel-chinesa'},
-        {'label': 'Novel Coreana', 'value': 'novel-coreana'},
-        {'label': 'Novel Japonesa', 'value': 'novel-japonesa'},
-        {'label': 'Novel Ocidental', 'value': 'novel-ocidental'},
-        {'label': 'Webnovel', 'value': 'webnovel'},
-      ],
-    },
-    'genres': {
-      'label': 'Gêneros',
-      'value': [],
-      'options': [
-        {'label': 'Ação', 'value': 'acao'},
-        {'label': 'Adulto', 'value': 'adulto'},
-        {'label': 'Adventure', 'value': 'adventure'},
-        {'label': 'Artes Marciais', 'value': 'artes-marciais'},
-        {'label': 'Aventura', 'value': 'aventura'},
-        {'label': 'Comédia', 'value': 'comedia'},
-        {'label': 'Comedy', 'value': 'comedy'},
-        {'label': 'Cotidiano', 'value': 'cotidiano'},
-        {'label': 'Cultivo', 'value': 'cultivo'},
-        {'label': 'Drama', 'value': 'drama'},
-        {'label': 'Ecchi', 'value': 'ecchi'},
-        {'label': 'Escolar', 'value': 'escolar'},
-        {'label': 'Esportes', 'value': 'esportes'},
-        {'label': 'Fantasia', 'value': 'fantasia'},
-        {'label': 'Ficção Científica', 'value': 'ficcao-cientifica'},
-        {'label': 'Harém', 'value': 'harem'},
-        {'label': 'Isekai', 'value': 'isekai'},
-        {'label': 'Magia', 'value': 'magia'},
-        {'label': 'Mecha', 'value': 'mecha'},
-        {'label': 'Medieval', 'value': 'medieval'},
-        {'label': 'Mistério', 'value': 'misterio'},
-        {'label': 'Mitologia', 'value': 'mitologia'},
-        {'label': 'Monstros', 'value': 'monstros'},
-        {'label': 'Pet', 'value': 'pet'},
-        {'label': 'Protagonista Feminina', 'value': 'protagonista-feminina'},
-        {'label': 'Protagonista Maligno', 'value': 'protagonista-maligno'},
-        {'label': 'Psicológico', 'value': 'psicologico'},
-        {'label': 'Reencarnação', 'value': 'reencarnacao'},
-        {'label': 'Romance', 'value': 'romance'},
-        {'label': 'Seinen', 'value': 'seinen'},
-        {'label': 'Shounen', 'value': 'shounen'},
-        {'label': 'Sistema', 'value': 'sistema'},
-        {'label': 'Sistema de Jogo', 'value': 'sistema-de-jogo'},
-        {'label': 'Slice of Life', 'value': 'slice-of-life'},
-        {'label': 'Sobrenatural', 'value': 'sobrenatural'},
-        {'label': 'Supernatural', 'value': 'supernatural'},
-        {'label': 'Tragédia', 'value': 'tragedia'},
-        {'label': 'Vida Escolar', 'value': 'vida-escolar'},
-        {'label': 'VRMMO', 'value': 'vrmmo'},
-        {'label': 'Xianxia', 'value': 'xianxia'},
-        {'label': 'Xuanhuan', 'value': 'xuanhuan'},
-      ],
-    },
-  };
 }

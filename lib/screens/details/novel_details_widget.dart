@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:akashic_records/models/novel.dart';
+import 'package:akashic_records/models/model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'chapter_list_widget.dart';

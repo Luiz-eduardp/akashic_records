@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:akashic_records/models/novel.dart';
+import 'package:akashic_records/models/model.dart';
 
 Future<Novel?> loadNovelWithTimeout(
   Future<Novel?> Function() loadFunction, {
