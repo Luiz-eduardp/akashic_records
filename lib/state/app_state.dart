@@ -1,3 +1,4 @@
+import 'package:akashic_records/services/plugins/english/boxnovel_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/mtl_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,7 @@ class AppState with ChangeNotifier {
     _pluginServices['Tsundoku'] = Tsundoku();
     _pluginServices['CentralNovel'] = CentralNovel();
     _pluginServices['MtlNovelPt'] = MtlNovelPt();
+    _pluginServices['BoxNovel'] = BoxNovel();
   }
 
   ThemeMode get themeMode => _themeMode;
@@ -54,7 +56,7 @@ class AppState with ChangeNotifier {
       Set<String> savedPlugins =
           (plugins?.isNotEmpty == true ? Set<String>.from(plugins!) : {});
 
-      _selectedPlugins = {'MtlNovelPt'}.union(savedPlugins);
+      _selectedPlugins = {'CentralNovel'}.union(savedPlugins);
 
       _themeMode =
           ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];

@@ -10,11 +10,15 @@ class PluginsScreen extends StatefulWidget {
 }
 
 class _PluginsScreenState extends State<PluginsScreen> {
-  List<String> availablePlugins = [
+  List<String> availablePluginsPtBr = [
     'NovelMania',
     'Tsundoku',
     'CentralNovel',
     'MtlNovelPt',
+  ];
+
+  List<String> availablePluginsEn = [
+    'BoxNovel',
   ];
 
   @override
@@ -31,7 +35,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Plugins (pt-br):',
+              'pt-br:',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -39,57 +43,71 @@ class _PluginsScreenState extends State<PluginsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: availablePlugins.length,
-                itemBuilder: (context, index) {
-                  final plugin = availablePlugins[index];
-                  return Card(
-                    elevation: 4.0,
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    color: isDarkMode ? const Color(0xFF424242) : Colors.white,
-                    child: ListTile(
-                      title: Row(
-                        children: [
-                          Checkbox(
-                            value: selectedPlugins.contains(plugin),
-                            onChanged: (bool? newValue) {
-                              if (newValue != null) {
-                                final updatedPlugins = Set<String>.from(
-                                  selectedPlugins,
-                                );
-                                if (newValue) {
-                                  updatedPlugins.add(plugin);
-                                } else {
-                                  updatedPlugins.remove(plugin);
-                                }
-                                appState.setSelectedPlugins(updatedPlugins);
-                                print(
-                                  "Plugins Selecionados: ${appState.selectedPlugins}",
-                                );
-                              }
-                            },
-
-                            activeColor: Theme.of(context).colorScheme.primary,
-                          ),
-                          Expanded(
-                            child: Text(
-                              plugin,
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+            _buildPluginList(availablePluginsPtBr, selectedPlugins, appState, isDarkMode, context),
+            const SizedBox(height: 16),
+            Text(
+              'english:',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black,
               ),
             ),
+            const SizedBox(height: 16),
+            _buildPluginList(availablePluginsEn, selectedPlugins, appState, isDarkMode, context),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPluginList(List<String> plugins, Set<String> selectedPlugins, AppState appState, bool isDarkMode, BuildContext context) {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: plugins.length,
+        itemBuilder: (context, index) {
+          final plugin = plugins[index];
+          return Card(
+            elevation: 4.0,
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            color: isDarkMode ? const Color(0xFF424242) : Colors.white,
+            child: ListTile(
+              title: Row(
+                children: [
+                  Checkbox(
+                    value: selectedPlugins.contains(plugin),
+                    onChanged: (bool? newValue) {
+                      if (newValue != null) {
+                        final updatedPlugins = Set<String>.from(
+                          selectedPlugins,
+                        );
+                        if (newValue) {
+                          updatedPlugins.add(plugin);
+                        } else {
+                          updatedPlugins.remove(plugin);
+                        }
+                        appState.setSelectedPlugins(updatedPlugins);
+                        print(
+                          "Plugins Selecionados: ${appState.selectedPlugins}",
+                        );
+                      }
+                    },
+                    activeColor: Theme.of(context).colorScheme.primary,
+                  ),
+                  Expanded(
+                    child: Text(
+                      plugin,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

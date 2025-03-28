@@ -9,6 +9,7 @@ class Novel {
   late List<Chapter> chapters;
   var genres;
   late String pluginId;
+  
   Novel({
     required this.id,
     required this.title,
