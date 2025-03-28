@@ -1,5 +1,5 @@
-import 'package:akashic_records/models/chapter.dart';
-import 'package:akashic_records/models/novel_status.dart';
+enum NovelStatus { Ongoing, Completed, OnHiatus, Unknown }
+
 class Novel {
   late String id;
   late String title;
@@ -8,6 +8,8 @@ class Novel {
   late String description;
   late List<Chapter> chapters;
   var genres;
+  late String pluginId;
+  
   Novel({
     required this.id,
     required this.title,
@@ -18,6 +20,7 @@ class Novel {
     required String statusString,
     required String artist,
     required List genres,
+    required this.pluginId,
     NovelStatus? status,
     String? summary,
   });
@@ -29,8 +32,10 @@ class Novel {
       'author': author,
       'description': description,
       'chapters': chapters.map((chapter) => chapter.toMap()).toList(),
+      'pluginId': pluginId,
     };
   }
+
   factory Novel.fromMap(Map<String, dynamic> map) {
     return Novel(
       id: map['id'] as String,
@@ -48,7 +53,48 @@ class Novel {
       statusString: '',
       artist: '',
       genres: [],
+      pluginId: map['pluginId'] as String,
     );
   }
   set status(NovelStatus status) {}
+}
+
+class Chapter {
+  late String id;
+  late String title;
+  late String? content;
+  late String? releaseDate;
+  late int? chapterNumber;
+
+  Chapter({
+    required this.id,
+    required this.title,
+    this.content,
+    this.releaseDate,
+    this.chapterNumber,
+    int? order,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'releaseDate': releaseDate,
+      'chapterNumber': chapterNumber,
+    };
+  }
+
+  factory Chapter.fromMap(Map<String, dynamic> map) {
+    return Chapter(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      content: map['content'] as String?,
+      releaseDate: map['releaseDate'] as String?,
+      chapterNumber: map['chapterNumber'] as int?,
+      order: 0,
+    );
+  }
+
+  get order => null;
 }

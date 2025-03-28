@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:akashic_records/models/novel.dart';
+import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/widgets/novel_card.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -8,8 +8,7 @@ class NovelGridWidget extends StatelessWidget {
   final bool isLoading;
   final String? errorMessage;
   final ScrollController scrollController;
-  final Function(Novel, String) onNovelTap;
-  final String Function(Novel) getPluginIdForNovel;
+  final Function(Novel) onNovelTap;
 
   const NovelGridWidget({
     super.key,
@@ -18,7 +17,6 @@ class NovelGridWidget extends StatelessWidget {
     required this.errorMessage,
     required this.scrollController,
     required this.onNovelTap,
-    required this.getPluginIdForNovel,
   });
 
   Widget _buildLoadingSkeleton() {
@@ -80,11 +78,7 @@ class NovelGridWidget extends StatelessWidget {
         itemBuilder: (context, index) {
           if (index < novels.length) {
             final novel = novels[index];
-            final pluginId = getPluginIdForNovel(novel);
-            return NovelCard(
-              novel: novel,
-              onTap: () => onNovelTap(novel, pluginId),
-            );
+            return NovelCard(novel: novel, onTap: () => onNovelTap(novel));
           } else if (isLoading && index < novels.length + 4) {
             return _buildLoadingSkeleton();
           } else {

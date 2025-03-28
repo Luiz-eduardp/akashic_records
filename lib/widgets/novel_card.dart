@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:akashic_records/models/novel.dart';
+import 'package:akashic_records/models/model.dart';
 
 class NovelCard extends StatelessWidget {
   final Novel novel;

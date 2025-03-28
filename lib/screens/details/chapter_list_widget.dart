@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:akashic_records/models/chapter.dart';
+import 'package:akashic_records/models/model.dart';
 
 class ChapterListWidget extends StatelessWidget {
   final List<Chapter> chapters;

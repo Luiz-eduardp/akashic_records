@@ -1,10 +1,7 @@
 import 'dart:io';
 import 'package:html/parser.dart' show parse;
-import 'package:akashic_records/models/novel.dart';
-import 'package:akashic_records/models/chapter.dart';
+import 'package:akashic_records/models/model.dart';
 import 'package:dio/dio.dart';
-
-import 'package:akashic_records/models/novel_status.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -87,6 +84,7 @@ class LightNovelPub {
             chapters: [],
             artist: '',
             statusString: '',
+            pluginId: name,
           ),
         );
       }
@@ -175,6 +173,7 @@ class LightNovelPub {
               chapters: [],
               artist: '',
               statusString: '',
+              pluginId: name,
             ),
           );
         }
@@ -251,6 +250,7 @@ class LightNovelPub {
       chapters: chapters,
       artist: '',
       statusString: '',
+      pluginId: name,
     );
   }
 

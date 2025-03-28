@@ -1,7 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
-import 'package:akashic_records/models/novel.dart';
-import 'package:akashic_records/models/chapter.dart';
+import 'package:akashic_records/models/model.dart';
 import 'dart:convert';
 
 enum NovelStatus { Ongoing, Completed, OnHiatus, Unknown }
@@ -63,6 +62,7 @@ class SaikaiScans {
               chapters: [],
               artist: '',
               statusString: '',
+              pluginId: name,
             );
           }).toList();
 
@@ -100,6 +100,7 @@ class SaikaiScans {
               chapters: [],
               artist: '',
               statusString: '',
+              pluginId: name,
             );
           }).toList();
 
@@ -157,6 +158,7 @@ class SaikaiScans {
         chapters: await _getChapters(novelSlug),
         artist: '',
         statusString: '',
+        pluginId: name,
       );
       print('parseNovel: Novel created');
 
