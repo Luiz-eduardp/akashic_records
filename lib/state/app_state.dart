@@ -58,7 +58,7 @@ class AppState with ChangeNotifier {
       Set<String> savedPlugins =
           (plugins?.isNotEmpty == true ? Set<String>.from(plugins!) : {});
 
-      _selectedPlugins = {'CentralNovel'}.union(savedPlugins);
+      _selectedPlugins = savedPlugins;
 
       _themeMode =
           ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];
