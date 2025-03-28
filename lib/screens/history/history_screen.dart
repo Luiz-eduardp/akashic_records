@@ -3,12 +3,7 @@ import 'dart:convert';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/services/plugins/ptbr/novelmania_service.dart';
-import 'package:akashic_records/services/plugins/ptbr/tsundoku_service.dart';
-import 'package:akashic_records/services/plugins/ptbr/centralnovel_service.dart';
 import 'package:akashic_records/screens/history/history_card_widget.dart';
-import 'package:provider/provider.dart';
-import 'package:akashic_records/state/app_state.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -20,9 +15,6 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   List<Map<String, dynamic>> _history = [];
   bool _isLoading = true;
-  final NovelMania novelMania = NovelMania();
-  final Tsundoku tsundoku = Tsundoku();
-  final CentralNovel centralNovel = CentralNovel();
   bool _mounted = false;
 
   @override
@@ -100,18 +92,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  void _handleHistoryTap(String novelId, String chapterId, String pluginId) {
+  void _handleHistoryTap(String novelId, String pluginId) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder:
-            (context) => ReaderScreen(
-              novelId: novelId,
-              pluginId: pluginId,
-              selectedPlugins:
-                  Provider.of<AppState>(context, listen: false).selectedPlugins,
-            ),
-      ),
+      MaterialPageRoute(builder: (context) => ReaderScreen(novelId: novelId)),
     );
   }
 
@@ -143,7 +127,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       onTap:
                           () => _handleHistoryTap(
                             item['novelId'],
-                            item['chapterId'],
                             item['pluginId'],
                           ),
                     );

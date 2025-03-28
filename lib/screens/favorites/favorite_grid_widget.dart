@@ -4,15 +4,13 @@ import 'package:akashic_records/widgets/novel_card.dart';
 
 class FavoriteGridWidget extends StatelessWidget {
   final List<Novel> favoriteNovels;
-  final Function(Novel, String) onNovelTap;
-  final String Function(Novel) getPluginIdForNovel;
+  final Function(Novel) onNovelTap;
   final Future<void> Function() onRefresh;
 
   const FavoriteGridWidget({
     super.key,
     required this.favoriteNovels,
     required this.onNovelTap,
-    required this.getPluginIdForNovel,
     required this.onRefresh,
   });
 
@@ -39,11 +37,7 @@ class FavoriteGridWidget extends StatelessWidget {
             itemCount: favoriteNovels.length,
             itemBuilder: (context, index) {
               final novel = favoriteNovels[index];
-              final pluginId = getPluginIdForNovel(novel);
-              return NovelCard(
-                novel: novel,
-                onTap: () => onNovelTap(novel, pluginId),
-              );
+              return NovelCard(novel: novel, onTap: () => onNovelTap(novel));
             },
           );
         },

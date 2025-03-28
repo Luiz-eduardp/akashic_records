@@ -175,13 +175,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => NovelDetailsScreen(
-              novelId: novel.id,
-              pluginId: novel.pluginId,
-              selectedPlugins:
-                  Provider.of<AppState>(context, listen: false).selectedPlugins,
-            ),
+        builder: (context) => NovelDetailsScreen(novelId: novel.id),
       ),
     );
   }

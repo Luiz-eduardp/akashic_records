@@ -14,7 +14,6 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'NovelMania',
     'Tsundoku',
     'CentralNovel',
-    'LightNovelPub',
     'MtlNovelPt',
   ];
 

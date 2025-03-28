@@ -3,26 +3,19 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
-import 'package:akashic_records/services/plugins/ptbr/novelmania_service.dart';
-import 'package:akashic_records/services/plugins/ptbr/tsundoku_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/services/plugins/ptbr/centralnovel_service.dart';
 import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
 import 'package:akashic_records/screens/reader/chapter_display_widget.dart';
 import 'package:akashic_records/screens/reader/chapter_navigation_widget.dart';
 import 'package:akashic_records/screens/reader/reader_app_bar_widget.dart';
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
+import 'package:akashic_records/models/plugin_service.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String novelId;
-  final String pluginId;
-  final Set<String> selectedPlugins;
 
-  const ReaderScreen({
-    super.key,
-    required this.novelId,
-    required this.pluginId,
-    required this.selectedPlugins,
-  });
+  const ReaderScreen({super.key, required this.novelId});
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
@@ -34,9 +27,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   int currentChapterIndex = 0;
   bool isLoading = true;
   String? errorMessage;
-  final NovelMania novelMania = NovelMania();
-  final Tsundoku tsundoku = Tsundoku();
-  final CentralNovel centralNovel = CentralNovel();
   late SharedPreferences _prefs;
   String? _lastReadChapterId;
   bool _mounted = false;
@@ -120,41 +110,60 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
 
     try {
-      if (widget.pluginId == 'NovelMania') {
-        novel = await novelMania.parseNovel(widget.novelId);
-      } else if (widget.pluginId == 'Tsundoku') {
-        novel = await tsundoku.parseNovel(widget.novelId);
-      } else if (widget.pluginId == centralNovel.id) {
-        novel = await centralNovel.parseNovel(widget.novelId);
-      } else {
-        setState(() {
-          if (!_mounted) return;
-          errorMessage = 'Erro: Plugin inválido.';
-          isLoading = false;
-        });
-        return;
+      final appState = Provider.of<AppState>(context, listen: false);
+
+      PluginService? plugin;
+
+      for (final pluginName in appState.pluginServices.keys) {
+        final p = appState.pluginServices[pluginName];
+        try {
+          final tempNovel = await p?.parseNovel(widget.novelId);
+          if (tempNovel != null) {
+            plugin = p;
+            novel = tempNovel;
+            break;
+          }
+        } catch (e) {
+          print(
+            'Erro ao carregar detalhes da novel com o plugin ${p?.name}: $e',
+          );
+        }
       }
 
-      if (_lastReadChapterId != null) {
-        currentChapterIndex = novel!.chapters.indexWhere(
-          (chapter) => chapter.id == _lastReadChapterId,
-        );
-        if (currentChapterIndex == -1) {
-          currentChapterIndex = 0;
+      if (plugin != null && novel != null) {
+        final appState = Provider.of<AppState>(context, listen: false);
+        final plugin = appState.pluginServices[novel!.pluginId];
+        if (plugin != null) {
+          if (_lastReadChapterId != null) {
+            currentChapterIndex = novel!.chapters.indexWhere(
+              (chapter) => chapter.id == _lastReadChapterId,
+            );
+            if (currentChapterIndex == -1) {
+              currentChapterIndex = 0;
+            }
+          } else {
+            currentChapterIndex = 0;
+          }
+
+          if (novel!.chapters.isNotEmpty) {
+            currentChapter = novel!.chapters[currentChapterIndex];
+            await _loadChapterContent();
+          } else {
+            setState(() {
+              if (!_mounted) return;
+              errorMessage = 'Erro: Nenhum capítulo encontrado.';
+              isLoading = false;
+            });
+          }
+        } else {
+          setState(() {
+            if (!_mounted) return;
+            errorMessage = 'Erro: Plugin inválido.';
+            isLoading = false;
+          });
         }
       } else {
-        currentChapterIndex = 0;
-      }
-
-      if (novel!.chapters.isNotEmpty) {
-        currentChapter = novel!.chapters[currentChapterIndex];
-        await _loadChapterContent();
-      } else {
-        setState(() {
-          if (!_mounted) return;
-          errorMessage = 'Erro: Nenhum capítulo encontrado.';
-          isLoading = false;
-        });
+        errorMessage = 'Novel não encontrada em nenhum plugin selecionado.';
       }
     } catch (e) {
       setState(() {
@@ -166,42 +175,38 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Future<void> _loadChapterContent() async {
-    if (currentChapter == null) return;
+    if (novel == null || currentChapter == null) return;
 
     setState(() {
       isLoading = true;
     });
 
     try {
-      String content;
-      if (widget.pluginId == 'NovelMania') {
-        content = await novelMania.parseChapter(currentChapter!.id);
-      } else if (widget.pluginId == 'Tsundoku') {
-        content = await tsundoku.parseChapter(currentChapter!.id);
-      } else if (widget.pluginId == centralNovel.id) {
-        content = await centralNovel.parseChapter(currentChapter!.id);
+      final appState = Provider.of<AppState>(context, listen: false);
+      final plugin = appState.pluginServices[novel!.pluginId];
+      if (plugin != null) {
+        final content = await plugin.parseChapter(currentChapter!.id);
+
+        setState(() {
+          currentChapter = Chapter(
+            id: currentChapter!.id,
+            title: currentChapter!.title,
+            content: content,
+            releaseDate: '',
+            chapterNumber: null,
+            order: 0,
+          );
+          isLoading = false;
+        });
+        _saveLastReadChapter(currentChapter!.id);
+        _addToHistory();
       } else {
         setState(() {
           if (!_mounted) return;
           errorMessage = 'Erro: Plugin inválido.';
           isLoading = false;
         });
-        return;
       }
-
-      setState(() {
-        currentChapter = Chapter(
-          id: currentChapter!.id,
-          title: currentChapter!.title,
-          content: content,
-          releaseDate: '',
-          chapterNumber: null,
-          order: 0,
-        );
-        isLoading = false;
-      });
-      _saveLastReadChapter(currentChapter!.id);
-      _addToHistory();
     } catch (e) {
       setState(() {
         if (!_mounted) return;
@@ -284,7 +289,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       'novelTitle': novel!.title,
       'chapterId': currentChapter!.id,
       'chapterTitle': currentChapter!.title,
-      'pluginId': widget.pluginId,
+      'pluginId': novel!.pluginId,
     };
 
     int existingIndex = history.indexWhere(
