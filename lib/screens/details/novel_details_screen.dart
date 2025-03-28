@@ -1,5 +1,3 @@
-// ignore_for_file: empty_catches
-
 import 'dart:async';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:flutter/material.dart';
@@ -66,11 +64,13 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
       PluginService? plugin;
 
-      for (final pluginName in appState.pluginServices.keys) {
+      for (final pluginName in appState.selectedPlugins) {
         final p = appState.pluginServices[pluginName];
+        if (p == null) continue;
+
         try {
           final tempNovel = await loadNovelWithTimeout(
-            () async => p?.parseNovel(widget.novelId),
+            () async => p.parseNovel(widget.novelId),
           );
           if (tempNovel != null) {
             plugin = p;
@@ -78,7 +78,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
             break;
           }
         } catch (e) {
-         
+          print('Error loading novel from plugin $pluginName: $e');
         }
       }
 

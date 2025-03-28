@@ -98,12 +98,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
             currentPage,
             filters: _filters,
           );
+          for (final novel in pluginNovels) {
+            novel.pluginId = pluginName;
+          }
           newNovels.addAll(pluginNovels);
         }
       }
 
       for (final novel in newNovels) {
-        if (!allNovels.any((existingNovel) => existingNovel.id == novel.id)) {
+        if (!allNovels.any(
+          (existingNovel) =>
+              existingNovel.id == novel.id &&
+              existingNovel.pluginId == novel.pluginId,
+        )) {
           allNovels.add(novel);
         }
       }
