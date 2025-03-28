@@ -1,4 +1,5 @@
 import 'package:akashic_records/services/plugins/english/boxnovel_service.dart';
+import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/mtl_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,7 +12,7 @@ class AppState with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   Color _accentColor = Colors.blue;
   bool _settingsLoaded = false;
-  Set<String> _selectedPlugins = {'NovelMania', 'Tsundoku', 'CentralNovel'};
+  Set<String> _selectedPlugins = {};
 
   final Map<String, PluginService> _pluginServices = {};
 
@@ -21,6 +22,7 @@ class AppState with ChangeNotifier {
     _pluginServices['CentralNovel'] = CentralNovel();
     _pluginServices['MtlNovelPt'] = MtlNovelPt();
     _pluginServices['BoxNovel'] = BoxNovel();
+    _pluginServices['NovelsOnline'] = NovelsOnline();
   }
 
   ThemeMode get themeMode => _themeMode;

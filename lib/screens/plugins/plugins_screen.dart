@@ -17,9 +17,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'MtlNovelPt',
   ];
 
-  List<String> availablePluginsEn = [
-    'BoxNovel',
-  ];
+  List<String> availablePluginsEn = ['NovelsOnline'];
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +41,13 @@ class _PluginsScreenState extends State<PluginsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildPluginList(availablePluginsPtBr, selectedPlugins, appState, isDarkMode, context),
+            _buildPluginList(
+              availablePluginsPtBr,
+              selectedPlugins,
+              appState,
+              isDarkMode,
+              context,
+            ),
             const SizedBox(height: 16),
             Text(
               'english:',
@@ -54,14 +58,26 @@ class _PluginsScreenState extends State<PluginsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildPluginList(availablePluginsEn, selectedPlugins, appState, isDarkMode, context),
+            _buildPluginList(
+              availablePluginsEn,
+              selectedPlugins,
+              appState,
+              isDarkMode,
+              context,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPluginList(List<String> plugins, Set<String> selectedPlugins, AppState appState, bool isDarkMode, BuildContext context) {
+  Widget _buildPluginList(
+    List<String> plugins,
+    Set<String> selectedPlugins,
+    AppState appState,
+    bool isDarkMode,
+    BuildContext context,
+  ) {
     return Expanded(
       child: ListView.builder(
         itemCount: plugins.length,
