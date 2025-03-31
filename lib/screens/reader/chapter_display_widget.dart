@@ -1,7 +1,7 @@
+import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
-import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
 import 'package:html/parser.dart' as htmlParser;
 
 class ChapterDisplay extends StatefulWidget {

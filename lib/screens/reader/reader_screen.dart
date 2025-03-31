@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
 import 'package:akashic_records/screens/reader/chapter_display_widget.dart';
 import 'package:akashic_records/screens/reader/chapter_navigation_widget.dart';
 import 'package:akashic_records/screens/reader/reader_app_bar_widget.dart';
@@ -33,7 +33,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   late SharedPreferences _prefs;
   String? _lastReadChapterId;
   bool _mounted = false;
-  ReaderSettings _readerSettings = ReaderSettings();
   final bool _isFetchingNextChapter = false;
   bool _isUiVisible = true;
   Timer? _hideUiTimer;
@@ -54,41 +53,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<void> _initSharedPreferences() async {
     _prefs = await SharedPreferences.getInstance();
-    await _loadReaderSettings();
     await _loadNovel();
-  }
-
-  Future<void> _loadReaderSettings() async {
-    final settingsMap = _prefs.getKeys().fold<Map<String, dynamic>>(
-      {},
-      (previousValue, key) => {
-        ...previousValue,
-        if (key.startsWith('reader_')) key.substring(7): _prefs.get(key),
-      },
-    );
-
-    if (settingsMap.isNotEmpty) {
-      setState(() {
-        _readerSettings = ReaderSettings.fromMap(settingsMap);
-      });
-    }
-  }
-
-  Future<void> _saveReaderSettings() async {
-    final settingsMap = _readerSettings.toMap();
-    settingsMap.forEach((key, value) {
-      if (value is int) {
-        _prefs.setInt('reader_$key', value);
-      } else if (value is double) {
-        _prefs.setDouble('reader_$key', value);
-      } else if (value is String) {
-        _prefs.setString('reader_$key', value);
-      } else if (value is int?) {
-        if (value != null) {
-          _prefs.setInt('reader_$key', value);
-        }
-      }
-    });
   }
 
   Future<void> _loadLastReadChapter() async {
@@ -225,16 +190,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return ReaderSettingsModal(
-          readerSettings: _readerSettings,
-          onSettingsChanged: (newSettings) {
-            if (!_mounted) return;
-            setState(() {
-              _readerSettings = newSettings;
-            });
-          },
-          onSave: _saveReaderSettings,
-        );
+        return const ReaderSettingsModal();
       },
     );
   }
@@ -321,10 +277,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
     return GestureDetector(
       onTap: _toggleUiVisibility,
       child: Scaffold(
-        backgroundColor: _readerSettings.backgroundColor,
+        backgroundColor: appState.readerSettings.backgroundColor,
         appBar:
             _isUiVisible
                 ? ReaderAppBar(
@@ -334,7 +291,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               currentChapter == null
                           ? null
                           : currentChapter!.title,
-                  readerSettings: _readerSettings,
+                  readerSettings: appState.readerSettings,
                   onSettingsPressed: () => _showSettingsModal(context),
                 )
                 : null,
@@ -348,7 +305,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     Expanded(
                       child: ChapterDisplay(
                         chapterContent: currentChapter?.content,
-                        readerSettings: _readerSettings,
+                        readerSettings: appState.readerSettings,
                       ),
                     ),
                     if (_isUiVisible)
@@ -356,7 +313,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         onPreviousChapter: _goToPreviousChapter,
                         onNextChapter: _goToNextChapter,
                         isLoading: isLoading || _isFetchingNextChapter,
-                        readerSettings: _readerSettings,
+                        readerSettings: appState.readerSettings,
                       ),
                   ],
                 ),

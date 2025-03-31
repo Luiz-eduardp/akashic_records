@@ -1,5 +1,5 @@
+import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
-import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
 
 class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
