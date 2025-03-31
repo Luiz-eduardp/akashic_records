@@ -59,8 +59,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       final List<Future<void>> loadFutures = [];
       for (final key in favoriteKeys) {
         if (_prefs.getBool(key) == true) {
-          final novelId = key.substring('favorite_'.length);
-          loadFutures.add(_loadFavoriteNovel(novelId, appState));
+          final parts = key.substring('favorite_'.length).split('_');
+          final pluginId = parts[0];
+          final novelId = parts.sublist(1).join('_');
+          loadFutures.add(_loadFavoriteNovel(novelId, appState, pluginId));
         }
       }
       await Future.wait(loadFutures);
@@ -79,20 +81,27 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     }
   }
 
-  Future<void> _loadFavoriteNovel(String novelId, AppState appState) async {
+  Future<void> _loadFavoriteNovel(
+    String novelId,
+    AppState appState,
+    String pluginId,
+  ) async {
     Novel? novel;
+    final plugin = appState.pluginServices[pluginId];
 
-    for (final p in appState.pluginServices.values) {
+    if (plugin != null) {
       try {
         final tempNovel = await loadNovelWithTimeout(
-          () => p.parseNovel(novelId),
+          () => plugin.parseNovel(novelId),
         );
         if (tempNovel != null) {
           novel = tempNovel;
-          break;
+          novel.pluginId = pluginId;
         }
       } catch (e) {
-        print('Erro ao carregar detalhes da novel com o plugin ${p.name}: $e');
+        print(
+          'Erro ao carregar detalhes da novel com o plugin ${plugin.name}: $e',
+        );
       }
     }
 
@@ -106,9 +115,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => NovelDetailsScreen(novelId: novel.id),
-      ),
+      MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
     );
   }
 

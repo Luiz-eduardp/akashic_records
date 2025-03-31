@@ -181,9 +181,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => NovelDetailsScreen(novelId: novel.id),
-      ),
+      MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
     );
   }
 

@@ -11,6 +11,9 @@ import 'package:akashic_records/screens/reader/reader_app_bar_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:akashic_records/helpers/novel_loading_helper.dart';
+import 'package:akashic_records/widgets/error_message_widget.dart';
+import 'package:akashic_records/widgets/loading_indicator_widget.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String novelId;
@@ -32,16 +35,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
   bool _mounted = false;
   ReaderSettings _readerSettings = ReaderSettings();
   final bool _isFetchingNextChapter = false;
-
   bool _isUiVisible = true;
-
   Timer? _hideUiTimer;
 
   @override
   void initState() {
     super.initState();
     _initSharedPreferences();
-
     _startUiHideTimer();
   }
 
@@ -55,7 +55,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Future<void> _initSharedPreferences() async {
     _prefs = await SharedPreferences.getInstance();
     await _loadReaderSettings();
-    await _loadLastReadChapter();
+    await _loadNovel();
   }
 
   Future<void> _loadReaderSettings() async {
@@ -93,13 +93,30 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<void> _loadLastReadChapter() async {
     _lastReadChapterId = _prefs.getString('lastRead_${widget.novelId}');
-    await _loadNovel();
-  }
 
-  Future<void> _saveLastReadChapter(String chapterId) async {
-    final now = DateTime.now();
-    final timestamp = now.millisecondsSinceEpoch;
-    await _prefs.setString('lastRead_${widget.novelId}_$timestamp', chapterId);
+    if (novel != null) {
+      if (_lastReadChapterId != null) {
+        currentChapterIndex = novel!.chapters.indexWhere(
+          (chapter) => chapter.id == _lastReadChapterId,
+        );
+        if (currentChapterIndex == -1) {
+          currentChapterIndex = 0;
+        }
+      } else {
+        currentChapterIndex = 0;
+      }
+
+      if (novel!.chapters.isNotEmpty) {
+        currentChapter = novel!.chapters[currentChapterIndex];
+        await _loadChapterContent();
+      } else {
+        setState(() {
+          if (!_mounted) return;
+          errorMessage = 'Erro: Nenhum capítulo encontrado.';
+          isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadNovel() async {
@@ -107,68 +124,54 @@ class _ReaderScreenState extends State<ReaderScreen> {
       _mounted = true;
       isLoading = true;
       errorMessage = null;
+      novel = null;
+      currentChapter = null;
     });
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
 
       PluginService? plugin;
+      String? correctPluginName;
 
-      for (final pluginName in appState.pluginServices.keys) {
+      for (final pluginName in appState.selectedPlugins) {
         final p = appState.pluginServices[pluginName];
-        try {
-          final tempNovel = await p?.parseNovel(widget.novelId);
-          if (tempNovel != null) {
-            plugin = p;
-            novel = tempNovel;
-            break;
+        if (p != null) {
+          try {
+            final tempNovel = await loadNovelWithTimeout(
+              () => p.parseNovel(widget.novelId),
+            );
+            if (tempNovel != null) {
+              plugin = p;
+              novel = tempNovel;
+              correctPluginName = pluginName;
+              break;
+            }
+          } catch (e) {
+            print(
+              'Erro ao carregar detalhes da novel com o plugin ${p.name}: $e',
+            );
           }
-        } catch (e) {
-          print(
-            'Erro ao carregar detalhes da novel com o plugin ${p?.name}: $e',
-          );
         }
       }
 
       if (plugin != null && novel != null) {
-        final appState = Provider.of<AppState>(context, listen: false);
-        final plugin = appState.pluginServices[novel!.pluginId];
-        if (plugin != null) {
-          if (_lastReadChapterId != null) {
-            currentChapterIndex = novel!.chapters.indexWhere(
-              (chapter) => chapter.id == _lastReadChapterId,
-            );
-            if (currentChapterIndex == -1) {
-              currentChapterIndex = 0;
-            }
-          } else {
-            currentChapterIndex = 0;
-          }
-
-          if (novel!.chapters.isNotEmpty) {
-            currentChapter = novel!.chapters[currentChapterIndex];
-            await _loadChapterContent();
-          } else {
-            setState(() {
-              if (!_mounted) return;
-              errorMessage = 'Erro: Nenhum capítulo encontrado.';
-              isLoading = false;
-            });
-          }
-        } else {
-          setState(() {
-            if (!_mounted) return;
-            errorMessage = 'Erro: Plugin inválido.';
-            isLoading = false;
-          });
-        }
+        novel!.pluginId = correctPluginName!;
+        await _loadLastReadChapter();
       } else {
-        errorMessage = 'Novel não encontrada em nenhum plugin selecionado.';
+        setState(() {
+          errorMessage = 'Novel não encontrada em nenhum plugin selecionado.';
+        });
       }
     } catch (e) {
       setState(() {
         if (!_mounted) return;
         errorMessage = 'Erro ao carregar novel: $e';
+        isLoading = false;
+      });
+    } finally {
+      setState(() {
+        if (!_mounted) return;
         isLoading = false;
       });
     }
@@ -184,6 +187,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     try {
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[novel!.pluginId];
+
       if (plugin != null) {
         final content = await plugin.parseChapter(currentChapter!.id);
 
@@ -191,7 +195,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
           currentChapter = Chapter(
             id: currentChapter!.id,
             title: currentChapter!.title,
-            content: content,
+            content: content as String?,
             releaseDate: '',
             chapterNumber: null,
             order: 0,
@@ -336,9 +340,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 : null,
         body:
             isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: LoadingIndicatorWidget())
                 : errorMessage != null
-                ? Center(child: Text(errorMessage!))
+                ? Center(child: ErrorMessageWidget(errorMessage: errorMessage!))
                 : Column(
                   children: [
                     Expanded(
@@ -347,7 +351,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         readerSettings: _readerSettings,
                       ),
                     ),
-
                     if (_isUiVisible)
                       ChapterNavigation(
                         onPreviousChapter: _goToPreviousChapter,
@@ -359,5 +362,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 ),
       ),
     );
+  }
+
+  Future<void> _saveLastReadChapter(String chapterId) async {
+    final now = DateTime.now();
+    final timestamp = now.millisecondsSinceEpoch;
+    await _prefs.setString('lastRead_${widget.novelId}_$timestamp', chapterId);
   }
 }

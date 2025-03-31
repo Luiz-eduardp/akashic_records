@@ -1,121 +1,118 @@
 import 'dart:async';
-import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:akashic_records/screens/details/novel_details_widget.dart';
-import 'package:akashic_records/screens/details/loading_details_skeleton_widget.dart';
-import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'package:akashic_records/models/plugin_service.dart';
+import 'package:akashic_records/widgets/error_message_widget.dart';
+import 'package:akashic_records/widgets/loading_indicator_widget.dart';
+import 'package:akashic_records/helpers/novel_loading_helper.dart';
 
 class NovelDetailsScreen extends StatefulWidget {
-  final String novelId;
+  final Novel novel;
 
-  const NovelDetailsScreen({super.key, required this.novelId});
+  const NovelDetailsScreen({super.key, required this.novel});
 
   @override
   State<NovelDetailsScreen> createState() => _NovelDetailsScreenState();
 }
 
 class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
-  Novel? novel;
-  bool isLoading = true;
-  String? errorMessage;
   bool isFavorite = false;
   late SharedPreferences _prefs;
   String? lastReadChapterId;
-  bool _mounted = false;
   int? lastReadChapterIndex;
+  bool isLoading = false;
+  String? errorMessage;
+  Novel? _detailedNovel;
 
   @override
   void initState() {
     super.initState();
     _initSharedPreferences();
-  }
-
-  @override
-  void dispose() {
-    _mounted = false;
-    super.dispose();
+    _loadDetailedNovel();
   }
 
   Future<void> _initSharedPreferences() async {
     _prefs = await SharedPreferences.getInstance();
-    await _loadNovelData();
+    await _loadFavoriteStatus();
+    _loadLastReadChapter();
   }
 
-  Future<void> _loadNovelData() async {
-    _mounted = true;
+  String _getFavoriteKey() {
+    return 'favorite_${widget.novel.pluginId}_${widget.novel.id}';
+  }
+
+  Future<void> _loadDetailedNovel() async {
     setState(() {
       isLoading = true;
       errorMessage = null;
+      _detailedNovel = null;
     });
-
-    final loadPrefsFuture = Future.wait<dynamic>([
-      _loadFavoriteStatus(),
-      Future.value(_prefs.getString('lastRead_${widget.novelId}')),
-    ]);
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
+      final plugin = appState.pluginServices[widget.novel.pluginId];
 
-      PluginService? plugin;
-
-      for (final pluginName in appState.selectedPlugins) {
-        final p = appState.pluginServices[pluginName];
-        if (p == null) continue;
-
-        try {
-          final tempNovel = await loadNovelWithTimeout(
-            () async => p.parseNovel(widget.novelId),
-          );
-          if (tempNovel != null) {
-            plugin = p;
-            novel = tempNovel;
-            break;
-          }
-        } catch (e) {
-          print('Error loading novel from plugin $pluginName: $e');
-        }
-      }
-
-      if (plugin != null && novel != null) {
-        final prefsResults = await loadPrefsFuture;
-        lastReadChapterId = prefsResults[1] as String?;
-
-        if (lastReadChapterId != null) {
-          lastReadChapterIndex = novel!.chapters.indexWhere(
-            (chapter) => chapter.id == lastReadChapterId,
-          );
-          if (lastReadChapterIndex == -1) {
-            lastReadChapterIndex = null;
-            lastReadChapterId = null;
-          }
-        }
-      } else {
-        errorMessage = 'Novel não encontrada em nenhum plugin selecionado.';
-      }
-    } catch (e) {
-      errorMessage = 'Erro ao carregar detalhes da novel: $e';
-      print(e);
-    } finally {
-      if (_mounted) {
+      if (plugin == null) {
         setState(() {
+          errorMessage = 'Plugin não encontrado para esta novel.';
           isLoading = false;
         });
+        return;
       }
+
+      final detailedNovel = await loadNovelWithTimeout(
+        () => plugin.parseNovel(widget.novel.id),
+      );
+
+      if (detailedNovel != null) {
+        detailedNovel.pluginId = widget.novel.pluginId;
+        setState(() {
+          _detailedNovel = detailedNovel;
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Falha ao carregar detalhes da novel do plugin.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Erro ao carregar detalhes da novel: $e';
+      });
+      print(e);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadLastReadChapter() async {
+    final lastReadChapterId = _prefs.getString('lastRead_${widget.novel.id}');
+
+    if (lastReadChapterId != null && _detailedNovel != null) {
+      setState(() {
+        this.lastReadChapterId = lastReadChapterId;
+        lastReadChapterIndex = _detailedNovel!.chapters.indexWhere(
+          (chapter) => chapter.id == lastReadChapterId,
+        );
+        if (lastReadChapterIndex == -1) {
+          lastReadChapterIndex = null;
+          this.lastReadChapterId = null;
+        }
+      });
     }
   }
 
   Future<void> _loadFavoriteStatus() async {
-    isFavorite = _prefs.getBool('favorite_${widget.novelId}') ?? false;
+    isFavorite = _prefs.getBool(_getFavoriteKey()) ?? false;
   }
 
   Future<void> _saveFavoriteStatus() async {
-    await _prefs.setBool('favorite_${widget.novelId}', isFavorite);
+    await _prefs.setBool(_getFavoriteKey(), isFavorite);
   }
 
   void _toggleFavorite() {
@@ -126,11 +123,11 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
   }
 
   Future<void> _saveLastReadChapter(String chapterId) async {
-    await _prefs.setString('lastRead_${widget.novelId}', chapterId);
+    await _prefs.setString('lastRead_${widget.novel.id}', chapterId);
     setState(() {
       lastReadChapterId = chapterId;
-      if (novel != null) {
-        lastReadChapterIndex = novel!.chapters.indexWhere(
+      if (_detailedNovel != null) {
+        lastReadChapterIndex = _detailedNovel!.chapters.indexWhere(
           (chapter) => chapter.id == chapterId,
         );
       }
@@ -143,10 +140,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            isLoading
-                ? const Text("Carregando...")
-                : Text(novel?.title ?? 'Erro'),
+        title: Text(widget.novel.title),
         actions: [
           IconButton(
             icon: Icon(
@@ -159,28 +153,25 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
       ),
       body:
           isLoading
-              ? const LoadingDetailsSkeletonWidget()
+              ? const LoadingIndicatorWidget()
               : errorMessage != null
               ? ErrorMessageWidget(errorMessage: errorMessage!)
-              : (novel == null
-                  ? const Center(
-                    child: Text(
-                      'Novel não encontrada em nenhum plugin selecionado',
-                    ),
-                  )
+              : (_detailedNovel == null
+                  ? const Center(child: Text("Detalhes não encontrados"))
                   : NovelDetailsWidget(
-                    novel: novel!,
+                    novel: _detailedNovel!,
                     lastReadChapterId: lastReadChapterId,
                     lastReadChapterIndex: lastReadChapterIndex,
                     onContinueReading:
-                        lastReadChapterId != null && novel != null
+                        lastReadChapterId != null
                             ? () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder:
-                                      (context) =>
-                                          ReaderScreen(novelId: widget.novelId),
+                                      (context) => ReaderScreen(
+                                        novelId: widget.novel.id,
+                                      ),
                                 ),
                               );
                             }
@@ -192,7 +183,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
                         MaterialPageRoute(
                           builder:
                               (context) =>
-                                  ReaderScreen(novelId: widget.novelId),
+                                  ReaderScreen(novelId: widget.novel.id),
                         ),
                       );
                     },
