@@ -127,6 +127,28 @@ class _AppearanceTabState extends State<AppearanceTab> {
             ],
           ),
         ],
+        SwitchListTile(
+          title: const Text('Modo Foco'),
+          value: readerSettings.focusMode,
+          onChanged: (bool value) {
+            ReaderSettings newSettings = ReaderSettings(
+              theme: readerSettings.theme,
+              fontSize: readerSettings.fontSize,
+              fontFamily: readerSettings.fontFamily,
+              lineHeight: readerSettings.lineHeight,
+              textAlign: readerSettings.textAlign,
+              backgroundColor: readerSettings.backgroundColor,
+              textColor: readerSettings.textColor,
+              fontWeight: readerSettings.fontWeight,
+              customColors: readerSettings.customColors,
+              focusMode: value,
+            );
+            Provider.of<AppState>(
+              context,
+              listen: false,
+            ).setReaderSettings(newSettings);
+          },
+        ),
       ],
     );
   }
@@ -187,6 +209,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
           textColor: textColor,
           fontWeight: readerSettings.fontWeight,
           customColors: readerSettings.customColors,
+          focusMode: readerSettings.focusMode,
         );
 
         if (theme == ReaderTheme.amoledDark || theme == ReaderTheme.darkGreen) {
@@ -265,6 +288,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
             backgroundColor: _customBackgroundColor,
             textColor: readerSettings.customColors?.textColor,
           ),
+          focusMode: readerSettings.focusMode,
         );
         appState.setReaderSettings(newSettings);
       } else {
@@ -282,6 +306,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
             backgroundColor: readerSettings.customColors?.backgroundColor,
             textColor: _customTextColor,
           ),
+          focusMode: readerSettings.focusMode,
         );
         appState.setReaderSettings(newSettings);
       }
@@ -326,6 +351,7 @@ class TextTab extends StatelessWidget {
               textColor: readerSettings.textColor,
               fontWeight: readerSettings.fontWeight,
               customColors: readerSettings.customColors,
+              focusMode: readerSettings.focusMode,
             );
             appState.setReaderSettings(newSettings);
           },
@@ -358,6 +384,7 @@ class TextTab extends StatelessWidget {
               textColor: readerSettings.textColor,
               fontWeight: readerSettings.fontWeight,
               customColors: readerSettings.customColors,
+              focusMode: readerSettings.focusMode,
             );
             appState.setReaderSettings(newSettings);
           },
@@ -402,6 +429,7 @@ class TextTab extends StatelessWidget {
           textColor: readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
           customColors: readerSettings.customColors,
+          focusMode: readerSettings.focusMode,
         );
         appState.setReaderSettings(newSettings);
       },
@@ -445,6 +473,7 @@ class TextTab extends StatelessWidget {
           textColor: readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
           customColors: readerSettings.customColors,
+          focusMode: readerSettings.focusMode,
         );
         appState.setReaderSettings(newSettings);
       },
@@ -471,6 +500,7 @@ class TextTab extends StatelessWidget {
           textColor: readerSettings.textColor,
           fontWeight: fontWeight,
           customColors: readerSettings.customColors,
+          focusMode: readerSettings.focusMode,
         );
         appState.setReaderSettings(newSettings);
       },

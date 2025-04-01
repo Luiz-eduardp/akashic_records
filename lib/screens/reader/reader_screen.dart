@@ -309,14 +309,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       ),
                     ),
                     if (_isUiVisible)
-                      Material(
-                        elevation: 4.0,
-                        child: ChapterNavigation(
-                          onPreviousChapter: _goToPreviousChapter,
-                          onNextChapter: _goToNextChapter,
-                          isLoading: isLoading || _isFetchingNextChapter,
-                          readerSettings: appState.readerSettings,
-                        ),
+                      ChapterNavigation(
+                        onPreviousChapter: _goToPreviousChapter,
+                        onNextChapter: _goToNextChapter,
+                        isLoading: isLoading || _isFetchingNextChapter,
+                        readerSettings: appState.readerSettings,
                       ),
                   ],
                 ),

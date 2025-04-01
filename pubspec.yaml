@@ -54,6 +54,7 @@ dependencies:
   url_launcher: ^6.3.1
   flutter_launcher_icons: ^0.14.3
   provider: ^6.1.2
+  scrollable_positioned_list: ^0.3.8
 
 dev_dependencies:
   flutter_test:
