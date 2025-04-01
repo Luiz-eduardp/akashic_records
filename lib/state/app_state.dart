@@ -70,23 +70,26 @@ class ReaderSettings {
   static ReaderSettings fromMap(Map<String, dynamic> map) {
     return ReaderSettings(
       theme: ReaderTheme.values[map['theme'] ?? 0],
-      fontSize: map['fontSize'] ?? 18.0,
+      fontSize: (map['fontSize'] ?? 18.0).toDouble(),
       fontFamily: map['fontFamily'] ?? 'Roboto',
-      lineHeight: map['lineHeight'] ?? 1.5,
+      lineHeight: (map['lineHeight'] ?? 1.5).toDouble(),
       textAlign: TextAlign.values[map['textAlign'] ?? 3],
       backgroundColor: Color(map['backgroundColor'] ?? Colors.white.value),
       textColor: Color(map['textColor'] ?? Colors.black.value),
       fontWeight: FontWeight.values[map['fontWeight'] ?? 4],
-      customColors: CustomColors(
-        backgroundColor:
-            map['customBackgroundColor'] != null
-                ? Color(map['customBackgroundColor'])
-                : null,
-        textColor:
-            map['customTextColor'] != null
-                ? Color(map['customTextColor'])
-                : null,
-      ),
+      customColors:
+          map['customBackgroundColor'] != null || map['customTextColor'] != null
+              ? CustomColors(
+                backgroundColor:
+                    map['customBackgroundColor'] != null
+                        ? Color(map['customBackgroundColor'])
+                        : null,
+                textColor:
+                    map['customTextColor'] != null
+                        ? Color(map['customTextColor'])
+                        : null,
+              )
+              : null,
       focusMode: map['focusMode'] ?? false,
     );
   }
@@ -145,31 +148,31 @@ class AppState with ChangeNotifier {
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+
       final plugins = prefs.getStringList('selectedPlugins');
+      _selectedPlugins =
+          plugins?.isNotEmpty == true ? Set<String>.from(plugins!) : {};
 
-      Set<String> savedPlugins =
-          (plugins?.isNotEmpty == true ? Set<String>.from(plugins!) : {});
-
-      _selectedPlugins = savedPlugins;
-
-      _themeMode =
-          ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];
+      final themeModeIndex =
+          prefs.getInt('themeMode') ?? ThemeMode.system.index;
+      _themeMode = ThemeMode.values[themeModeIndex];
       _accentColor = Color(prefs.getInt('accentColor') ?? Colors.blue.value);
-      final settingsMap = prefs.getKeys().fold<Map<String, dynamic>>(
-        {},
-        (previousValue, key) => {
-          ...previousValue,
-          if (key.startsWith('reader_')) key.substring(7): prefs.get(key),
-        },
-      );
 
-      if (settingsMap.isNotEmpty) {
-        _readerSettings = ReaderSettings.fromMap(settingsMap);
+      final readerSettingsMap = <String, dynamic>{};
+      for (final key in prefs.getKeys()) {
+        if (key.startsWith('reader_')) {
+          final value = prefs.get(key);
+          readerSettingsMap[key.substring(7)] = value;
+        }
       }
+      if (readerSettingsMap.isNotEmpty) {
+        _readerSettings = ReaderSettings.fromMap(readerSettingsMap);
+      }
+
       _settingsLoaded = true;
       notifyListeners();
     } catch (e) {
-      print("Erro ao carregar configurações: $e");
+      debugPrint("Erro ao carregar configurações: $e");
     }
   }
 
@@ -182,33 +185,42 @@ class AppState with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('selectedPlugins', _selectedPlugins.toList());
     } catch (e) {
-      print("Erro ao salvar plugins selecionados: $e");
+      debugPrint("Erro ao salvar plugins selecionados: $e");
     }
   }
 
   Future<void> _saveThemeSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('themeMode', _themeMode.index);
-    await prefs.setInt('accentColor', _accentColor.value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('themeMode', _themeMode.index);
+      await prefs.setInt('accentColor', _accentColor.value);
+    } catch (e) {
+      debugPrint("Erro ao salvar configurações do tema: $e");
+    }
   }
 
   Future<void> _saveReaderSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    final settingsMap = _readerSettings.toMap();
-    settingsMap.forEach((key, value) async {
-      if (value is int) {
-        await prefs.setInt('reader_$key', value);
-      } else if (value is double) {
-        await prefs.setDouble('reader_$key', value);
-      } else if (value is String) {
-        await prefs.setString('reader_$key', value);
-      } else if (value is bool) {
-        await prefs.setBool('reader_$key', value);
-      } else if (value is int?) {
-        if (value != null) {
-          await prefs.setInt('reader_$key', value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final settingsMap = _readerSettings.toMap();
+      for (final key in settingsMap.keys) {
+        final value = settingsMap[key];
+        final prefsKey = 'reader_$key';
+
+        if (value is int) {
+          await prefs.setInt(prefsKey, value);
+        } else if (value is double) {
+          await prefs.setDouble(prefsKey, value);
+        } else if (value is String) {
+          await prefs.setString(prefsKey, value);
+        } else if (value is bool) {
+          await prefs.setBool(prefsKey, value);
+        } else if (value == null) {
+          await prefs.remove(prefsKey);
         }
       }
-    });
+    } catch (e) {
+      debugPrint("Erro ao salvar configurações do leitor: $e");
+    }
   }
 }
