@@ -56,16 +56,23 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
       final appState = Provider.of<AppState>(context, listen: false);
 
-      final List<Future<void>> loadFutures = [];
-      for (final key in favoriteKeys) {
-        if (_prefs.getBool(key) == true) {
-          final parts = key.substring('favorite_'.length).split('_');
-          final pluginId = parts[0];
-          final novelId = parts.sublist(1).join('_');
-          loadFutures.add(_loadFavoriteNovel(novelId, appState, pluginId));
-        }
+      final List<Future<Novel?>> novelFutures =
+          favoriteKeys.where((key) => _prefs.getBool(key) == true).map((key) {
+            final parts = key.substring('favorite_'.length).split('_');
+            final pluginId = parts[0];
+            final novelId = parts.sublist(1).join('_');
+            return _loadFavoriteNovel(novelId, appState, pluginId);
+          }).toList();
+
+      final List<Novel?> loadedNovels = await Future.wait(novelFutures);
+
+      final List<Novel> validNovels = loadedNovels.whereType<Novel>().toList();
+
+      if (_mounted) {
+        setState(() {
+          favoriteNovels = validNovels;
+        });
       }
-      await Future.wait(loadFutures);
     } catch (e) {
       if (_mounted) {
         setState(() {
@@ -81,35 +88,31 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     }
   }
 
-  Future<void> _loadFavoriteNovel(
+  Future<Novel?> _loadFavoriteNovel(
     String novelId,
     AppState appState,
     String pluginId,
   ) async {
-    Novel? novel;
     final plugin = appState.pluginServices[pluginId];
+    if (plugin == null) {
+      return null;
+    }
 
-    if (plugin != null) {
-      try {
-        final tempNovel = await loadNovelWithTimeout(
-          () => plugin.parseNovel(novelId),
-        );
-        if (tempNovel != null) {
-          novel = tempNovel;
-          novel.pluginId = pluginId;
-        }
-      } catch (e) {
-        print(
-          'Erro ao carregar detalhes da novel com o plugin ${plugin.name}: $e',
-        );
+    try {
+      final novel = await loadNovelWithTimeout(
+        () => plugin.parseNovel(novelId),
+      );
+      if (novel != null) {
+        novel.pluginId = pluginId;
+        return novel;
       }
+    } catch (e) {
+      debugPrint(
+        'Erro ao carregar detalhes da novel com o plugin ${plugin.name}: $e',
+      );
+      return null;
     }
-
-    if (novel != null && _mounted) {
-      setState(() {
-        favoriteNovels.add(novel!);
-      });
-    }
+    return null;
   }
 
   void _handleNovelTap(Novel novel) {
@@ -122,16 +125,67 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:
-          isLoading
-              ? const LoadingIndicatorWidget()
-              : errorMessage != null
-              ? ErrorMessageWidget(errorMessage: errorMessage!)
-              : FavoriteGridWidget(
-                favoriteNovels: favoriteNovels,
-                onNovelTap: _handleNovelTap,
-                onRefresh: () => _loadFavorites(true),
-              ),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _buildBody(),
+      ),
+      floatingActionButton:
+          favoriteNovels.isNotEmpty && !isLoading
+              ? FloatingActionButton(
+                onPressed: () => _loadFavorites(true),
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                tooltip: 'Recarregar Favoritos',
+                child: const Icon(Icons.refresh),
+              )
+              : null,
     );
+  }
+
+  Widget _buildBody() {
+    if (isLoading) {
+      return const Center(child: LoadingIndicatorWidget());
+    } else if (errorMessage != null) {
+      return Center(child: ErrorMessageWidget(errorMessage: errorMessage!));
+    } else if (favoriteNovels.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(
+              Icons.favorite_border,
+              size: 60,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Nenhuma novel adicionada aos favoritos.',
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    } else {
+      return RefreshIndicator(
+        onRefresh: () => _loadFavorites(true),
+        color: Theme.of(context).colorScheme.secondary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            return FavoriteGridWidget(
+              favoriteNovels: favoriteNovels,
+              onNovelTap: _handleNovelTap,
+              onRefresh: () async {
+                return;
+              },
+            );
+          },
+        ),
+      );
+    }
   }
 }
