@@ -1,10 +1,10 @@
+import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
-import 'package:akashic_records/state/app_state.dart';
 
 class ReaderSettingsModal extends StatefulWidget {
-  const ReaderSettingsModal({Key? key});
+  const ReaderSettingsModal({super.key});
 
   @override
   State<ReaderSettingsModal> createState() => _ReaderSettingsModalState();
@@ -28,7 +28,6 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
 
   @override
   Widget build(BuildContext context) {
-    final _ = Provider.of<AppState>(context);
     return SingleChildScrollView(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -40,9 +39,11 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Configurações de Leitura',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           TabBar(
@@ -72,47 +73,50 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
 }
 
 class AppearanceTab extends StatefulWidget {
+  const AppearanceTab({super.key});
+
   @override
-  _AppearanceTabState createState() => _AppearanceTabState();
+  State<AppearanceTab> createState() => _AppearanceTabState();
 }
 
 class _AppearanceTabState extends State<AppearanceTab> {
-  Color? _customBackgroundColor;
-  Color? _customTextColor;
-
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final readerSettings = appState.readerSettings;
-    _customBackgroundColor = readerSettings.customColors?.backgroundColor;
-    _customTextColor = readerSettings.customColors?.textColor;
+
     return ListView(
       children: [
-        const Text('Tema:'),
+        Text('Tema:', style: Theme.of(context).textTheme.titleMedium),
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
-            _buildThemeButton(ReaderTheme.light),
-            _buildThemeButton(ReaderTheme.dark),
-            _buildThemeButton(ReaderTheme.sepia),
-            _buildThemeButton(ReaderTheme.darkGreen),
-            _buildThemeButton(ReaderTheme.amoledDark),
-            _buildThemeButton(ReaderTheme.grey),
-            _buildThemeButton(ReaderTheme.solarizedLight),
-            _buildThemeButton(ReaderTheme.solarizedDark),
+            _buildThemeButton(ReaderTheme.light, context),
+            _buildThemeButton(ReaderTheme.dark, context),
+            _buildThemeButton(ReaderTheme.sepia, context),
+            _buildThemeButton(ReaderTheme.darkGreen, context),
+            _buildThemeButton(ReaderTheme.amoledDark, context),
+            _buildThemeButton(ReaderTheme.grey, context),
+            _buildThemeButton(ReaderTheme.solarizedLight, context),
+            _buildThemeButton(ReaderTheme.solarizedDark, context),
           ],
         ),
         if (readerSettings.theme == ReaderTheme.amoledDark ||
             readerSettings.theme == ReaderTheme.darkGreen) ...[
           const SizedBox(height: 20),
-          const Text('Cores Customizadas:'),
+          Text(
+            'Cores Customizadas:',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           Row(
             children: [
               ElevatedButton(
                 onPressed: () => _showColorPicker(context, true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _customBackgroundColor ?? Colors.grey,
+                  backgroundColor:
+                      readerSettings.customColors?.backgroundColor ??
+                      Colors.grey,
                 ),
                 child: const Text('Fundo'),
               ),
@@ -120,7 +124,8 @@ class _AppearanceTabState extends State<AppearanceTab> {
               ElevatedButton(
                 onPressed: () => _showColorPicker(context, false),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _customTextColor ?? Colors.grey,
+                  backgroundColor:
+                      readerSettings.customColors?.textColor ?? Colors.grey,
                 ),
                 child: const Text('Texto'),
               ),
@@ -131,7 +136,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
           title: const Text('Modo Foco'),
           value: readerSettings.focusMode,
           onChanged: (bool value) {
-            ReaderSettings newSettings = ReaderSettings(
+            final newSettings = ReaderSettings(
               theme: readerSettings.theme,
               fontSize: readerSettings.fontSize,
               fontFamily: readerSettings.fontFamily,
@@ -143,18 +148,15 @@ class _AppearanceTabState extends State<AppearanceTab> {
               customColors: readerSettings.customColors,
               focusMode: value,
             );
-            Provider.of<AppState>(
-              context,
-              listen: false,
-            ).setReaderSettings(newSettings);
+            appState.setReaderSettings(newSettings);
           },
         ),
       ],
     );
   }
 
-  Widget _buildThemeButton(ReaderTheme theme) {
-    final appState = Provider.of<AppState>(context, listen: false);
+  Widget _buildThemeButton(ReaderTheme theme, BuildContext context) {
+    final appState = Provider.of<AppState>(context);
     final readerSettings = appState.readerSettings;
 
     late Color backgroundColor;
@@ -199,7 +201,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
       label: Text(theme.toString().split('.').last),
       selected: readerSettings.theme == theme,
       onSelected: (selected) {
-        ReaderSettings newSettings = ReaderSettings(
+        final newSettings = ReaderSettings(
           theme: theme,
           fontSize: readerSettings.fontSize,
           fontFamily: readerSettings.fontFamily,
@@ -208,22 +210,12 @@ class _AppearanceTabState extends State<AppearanceTab> {
           backgroundColor: backgroundColor,
           textColor: textColor,
           fontWeight: readerSettings.fontWeight,
-          customColors: readerSettings.customColors,
+          customColors:
+              theme == ReaderTheme.amoledDark || theme == ReaderTheme.darkGreen
+                  ? readerSettings.customColors
+                  : null,
           focusMode: readerSettings.focusMode,
         );
-
-        if (theme == ReaderTheme.amoledDark || theme == ReaderTheme.darkGreen) {
-          newSettings.customColors = CustomColors(
-            backgroundColor: _customBackgroundColor,
-            textColor: _customTextColor,
-          );
-          newSettings.backgroundColor =
-              _customBackgroundColor ?? backgroundColor;
-          newSettings.textColor = _customTextColor ?? textColor;
-        } else {
-          newSettings.customColors = null;
-        }
-
         appState.setReaderSettings(newSettings);
       },
     );
@@ -232,85 +224,68 @@ class _AppearanceTabState extends State<AppearanceTab> {
   Future<void> _showColorPicker(BuildContext context, bool isBackground) async {
     final appState = Provider.of<AppState>(context, listen: false);
     final readerSettings = appState.readerSettings;
-    Color currentColor =
+    final currentColor =
         isBackground
-            ? _customBackgroundColor ?? Colors.white
-            : _customTextColor ?? Colors.black;
+            ? (readerSettings.customColors?.backgroundColor ?? Colors.white)
+            : (readerSettings.customColors?.textColor ?? Colors.black);
 
-    Color? pickedColor = await showDialog<Color>(
+    showDialog(
       context: context,
       builder: (BuildContext context) {
+        Color tempColor = currentColor;
         return AlertDialog(
           title: const Text('Escolha uma cor'),
           content: SingleChildScrollView(
             child: ColorPicker(
               pickerColor: currentColor,
               onColorChanged: (Color color) {
-                currentColor = color;
-                setState(() {
-                  if (isBackground) {
-                    _customBackgroundColor = color;
-                  } else {
-                    _customTextColor = color;
-                  }
-                });
+                tempColor = color;
               },
               enableAlpha: true,
               labelTypes: const [ColorLabelType.rgb, ColorLabelType.hsv],
             ),
           ),
           actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
             ElevatedButton(
               child: const Text('OK'),
               onPressed: () {
-                Navigator.of(context).pop(currentColor);
+                final updatedCustomColors = CustomColors(
+                  backgroundColor:
+                      isBackground
+                          ? tempColor
+                          : readerSettings.customColors?.backgroundColor,
+                  textColor:
+                      !isBackground
+                          ? tempColor
+                          : readerSettings.customColors?.textColor,
+                );
+
+                final newSettings = ReaderSettings(
+                  theme: readerSettings.theme,
+                  fontSize: readerSettings.fontSize,
+                  fontFamily: readerSettings.fontFamily,
+                  lineHeight: readerSettings.lineHeight,
+                  textAlign: readerSettings.textAlign,
+                  backgroundColor: readerSettings.backgroundColor,
+                  textColor: readerSettings.textColor,
+                  fontWeight: readerSettings.fontWeight,
+                  customColors: updatedCustomColors,
+                  focusMode: readerSettings.focusMode,
+                );
+                appState.setReaderSettings(newSettings);
+                Navigator.of(context).pop();
               },
             ),
           ],
         );
       },
     );
-
-    if (pickedColor != null) {
-      if (isBackground) {
-        _customBackgroundColor = pickedColor;
-        ReaderSettings newSettings = ReaderSettings(
-          theme: readerSettings.theme,
-          fontSize: readerSettings.fontSize,
-          fontFamily: readerSettings.fontFamily,
-          lineHeight: readerSettings.lineHeight,
-          textAlign: readerSettings.textAlign,
-          backgroundColor:
-              _customBackgroundColor ?? readerSettings.backgroundColor,
-          textColor: readerSettings.textColor,
-          fontWeight: readerSettings.fontWeight,
-          customColors: CustomColors(
-            backgroundColor: _customBackgroundColor,
-            textColor: readerSettings.customColors?.textColor,
-          ),
-          focusMode: readerSettings.focusMode,
-        );
-        appState.setReaderSettings(newSettings);
-      } else {
-        _customTextColor = pickedColor;
-        ReaderSettings newSettings = ReaderSettings(
-          theme: readerSettings.theme,
-          fontSize: readerSettings.fontSize,
-          fontFamily: readerSettings.fontFamily,
-          lineHeight: readerSettings.lineHeight,
-          textAlign: readerSettings.textAlign,
-          backgroundColor: readerSettings.backgroundColor,
-          textColor: _customTextColor ?? readerSettings.textColor,
-          fontWeight: readerSettings.fontWeight,
-          customColors: CustomColors(
-            backgroundColor: readerSettings.customColors?.backgroundColor,
-            textColor: _customTextColor,
-          ),
-          focusMode: readerSettings.focusMode,
-        );
-        appState.setReaderSettings(newSettings);
-      }
-    }
   }
 }
 
@@ -327,13 +302,18 @@ class TextTab extends StatelessWidget {
     'Courier New',
   ];
 
+  TextTab({super.key});
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final readerSettings = appState.readerSettings;
     return ListView(
       children: [
-        const Text('Tamanho da Fonte:'),
+        Text(
+          'Tamanho da Fonte:',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         Slider(
           value: readerSettings.fontSize,
           min: 12,
@@ -341,7 +321,7 @@ class TextTab extends StatelessWidget {
           divisions: 18,
           label: readerSettings.fontSize.round().toString(),
           onChanged: (value) {
-            ReaderSettings newSettings = ReaderSettings(
+            final newSettings = ReaderSettings(
               theme: readerSettings.theme,
               fontSize: value,
               fontFamily: readerSettings.fontFamily,
@@ -356,7 +336,7 @@ class TextTab extends StatelessWidget {
             appState.setReaderSettings(newSettings);
           },
         ),
-        const Text('Fonte:'),
+        Text('Fonte:', style: Theme.of(context).textTheme.titleMedium),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -366,7 +346,7 @@ class TextTab extends StatelessWidget {
                   .toList(),
         ),
         const SizedBox(height: 20),
-        const Text('Espaçamento:'),
+        Text('Espaçamento:', style: Theme.of(context).textTheme.titleMedium),
         Slider(
           value: readerSettings.lineHeight,
           min: 1.0,
@@ -374,7 +354,7 @@ class TextTab extends StatelessWidget {
           divisions: 20,
           label: readerSettings.lineHeight.toStringAsFixed(1),
           onChanged: (value) {
-            ReaderSettings newSettings = ReaderSettings(
+            final newSettings = ReaderSettings(
               theme: readerSettings.theme,
               fontSize: readerSettings.fontSize,
               fontFamily: readerSettings.fontFamily,
@@ -389,7 +369,10 @@ class TextTab extends StatelessWidget {
             appState.setReaderSettings(newSettings);
           },
         ),
-        const Text('Alinhamento do Texto:'),
+        Text(
+          'Alinhamento do Texto:',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -399,7 +382,7 @@ class TextTab extends StatelessWidget {
             _buildTextAlignButton(TextAlign.justify, context),
           ],
         ),
-        const Text('Peso da Fonte:'),
+        Text('Peso da Fonte:', style: Theme.of(context).textTheme.titleMedium),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -419,7 +402,7 @@ class TextTab extends StatelessWidget {
       label: Text(font),
       selected: readerSettings.fontFamily == font,
       onSelected: (selected) {
-        ReaderSettings newSettings = ReaderSettings(
+        final newSettings = ReaderSettings(
           theme: readerSettings.theme,
           fontSize: readerSettings.fontSize,
           fontFamily: font,
@@ -463,7 +446,7 @@ class TextTab extends StatelessWidget {
       label: Icon(icon),
       selected: readerSettings.textAlign == align,
       onSelected: (selected) {
-        ReaderSettings newSettings = ReaderSettings(
+        final newSettings = ReaderSettings(
           theme: readerSettings.theme,
           fontSize: readerSettings.fontSize,
           fontFamily: readerSettings.fontFamily,
@@ -490,7 +473,7 @@ class TextTab extends StatelessWidget {
       label: Text(fontWeightName),
       selected: readerSettings.fontWeight == fontWeight,
       onSelected: (selected) {
-        ReaderSettings newSettings = ReaderSettings(
+        final newSettings = ReaderSettings(
           theme: readerSettings.theme,
           fontSize: readerSettings.fontSize,
           fontFamily: readerSettings.fontFamily,

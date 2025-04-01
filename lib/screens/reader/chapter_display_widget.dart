@@ -1,9 +1,9 @@
+import 'dart:ui';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as htmlParser;
-import 'dart:ui';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class ChapterDisplay extends StatefulWidget {
@@ -21,7 +21,6 @@ class ChapterDisplay extends StatefulWidget {
 }
 
 class _ChapterDisplayState extends State<ChapterDisplay> {
-  String? _cleanedContent;
   List<String> _paragraphs = [];
   final ItemScrollController _scrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener =
@@ -32,46 +31,31 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
   @override
   void initState() {
     super.initState();
-    _cleanedContent = _cleanChapterContent(widget.chapterContent);
-    _splitIntoParagraphs();
-
-    _itemPositionsListener.itemPositions.addListener(() {
-      if (_isScrolling) return;
-
-      final positions = _itemPositionsListener.itemPositions.value;
-      if (positions.isNotEmpty) {
-        final mostVisibleIndex =
-            positions.reduce((a, b) {
-              if (a.itemLeadingEdge < 0 && b.itemLeadingEdge >= 0) {
-                return b;
-              } else if (b.itemLeadingEdge < 0 && a.itemLeadingEdge >= 0) {
-                return a;
-              } else {
-                return a.itemLeadingEdge.abs() < b.itemLeadingEdge.abs()
-                    ? a
-                    : b;
-              }
-            }).index;
-
-        if (mostVisibleIndex != _currentFocusedIndex) {
-          setState(() {
-            _currentFocusedIndex = mostVisibleIndex;
-          });
-        }
-      }
-    });
+    _processContent();
+    _itemPositionsListener.itemPositions.addListener(_onItemPositionsChanged);
   }
 
   @override
   void didUpdateWidget(covariant ChapterDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.chapterContent != widget.chapterContent ||
         oldWidget.readerSettings != widget.readerSettings) {
-      _cleanedContent = _cleanChapterContent(widget.chapterContent);
-      _splitIntoParagraphs();
+      _processContent();
       _scrollToIndex(_currentFocusedIndex, animate: false);
     }
+  }
+
+  @override
+  void dispose() {
+    _itemPositionsListener.itemPositions.removeListener(
+      _onItemPositionsChanged,
+    );
+    super.dispose();
+  }
+
+  void _processContent() {
+    final cleanedContent = _cleanChapterContent(widget.chapterContent);
+    _splitIntoParagraphs(cleanedContent);
   }
 
   String _cleanChapterContent(String? content) {
@@ -81,41 +65,23 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
 
     final document = htmlParser.parse(content);
 
-    for (final element in document.querySelectorAll('p')) {
-      if (element.text.trim().isEmpty) {
-        element.remove();
-      }
+    const selectorsToRemove = ['p:empty', '.ad-container', '.ads'];
+    for (final selector in selectorsToRemove) {
+      document
+          .querySelectorAll(selector)
+          .forEach((element) => element.remove());
     }
 
-    for (final element in document.querySelectorAll('.ad-container')) {
-      element.remove();
-    }
-    for (final element in document.querySelectorAll('.ads')) {
-      element.remove();
-    }
-
-    for (final element in document.querySelectorAll('*')) {
-      if (element.text.toLowerCase().contains('discord.com')) {
-        element.remove();
-      }
-    }
-
-    for (final element in document.querySelectorAll('*')) {
-      if (element.children.isEmpty && element.text.trim().isEmpty) {
-        element.remove();
-      }
-    }
+    document
+        .querySelectorAll('*')
+        .where((element) => element.text.toLowerCase().contains('discord.com'))
+        .forEach((element) => element.remove());
 
     return document.body?.innerHtml ?? "";
   }
 
-  void _splitIntoParagraphs() {
-    if (_cleanedContent == null || _cleanedContent!.isEmpty) {
-      _paragraphs = [];
-      return;
-    }
-
-    final document = htmlParser.parse(_cleanedContent);
+  void _splitIntoParagraphs(String cleanedContent) {
+    final document = htmlParser.parse(cleanedContent);
     _paragraphs =
         document.querySelectorAll('p').map((e) => e.innerHtml).toList();
   }
@@ -123,27 +89,47 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
   void _scrollToIndex(int index, {bool animate = true}) async {
     if (_paragraphs.isEmpty) return;
 
-    if (index < 0) {
-      index = 0;
-    } else if (index >= _paragraphs.length) {
-      index = _paragraphs.length - 1;
-    }
+    final validIndex = index.clamp(0, _paragraphs.length - 1);
 
     setState(() {
-      _currentFocusedIndex = index;
+      _currentFocusedIndex = validIndex;
     });
 
     _isScrolling = true;
 
     try {
       await _scrollController.scrollTo(
-        index: index,
+        index: validIndex,
         duration: animate ? const Duration(milliseconds: 300) : Duration.zero,
         curve: Curves.easeInOut,
         alignment: 0.0,
       );
     } finally {
       _isScrolling = false;
+    }
+  }
+
+  void _onItemPositionsChanged() {
+    if (_isScrolling) return;
+
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isNotEmpty) {
+      final mostVisibleIndex =
+          positions.reduce((a, b) {
+            if (a.itemLeadingEdge < 0 && b.itemLeadingEdge >= 0) {
+              return b;
+            } else if (b.itemLeadingEdge < 0 && a.itemLeadingEdge >= 0) {
+              return a;
+            } else {
+              return a.itemLeadingEdge.abs() < b.itemLeadingEdge.abs() ? a : b;
+            }
+          }).index;
+
+      if (mostVisibleIndex != _currentFocusedIndex) {
+        setState(() {
+          _currentFocusedIndex = mostVisibleIndex;
+        });
+      }
     }
   }
 
@@ -162,9 +148,7 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
         final paragraph = _paragraphs[index];
 
         return GestureDetector(
-          onTap: () {
-            _scrollToIndex(index);
-          },
+          onTap: () => _scrollToIndex(index),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 40.0),
             child: AnimatedScale(

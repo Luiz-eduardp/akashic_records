@@ -18,15 +18,20 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: readerSettings.backgroundColor,
       foregroundColor: readerSettings.textColor,
-      elevation: 20,
+      elevation: 2,
+      centerTitle: true,
       title: Text(
         title ?? "Carregando...",
-        style: TextStyle(color: readerSettings.textColor),
+        style: TextStyle(
+          color: readerSettings.textColor,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       actions: [
         IconButton(
           icon: Icon(Icons.settings, color: readerSettings.textColor),
           onPressed: onSettingsPressed,
+          tooltip: 'Configurações de Leitura',
         ),
       ],
     );
