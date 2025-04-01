@@ -35,7 +35,6 @@ class ReaderSettings {
   Color backgroundColor;
   Color textColor;
   FontWeight fontWeight;
-  bool bionicReading;
   CustomColors? customColors;
 
   ReaderSettings({
@@ -47,7 +46,6 @@ class ReaderSettings {
     this.backgroundColor = Colors.white,
     this.textColor = Colors.black,
     this.fontWeight = FontWeight.normal,
-    this.bionicReading = false,
     this.customColors,
   });
 
@@ -61,7 +59,6 @@ class ReaderSettings {
       'backgroundColor': backgroundColor.value,
       'textColor': textColor.value,
       'fontWeight': fontWeight.index,
-      'bionicReading': bionicReading,
       'customBackgroundColor': customColors?.backgroundColor?.value,
       'customTextColor': customColors?.textColor?.value,
     };
@@ -77,7 +74,6 @@ class ReaderSettings {
       backgroundColor: Color(map['backgroundColor'] ?? Colors.white.value),
       textColor: Color(map['textColor'] ?? Colors.black.value),
       fontWeight: FontWeight.values[map['fontWeight'] ?? 4],
-      bionicReading: map['bionicReading'] ?? false,
       customColors: CustomColors(
         backgroundColor:
             map['customBackgroundColor'] != null

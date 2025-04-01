@@ -18,6 +18,7 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: readerSettings.backgroundColor,
       foregroundColor: readerSettings.textColor,
+      elevation: 20,
       title: Text(
         title ?? "Carregando...",
         style: TextStyle(color: readerSettings.textColor),

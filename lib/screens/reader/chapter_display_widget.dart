@@ -87,6 +87,7 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
                     lineHeight: LineHeight(widget.readerSettings.lineHeight),
                     textAlign: widget.readerSettings.textAlign,
                     color: widget.readerSettings.textColor,
+                    fontWeight: widget.readerSettings.fontWeight,
                   ),
                   "h1": Style(
                     fontSize: FontSize(widget.readerSettings.fontSize + 6),
@@ -99,6 +100,8 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
                     color: Colors.blue,
                     textDecoration: TextDecoration.underline,
                   ),
+                  "b": Style(fontWeight: FontWeight.bold),
+                  "strong": Style(fontWeight: FontWeight.bold),
                 },
                 onLinkTap: (
                   String? url,

@@ -1,5 +1,3 @@
-// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
@@ -188,7 +186,6 @@ class _AppearanceTabState extends State<AppearanceTab> {
           backgroundColor: backgroundColor,
           textColor: textColor,
           fontWeight: readerSettings.fontWeight,
-          bionicReading: readerSettings.bionicReading,
           customColors: readerSettings.customColors,
         );
 
@@ -264,7 +261,6 @@ class _AppearanceTabState extends State<AppearanceTab> {
               _customBackgroundColor ?? readerSettings.backgroundColor,
           textColor: readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
-          bionicReading: readerSettings.bionicReading,
           customColors: CustomColors(
             backgroundColor: _customBackgroundColor,
             textColor: readerSettings.customColors?.textColor,
@@ -282,7 +278,6 @@ class _AppearanceTabState extends State<AppearanceTab> {
           backgroundColor: readerSettings.backgroundColor,
           textColor: _customTextColor ?? readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
-          bionicReading: readerSettings.bionicReading,
           customColors: CustomColors(
             backgroundColor: readerSettings.customColors?.backgroundColor,
             textColor: _customTextColor,
@@ -330,7 +325,6 @@ class TextTab extends StatelessWidget {
               backgroundColor: readerSettings.backgroundColor,
               textColor: readerSettings.textColor,
               fontWeight: readerSettings.fontWeight,
-              bionicReading: readerSettings.bionicReading,
               customColors: readerSettings.customColors,
             );
             appState.setReaderSettings(newSettings);
@@ -363,7 +357,6 @@ class TextTab extends StatelessWidget {
               backgroundColor: readerSettings.backgroundColor,
               textColor: readerSettings.textColor,
               fontWeight: readerSettings.fontWeight,
-              bionicReading: readerSettings.bionicReading,
               customColors: readerSettings.customColors,
             );
             appState.setReaderSettings(newSettings);
@@ -387,26 +380,6 @@ class TextTab extends StatelessWidget {
             _buildFontWeightButton(FontWeight.bold, context),
           ],
         ),
-        const Text('Leitura Biônica:'),
-        SwitchListTile(
-          title: const Text('Ativar Leitura Biônica'),
-          value: readerSettings.bionicReading,
-          onChanged: (value) {
-            ReaderSettings newSettings = ReaderSettings(
-              theme: readerSettings.theme,
-              fontSize: readerSettings.fontSize,
-              fontFamily: readerSettings.fontFamily,
-              lineHeight: readerSettings.lineHeight,
-              textAlign: readerSettings.textAlign,
-              backgroundColor: readerSettings.backgroundColor,
-              textColor: readerSettings.textColor,
-              fontWeight: readerSettings.fontWeight,
-              bionicReading: value,
-              customColors: readerSettings.customColors,
-            );
-            appState.setReaderSettings(newSettings);
-          },
-        ),
       ],
     );
   }
@@ -428,7 +401,6 @@ class TextTab extends StatelessWidget {
           backgroundColor: readerSettings.backgroundColor,
           textColor: readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
-          bionicReading: readerSettings.bionicReading,
           customColors: readerSettings.customColors,
         );
         appState.setReaderSettings(newSettings);
@@ -472,7 +444,6 @@ class TextTab extends StatelessWidget {
           backgroundColor: readerSettings.backgroundColor,
           textColor: readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
-          bionicReading: readerSettings.bionicReading,
           customColors: readerSettings.customColors,
         );
         appState.setReaderSettings(newSettings);
@@ -499,7 +470,6 @@ class TextTab extends StatelessWidget {
           backgroundColor: readerSettings.backgroundColor,
           textColor: readerSettings.textColor,
           fontWeight: fontWeight,
-          bionicReading: readerSettings.bionicReading,
           customColors: readerSettings.customColors,
         );
         appState.setReaderSettings(newSettings);
