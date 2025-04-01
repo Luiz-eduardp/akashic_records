@@ -11,13 +11,13 @@ class NovelGridWidget extends StatelessWidget {
   final Function(Novel) onNovelTap;
 
   const NovelGridWidget({
-    Key? key,
+    super.key,
     required this.novels,
     required this.isLoading,
     required this.errorMessage,
     required this.scrollController,
     required this.onNovelTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
