@@ -7,8 +7,8 @@ import 'package:akashic_records/screens/details/novel_details_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
-import 'package:akashic_records/widgets/loading_indicator_widget.dart';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
+import 'package:akashic_records/screens/details/loading_details_skeleton_widget.dart';
 
 class NovelDetailsScreen extends StatefulWidget {
   final Novel novel;
@@ -31,13 +31,13 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _initSharedPreferences();
-    _loadDetailedNovel();
+    _init();
   }
 
-  Future<void> _initSharedPreferences() async {
+  Future<void> _init() async {
     _prefs = await SharedPreferences.getInstance();
     await _loadFavoriteStatus();
+    await _loadDetailedNovel();
     _loadLastReadChapter();
   }
 
@@ -49,7 +49,6 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
     setState(() {
       isLoading = true;
       errorMessage = null;
-      _detailedNovel = null;
     });
 
     try {
@@ -82,7 +81,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
       setState(() {
         errorMessage = 'Erro ao carregar detalhes da novel: $e';
       });
-      print(e);
+      debugPrint("Erro ao carregar detalhes da novel: $e");
     } finally {
       setState(() {
         isLoading = false;
@@ -91,24 +90,26 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
   }
 
   Future<void> _loadLastReadChapter() async {
+    if (_detailedNovel == null) return;
+
     final lastReadChapterId = _prefs.getString('lastRead_${widget.novel.id}');
 
-    if (lastReadChapterId != null && _detailedNovel != null) {
+    if (lastReadChapterId != null) {
+      final index = _detailedNovel!.chapters.indexWhere(
+        (chapter) => chapter.id == lastReadChapterId,
+      );
+
       setState(() {
         this.lastReadChapterId = lastReadChapterId;
-        lastReadChapterIndex = _detailedNovel!.chapters.indexWhere(
-          (chapter) => chapter.id == lastReadChapterId,
-        );
-        if (lastReadChapterIndex == -1) {
-          lastReadChapterIndex = null;
-          this.lastReadChapterId = null;
-        }
+        lastReadChapterIndex = index == -1 ? null : index;
       });
     }
   }
 
   Future<void> _loadFavoriteStatus() async {
-    isFavorite = _prefs.getBool(_getFavoriteKey()) ?? false;
+    setState(() {
+      isFavorite = _prefs.getBool(_getFavoriteKey()) ?? false;
+    });
   }
 
   Future<void> _saveFavoriteStatus() async {
@@ -126,11 +127,9 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
     await _prefs.setString('lastRead_${widget.novel.id}', chapterId);
     setState(() {
       lastReadChapterId = chapterId;
-      if (_detailedNovel != null) {
-        lastReadChapterIndex = _detailedNovel!.chapters.indexWhere(
-          (chapter) => chapter.id == chapterId,
-        );
-      }
+      lastReadChapterIndex = _detailedNovel?.chapters.indexWhere(
+        (chapter) => chapter.id == chapterId,
+      );
     });
   }
 
@@ -141,6 +140,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.novel.title),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(
@@ -148,46 +148,54 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
               color: isFavorite ? Colors.red : null,
             ),
             onPressed: _toggleFavorite,
+            tooltip:
+                isFavorite
+                    ? 'Remover dos Favoritos'
+                    : 'Adicionar aos Favoritos',
           ),
         ],
       ),
-      body:
-          isLoading
-              ? const LoadingIndicatorWidget()
-              : errorMessage != null
-              ? ErrorMessageWidget(errorMessage: errorMessage!)
-              : (_detailedNovel == null
-                  ? const Center(child: Text("Detalhes não encontrados"))
-                  : NovelDetailsWidget(
-                    novel: _detailedNovel!,
-                    lastReadChapterId: lastReadChapterId,
-                    lastReadChapterIndex: lastReadChapterIndex,
-                    onContinueReading:
-                        lastReadChapterId != null
-                            ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => ReaderScreen(
-                                        novelId: widget.novel.id,
-                                      ),
-                                ),
-                              );
-                            }
-                            : null,
-                    onChapterTap: (chapterId) {
-                      _saveLastReadChapter(chapterId);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  ReaderScreen(novelId: widget.novel.id),
-                        ),
-                      );
-                    },
-                  )),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _buildBody(),
+      ),
     );
+  }
+
+  Widget _buildBody() {
+    if (isLoading) {
+      return const LoadingDetailsSkeletonWidget();
+    } else if (errorMessage != null) {
+      return Center(child: ErrorMessageWidget(errorMessage: errorMessage!));
+    } else if (_detailedNovel == null) {
+      return const Center(child: Text("Detalhes não encontrados"));
+    } else {
+      return NovelDetailsWidget(
+        novel: _detailedNovel!,
+        lastReadChapterId: lastReadChapterId,
+        lastReadChapterIndex: lastReadChapterIndex,
+        onContinueReading:
+            lastReadChapterId != null
+                ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => ReaderScreen(novelId: widget.novel.id),
+                    ),
+                  );
+                }
+                : null,
+        onChapterTap: (chapterId) {
+          _saveLastReadChapter(chapterId);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ReaderScreen(novelId: widget.novel.id),
+            ),
+          );
+        },
+      );
+    }
   }
 }
