@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:flutter/material.dart';
@@ -46,11 +45,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
       for (final historyKey in historyKeys) {
         final historyString = prefs.getString(historyKey) ?? '[]';
-        List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+        try {
+          List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
 
-        loadedHistory.addAll(
-          history.map((item) => Map<String, dynamic>.from(item)),
-        );
+          loadedHistory.addAll(
+            history.map((item) => Map<String, dynamic>.from(item)),
+          );
+        } catch (e) {
+          debugPrint(
+            "Erro ao decodificar histórico para a chave $historyKey: $e",
+          );
+        }
       }
 
       loadedHistory.sort((a, b) {
@@ -60,13 +65,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
         try {
           dateA = a['lastRead'] != null ? DateTime.parse(a['lastRead']) : null;
         } catch (e) {
-          print("Erro ao fazer o parse da data A: ${a['lastRead']}, erro: $e");
+          debugPrint(
+            "Erro ao fazer o parse da data A: ${a['lastRead']}, erro: $e",
+          );
         }
 
         try {
           dateB = b['lastRead'] != null ? DateTime.parse(b['lastRead']) : null;
         } catch (e) {
-          print("Erro ao fazer o parse da data B: ${b['lastRead']}, erro: $e");
+          debugPrint(
+            "Erro ao fazer o parse da data B: ${b['lastRead']}, erro: $e",
+          );
         }
 
         if (dateA == null && dateB == null) return 0;
@@ -83,7 +92,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         });
       }
     } catch (e) {
-      print("Erro ao carregar histórico: $e");
+      debugPrint("Erro ao carregar histórico: $e");
       if (_mounted) {
         setState(() {
           _isLoading = false;
@@ -105,34 +114,69 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _history.isEmpty
-              ? const Center(child: Text('Seu histórico está vazio.'))
-              : RefreshIndicator(
-                onRefresh: _refreshHistory,
-                child: ListView.builder(
-                  itemCount: _history.length,
-                  itemBuilder: (context, index) {
-                    final item = _history[index];
-                    return HistoryCardWidget(
-                      novelTitle: item['novelTitle'],
-                      chapterTitle: item['chapterTitle'],
-                      pluginId: item['pluginId'] ?? '',
-                      lastRead: DateTime.parse(
-                        item['lastRead'] ?? DateTime.now().toIso8601String(),
-                      ),
-                      onTap:
-                          () => _handleHistoryTap(
-                            item['novelId'],
-                            item['pluginId'],
-                          ),
-                    );
-                  },
-                ),
+    return Scaffold(body: _buildBody());
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_history.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.history,
+              size: 60,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Seu histórico está vazio.',
+              style: TextStyle(
+                fontSize: 18,
+                color: Theme.of(context).colorScheme.outline,
               ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Comece a ler para ver seus livros aqui.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshHistory,
+      color: Theme.of(context).colorScheme.secondary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(8),
+        itemCount: _history.length,
+        separatorBuilder:
+            (context, index) => const Divider(height: 1, color: Colors.grey),
+        itemBuilder: (context, index) {
+          final item = _history[index];
+          return HistoryCardWidget(
+            novelTitle: item['novelTitle'],
+            chapterTitle: item['chapterTitle'],
+            pluginId: item['pluginId'] ?? '',
+            lastRead: DateTime.parse(
+              item['lastRead'] ?? DateTime.now().toIso8601String(),
+            ),
+            onTap: () => _handleHistoryTap(item['novelId'], item['pluginId']),
+          );
+        },
+      ),
     );
   }
 }
