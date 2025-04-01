@@ -15,7 +15,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-
   final PageController _pageController = PageController();
 
   @override
@@ -44,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: 'Akashic Records',
         actions: [
           PopupMenuButton<String>(
+            tooltip: 'Opções',
             onSelected: (value) {
               if (value == 'settings') {
                 Navigator.pushNamed(context, '/settings');
@@ -57,8 +57,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Configurações',
                   Icons.settings,
                   'settings',
+                  tooltip: 'Configurações do aplicativo',
                 ),
-                _buildPopupMenuItem('Plugins', Icons.extension, 'plugins'),
+                _buildPopupMenuItem(
+                  'Plugins',
+                  Icons.extension,
+                  'plugins',
+                  tooltip: 'Gerenciar plugins',
+                ),
               ];
             },
             icon: const Icon(Icons.more_vert),
@@ -100,11 +106,17 @@ class _HomeScreenState extends State<HomeScreen> {
   PopupMenuItem<String> _buildPopupMenuItem(
     String text,
     IconData icon,
-    String value,
-  ) {
+    String value, {
+    String? tooltip,
+  }) {
     return PopupMenuItem<String>(
       value: value,
-      child: Row(children: [Icon(icon), const SizedBox(width: 8), Text(text)]),
+      child: Tooltip(
+        message: tooltip ?? text,
+        child: Row(
+          children: [Icon(icon), const SizedBox(width: 8), Text(text)],
+        ),
+      ),
     );
   }
 }
