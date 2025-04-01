@@ -13,7 +13,8 @@ class NovelGridSkeletonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
     final baseColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
     final highlightColor = isDarkMode ? Colors.grey[600]! : Colors.grey[100]!;
 
@@ -21,8 +22,7 @@ class NovelGridSkeletonWidget extends StatelessWidget {
       builder: (context, constraints) {
         final crossAxisCount = (constraints.maxWidth / 150).floor().clamp(2, 4);
         final itemWidth = constraints.maxWidth / crossAxisCount;
-        final itemHeight =
-            aspectRatio != null ? itemWidth / aspectRatio! : itemWidth * 1.4;
+        final itemHeight = aspectRatio ?? itemWidth * 1.4;
 
         return GridView.builder(
           padding: const EdgeInsets.all(16.0),
@@ -41,27 +41,33 @@ class NovelGridSkeletonWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    height: itemHeight * 0.7,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.0),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8.0),
 
                   Container(
                     width: double.infinity,
-                    height: 16.0,
-                    color: Colors.white,
+                    height: 14.0,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
                   ),
                   const SizedBox(height: 4.0),
 
                   Container(
                     width: itemWidth * 0.6,
                     height: 12.0,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
                   ),
                 ],
               ),
