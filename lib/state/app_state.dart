@@ -40,7 +40,7 @@ class ReaderSettings {
 
   ReaderSettings({
     this.theme = ReaderTheme.light,
-    this.fontSize = 18.0,
+    this.fontSize = 30.0,
     this.fontFamily = 'Roboto',
     this.lineHeight = 1.5,
     this.textAlign = TextAlign.justify,

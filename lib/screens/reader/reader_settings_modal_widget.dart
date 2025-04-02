@@ -316,9 +316,9 @@ class TextTab extends StatelessWidget {
         ),
         Slider(
           value: readerSettings.fontSize,
-          min: 12,
-          max: 30,
-          divisions: 18,
+          min: 35,
+          max: 100,
+          divisions: 50,
           label: readerSettings.fontSize.round().toString(),
           onChanged: (value) {
             final newSettings = ReaderSettings(
