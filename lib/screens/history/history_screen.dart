@@ -101,10 +101,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  void _handleHistoryTap(String novelId, String pluginId) {
+  void _handleHistoryTap(String novelId, String pluginId, String chapterId) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ReaderScreen(novelId: novelId)),
+      MaterialPageRoute(
+        builder:
+            (context) => ReaderScreen(novelId: novelId, chapterId: chapterId),
+      ),
     );
   }
 
@@ -173,7 +176,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
             lastRead: DateTime.parse(
               item['lastRead'] ?? DateTime.now().toIso8601String(),
             ),
-            onTap: () => _handleHistoryTap(item['novelId'], item['pluginId']),
+            onTap:
+                () => _handleHistoryTap(
+                  item['novelId'],
+                  item['pluginId'],
+                  item['chapterId'],
+                ),
           );
         },
       ),
