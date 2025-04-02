@@ -2,6 +2,7 @@ import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
+import 'package:akashic_records/widgets/custom_plugin_tab.dart';
 
 class ReaderSettingsModal extends StatefulWidget {
   const ReaderSettingsModal({super.key});
@@ -17,7 +18,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -51,8 +52,9 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
             tabs: const [
               Tab(text: 'Aparência'),
               Tab(text: 'Texto'),
-              Tab(text: 'Avançado'),
+              Tab(text: 'JS'),
               Tab(text: 'CSS'),
+              Tab(text: 'Plugins'),
             ],
           ),
           SizedBox(
@@ -64,6 +66,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                 TextTab(),
                 AdvancedTab(),
                 CustomCssTab(),
+                CustomPluginTab(),
               ],
             ),
           ),
@@ -142,27 +145,6 @@ class _AppearanceTabState extends State<AppearanceTab> {
             ],
           ),
         ],
-        SwitchListTile(
-          title: const Text('Modo Foco'),
-          value: readerSettings.focusMode,
-          onChanged: (bool value) {
-            final newSettings = ReaderSettings(
-              theme: readerSettings.theme,
-              fontSize: readerSettings.fontSize,
-              fontFamily: readerSettings.fontFamily,
-              lineHeight: readerSettings.lineHeight,
-              textAlign: readerSettings.textAlign,
-              backgroundColor: readerSettings.backgroundColor,
-              textColor: readerSettings.textColor,
-              fontWeight: readerSettings.fontWeight,
-              customColors: readerSettings.customColors,
-              focusMode: value,
-              customJs: readerSettings.customJs,
-              customCss: readerSettings.customCss,
-            );
-            appState.setReaderSettings(newSettings);
-          },
-        ),
       ],
     );
   }
@@ -226,7 +208,6 @@ class _AppearanceTabState extends State<AppearanceTab> {
               theme == ReaderTheme.amoledDark || theme == ReaderTheme.darkGreen
                   ? readerSettings.customColors
                   : null,
-          focusMode: readerSettings.focusMode,
           customJs: readerSettings.customJs,
           customCss: readerSettings.customCss,
         );
@@ -290,7 +271,6 @@ class _AppearanceTabState extends State<AppearanceTab> {
                   textColor: readerSettings.textColor,
                   fontWeight: readerSettings.fontWeight,
                   customColors: updatedCustomColors,
-                  focusMode: readerSettings.focusMode,
                   customJs: readerSettings.customJs,
                   customCss: readerSettings.customCss,
                 );
@@ -347,7 +327,6 @@ class TextTab extends StatelessWidget {
               textColor: readerSettings.textColor,
               fontWeight: readerSettings.fontWeight,
               customColors: readerSettings.customColors,
-              focusMode: readerSettings.focusMode,
               customJs: readerSettings.customJs,
               customCss: readerSettings.customCss,
             );
@@ -382,7 +361,6 @@ class TextTab extends StatelessWidget {
               textColor: readerSettings.textColor,
               fontWeight: readerSettings.fontWeight,
               customColors: readerSettings.customColors,
-              focusMode: readerSettings.focusMode,
               customJs: readerSettings.customJs,
               customCss: readerSettings.customCss,
             );
@@ -432,7 +410,6 @@ class TextTab extends StatelessWidget {
           textColor: readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
           customColors: readerSettings.customColors,
-          focusMode: readerSettings.focusMode,
           customJs: readerSettings.customJs,
           customCss: readerSettings.customCss,
         );
@@ -478,7 +455,6 @@ class TextTab extends StatelessWidget {
           textColor: readerSettings.textColor,
           fontWeight: readerSettings.fontWeight,
           customColors: readerSettings.customColors,
-          focusMode: readerSettings.focusMode,
           customJs: readerSettings.customJs,
           customCss: readerSettings.customCss,
         );
@@ -507,7 +483,6 @@ class TextTab extends StatelessWidget {
           textColor: readerSettings.textColor,
           fontWeight: fontWeight,
           customColors: readerSettings.customColors,
-          focusMode: readerSettings.focusMode,
           customJs: readerSettings.customJs,
           customCss: readerSettings.customCss,
         );
@@ -555,6 +530,11 @@ class _AdvancedTabState extends State<AdvancedTab> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 10),
+          Text(
+            'Classes e tags úteis: .reader-content, p, h1, h2, a, b, strong',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 10),
           TextFormField(
             controller: _customJsController,
             maxLines: 10,
@@ -577,7 +557,6 @@ class _AdvancedTabState extends State<AdvancedTab> {
                 textColor: readerSettings.textColor,
                 fontWeight: readerSettings.fontWeight,
                 customColors: readerSettings.customColors,
-                focusMode: readerSettings.focusMode,
                 customJs: _customJsController.text,
                 customCss: readerSettings.customCss,
               );
@@ -632,6 +611,11 @@ class _CustomCssTabState extends State<CustomCssTab> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 10),
+          Text(
+            'Classes e tags úteis: .reader-content, p, h1, h2, a, b, strong',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 10),
           TextFormField(
             controller: _customCssController,
             maxLines: 10,
@@ -654,7 +638,6 @@ class _CustomCssTabState extends State<CustomCssTab> {
                 textColor: readerSettings.textColor,
                 fontWeight: readerSettings.fontWeight,
                 customColors: readerSettings.customColors,
-                focusMode: readerSettings.focusMode,
                 customJs: readerSettings.customJs,
                 customCss: _customCssController.text,
               );
