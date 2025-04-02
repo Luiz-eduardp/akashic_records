@@ -2,16 +2,19 @@ import 'dart:ui';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
-import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as htmlParser;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
   final ReaderSettings readerSettings;
 
-  const ChapterDisplay({super.key, required this.chapterContent, required this.readerSettings});
+  const ChapterDisplay({
+    super.key,
+    required this.chapterContent,
+    required this.readerSettings,
+  });
 
   @override
   State<ChapterDisplay> createState() => _ChapterDisplayState();
@@ -21,8 +24,32 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     with AutomaticKeepAliveClientMixin {
   List<String> _paragraphs = [];
   final ItemScrollController _scrollController = ItemScrollController();
-  final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
   int _currentFocusedIndex = 0;
+  WebViewController? _webViewController;
+  String _currentHtmlContent = "";
+  late double _webViewHeight;
+
+  static const double _headerMargin = 20.0;
+  static const double _bottomMargin = 20.0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? 0.0;
+    final chapterNavigationHeight = 50.0;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    setState(() {
+      _webViewHeight =
+          screenHeight -
+          appBarHeight -
+          chapterNavigationHeight -
+          _headerMargin -
+          _bottomMargin;
+    });
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -32,6 +59,13 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     super.initState();
     _processContent();
     _itemPositionsListener.itemPositions.addListener(_onItemPositionsChanged);
+
+    _webViewController =
+        WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..enableZoom(false)
+          ..setBackgroundColor(Colors.transparent);
+    _updateWebViewContent();
   }
 
   @override
@@ -40,6 +74,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     if (oldWidget.chapterContent != widget.chapterContent ||
         oldWidget.readerSettings != widget.readerSettings) {
       _processContent();
+      _updateWebViewContent();
     }
   }
 
@@ -59,7 +94,9 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
   @override
   void dispose() {
-    _itemPositionsListener.itemPositions.removeListener(_onItemPositionsChanged);
+    _itemPositionsListener.itemPositions.removeListener(
+      _onItemPositionsChanged,
+    );
     super.dispose();
   }
 
@@ -77,7 +114,9 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
     const selectorsToRemove = ['p:empty', '.ad-container', '.ads'];
     for (final selector in selectorsToRemove) {
-      document.querySelectorAll(selector).forEach((element) => element.remove());
+      document
+          .querySelectorAll(selector)
+          .forEach((element) => element.remove());
     }
 
     document
@@ -98,15 +137,18 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
   void _splitIntoParagraphs(String cleanedContent) {
     final document = htmlParser.parse(cleanedContent);
-    _paragraphs = document.querySelectorAll('p').map((e) => e.innerHtml).toList();
+    _paragraphs =
+        document.querySelectorAll('p').map((e) => e.innerHtml).toList();
   }
 
-
   void _updateFocusedIndex(int delta) {
-      final newIndex = (_currentFocusedIndex + delta).clamp(0, _paragraphs.length - 1);
-      setState(() {
-        _currentFocusedIndex = newIndex;
-      });
+    final newIndex = (_currentFocusedIndex + delta).clamp(
+      0,
+      _paragraphs.length - 1,
+    );
+    setState(() {
+      _currentFocusedIndex = newIndex;
+    });
     if (newIndex > _currentFocusedIndex) {
       _scrollToIndex(newIndex);
     } else {
@@ -119,7 +161,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
     final validIndex = index.clamp(0, _paragraphs.length - 1);
 
-
     try {
       await _scrollController.scrollTo(
         index: validIndex,
@@ -127,7 +168,81 @@ class _ChapterDisplayState extends State<ChapterDisplay>
         curve: Curves.easeInOut,
         alignment: 0.0,
       );
-    } finally {
+    } finally {}
+  }
+
+  String _buildHtmlContent(ReaderSettings readerSettings, bool isFocused) {
+    final opacity = readerSettings.focusMode && !isFocused ? 0.4 : 1.0;
+    final fontWeight =
+        isFocused
+            ? '600'
+            : (readerSettings.fontWeight == FontWeight.bold
+                ? 'bold'
+                : 'normal');
+
+    return '''
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body {
+            margin: 40px;
+            padding: 0;
+            font-size: ${readerSettings.fontSize}px;
+            font-family: ${readerSettings.fontFamily};
+            line-height: ${readerSettings.lineHeight};
+            text-align: ${readerSettings.textAlign.toString().split('.').last};
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            font-weight: $fontWeight;
+            opacity: $opacity;
+            /* Adicionando padding para simular margem */
+            padding-top: ${_headerMargin}px;
+            padding-bottom: ${_bottomMargin}px;
+          }
+          h1 {
+            font-size: ${readerSettings.fontSize + 6}px;
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            opacity: $opacity;
+          }
+          h2 {
+            font-size: ${readerSettings.fontSize + 4}px;
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            opacity: $opacity;
+          }
+          p {
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            opacity: $opacity;
+          }
+          a {
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            text-decoration: underline;
+            opacity: $opacity;
+          }
+          b, strong {
+            font-weight: bold;
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            opacity: $opacity;
+          }
+        </style>
+      </head>
+      <body>
+        ${_paragraphs.join("<br><br>")}
+      </body>
+      </html>
+    ''';
+  }
+
+  Future<void> _updateWebViewContent() async {
+    if (_webViewController == null) return;
+
+    final readerSettings = widget.readerSettings;
+    final isFocused = false;
+
+    final newHtmlContent = _buildHtmlContent(readerSettings, isFocused);
+
+    if (newHtmlContent != _currentHtmlContent) {
+      await _webViewController!.loadHtmlString(newHtmlContent);
+      _currentHtmlContent = newHtmlContent;
     }
   }
 
@@ -148,92 +263,27 @@ class _ChapterDisplayState extends State<ChapterDisplay>
         axis: Axis.vertical,
         dragAnchorStrategy: pointerDragAnchorStrategy,
         feedback: SizedBox.shrink(),
-        child: ScrollablePositionedList.builder(
-          itemCount: _paragraphs.length,
-          itemScrollController: _scrollController,
-          itemPositionsListener: _itemPositionsListener,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
-          initialScrollIndex: _currentFocusedIndex,
-          itemBuilder: (context, index) {
-            final isFocused = readerSettings.focusMode && index == _currentFocusedIndex;
-            final paragraph = _paragraphs[index];
-
-            return Container(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (readerSettings.focusMode && !isFocused)
-                    Positioned.fill(
-                      child: ClipRect(
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            color: readerSettings.backgroundColor.withOpacity(0.7),
-                          ),
-                        ),
-                      ),
-                    ),
-                  Html(
-                    data: paragraph,
-                    style: {
-                      "body": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontSize: FontSize(readerSettings.fontSize),
-                        fontFamily: readerSettings.fontFamily,
-                        lineHeight: LineHeight(readerSettings.lineHeight),
-                        textAlign: readerSettings.textAlign,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                        fontWeight: isFocused ? FontWeight.w600 : readerSettings.fontWeight,
-                      ),
-                      "h1": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontSize: FontSize(readerSettings.fontSize + 6),
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "h2": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontSize: FontSize(readerSettings.fontSize + 4),
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "p": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "a": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        textDecoration: TextDecoration.underline,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "b": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontWeight: FontWeight.bold,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "strong": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontWeight: FontWeight.bold,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                    },
-                    onLinkTap: (String? url, Map<String, String> attributes, dom.Element? element) {
-                      if (url != null) {
-                        debugPrint("Abrindo URL: $url");
-                      }
-                    },
+        child: Column(
+          children: [
+            if (readerSettings.focusMode)
+              ClipRect(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    color: readerSettings.backgroundColor.withOpacity(0.7),
+                    height: _webViewHeight,
+                    width: double.infinity,
                   ),
-                ],
+                ),
               ),
-            );
-          },
+
+            Expanded(
+              child: SizedBox(
+                width: double.infinity,
+                child: WebViewWidget(controller: _webViewController!),
+              ),
+            ),
+          ],
         ),
         onDragUpdate: (details) {
           final scrollDelta = details.delta.dy;
@@ -241,5 +291,9 @@ class _ChapterDisplayState extends State<ChapterDisplay>
         },
       ),
     );
+  }
+
+  String _colorToHtmlColor(Color color) {
+    return '#${color.value.toRadixString(16).substring(2)}';
   }
 }

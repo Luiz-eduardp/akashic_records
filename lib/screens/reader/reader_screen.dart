@@ -49,7 +49,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
         _loadNovel();
       }
     });
-    _startUiHideTimer();
   }
 
   Future<void> _loadNovelAndChapter(String chapterId) async {
