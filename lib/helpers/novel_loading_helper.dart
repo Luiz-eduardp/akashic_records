@@ -3,7 +3,7 @@ import 'package:akashic_records/models/model.dart';
 
 Future<Novel?> loadNovelWithTimeout(
   Future<Novel?> Function() loadFunction, {
-  Duration timeoutDuration = const Duration(seconds: 15),
+  Duration timeoutDuration = const Duration(seconds: 50),
 }) async {
   try {
     return await loadFunction().timeout(timeoutDuration);
