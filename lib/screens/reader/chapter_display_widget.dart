@@ -1,8 +1,8 @@
-import 'dart:ui';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as htmlParser;
+import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -29,7 +29,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   int _currentFocusedIndex = 0;
   WebViewController? _webViewController;
   String _currentHtmlContent = "";
-  late double _webViewHeight;
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
@@ -37,18 +36,8 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final appBarHeight = Scaffold.of(context).appBarMaxHeight ?? 0.0;
-    final chapterNavigationHeight = 50.0;
-    final screenHeight = MediaQuery.of(context).size.height;
 
-    setState(() {
-      _webViewHeight =
-          screenHeight -
-          appBarHeight -
-          chapterNavigationHeight -
-          _headerMargin -
-          _bottomMargin;
-    });
+    setState(() {});
   }
 
   @override
@@ -104,10 +93,20 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             });
           ''');
           _injectCustomJavaScript(widget.readerSettings.customJs);
+
+          final appState = Provider.of<AppState>(context, listen: false);
+          List<CustomPlugin> enabledPlugins =
+              appState.customPlugins.where((plugin) => plugin.enabled).toList();
+
+          enabledPlugins.sort((a, b) => a.priority.compareTo(b.priority));
+
+          for (final plugin in enabledPlugins) {
+            _injectCustomJavaScript(plugin.code);
+          }
         },
       ),
     );
-    await _updateWebViewContent();
+    await updateWebViewContent();
   }
 
   Future<void> _injectCustomJavaScript(String? customJs) async {
@@ -126,7 +125,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     if (oldWidget.chapterContent != widget.chapterContent ||
         oldWidget.readerSettings != widget.readerSettings) {
       _processContent();
-      _updateWebViewContent();
+      updateWebViewContent();
     }
   }
 
@@ -223,14 +222,9 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     } finally {}
   }
 
-  String _buildHtmlContent(ReaderSettings readerSettings, bool isFocused) {
-    final opacity = readerSettings.focusMode && !isFocused ? 0.4 : 1.0;
+  String _buildHtmlContent(ReaderSettings readerSettings) {
     final fontWeight =
-        isFocused
-            ? '600'
-            : (readerSettings.fontWeight == FontWeight.bold
-                ? 'bold'
-                : 'normal');
+        (readerSettings.fontWeight == FontWeight.bold ? 'bold' : 'normal');
 
     return '''
       <!DOCTYPE html>
@@ -249,7 +243,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             color: ${_colorToHtmlColor(readerSettings.textColor)};
             background-color: ${_colorToHtmlColor(readerSettings.backgroundColor)};
             font-weight: $fontWeight;
-            opacity: $opacity;
             padding-top: ${_headerMargin}px;
             padding-bottom: ${_bottomMargin}px;
             word-wrap: break-word; 
@@ -257,46 +250,40 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           h1 {
             font-size: ${readerSettings.fontSize + 6}px;
             color: ${_colorToHtmlColor(readerSettings.textColor)};
-            opacity: $opacity;
           }
           h2 {
             font-size: ${readerSettings.fontSize + 4}px;
             color: ${_colorToHtmlColor(readerSettings.textColor)};
-            opacity: $opacity;
           }
           p {
             color: ${_colorToHtmlColor(readerSettings.textColor)};
-            opacity: $opacity;
             margin-bottom: 1em; 
           }
           a {
             color: ${_colorToHtmlColor(readerSettings.textColor)};
-            text-decoration: underline;
-            opacity: $opacity;
-          }
+            text-decoration: underline;          }
           b, strong {
             font-weight: bold;
             color: ${_colorToHtmlColor(readerSettings.textColor)};
-            opacity: $opacity;
           }
           ${readerSettings.customCss ?? ''}
         </style>
       </head>
       <body>
-        ${_paragraphs.join("<br><br>")}
-
+        <div class="reader-content">
+            ${_paragraphs.join("<br><br>")}
+        </div>
       </body>
       </html>
     ''';
   }
 
-  Future<void> _updateWebViewContent() async {
+  Future<void> updateWebViewContent() async {
     if (_webViewController == null) return;
 
     final readerSettings = widget.readerSettings;
-    final isFocused = false;
 
-    final newHtmlContent = _buildHtmlContent(readerSettings, isFocused);
+    final newHtmlContent = _buildHtmlContent(readerSettings);
 
     if (newHtmlContent != _currentHtmlContent) {
       await _webViewController!.loadHtmlString(newHtmlContent);
@@ -307,7 +294,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final readerSettings = widget.readerSettings;
 
     return Listener(
       onPointerSignal: (pointerSignal) {
@@ -323,18 +309,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
         feedback: SizedBox.shrink(),
         child: Column(
           children: [
-            if (readerSettings.focusMode)
-              ClipRect(
-                child: ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    color: readerSettings.backgroundColor.withOpacity(0.7),
-                    height: _webViewHeight,
-                    width: double.infinity,
-                  ),
-                ),
-              ),
-
             Expanded(
               child: SizedBox(
                 width: double.infinity,
@@ -343,10 +317,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             ),
           ],
         ),
-        onDragUpdate: (details) {
-          final scrollDelta = details.delta.dy;
-          _updateFocusedIndex(scrollDelta > 0 ? -1 : 1);
-        },
+        onDragUpdate: (details) {},
       ),
     );
   }
