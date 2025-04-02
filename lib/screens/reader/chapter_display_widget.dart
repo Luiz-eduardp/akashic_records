@@ -33,6 +33,10 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
 
+  final RefreshController _refreshController = RefreshController(
+    initialRefresh: false,
+  );
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -148,6 +152,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     _itemPositionsListener.itemPositions.removeListener(
       _onItemPositionsChanged,
     );
+    _refreshController.dispose();
     super.dispose();
   }
 
@@ -294,6 +299,13 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     }
   }
 
+  Future<void> _onRefresh() async {
+    _processContent();
+    await updateWebViewContent();
+
+    _refreshController.refreshCompleted();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -305,22 +317,25 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           _updateFocusedIndex(scrollDelta > 0 ? 1 : -1);
         }
       },
-      child: LongPressDraggable(
-        hapticFeedbackOnStart: false,
-        axis: Axis.vertical,
-        dragAnchorStrategy: pointerDragAnchorStrategy,
-        feedback: SizedBox.shrink(),
-        child: Column(
-          children: [
-            Expanded(
-              child: SizedBox(
-                width: double.infinity,
-                child: WebViewWidget(controller: _webViewController!),
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: LongPressDraggable(
+          hapticFeedbackOnStart: false,
+          axis: Axis.vertical,
+          dragAnchorStrategy: pointerDragAnchorStrategy,
+          feedback: SizedBox.shrink(),
+          child: Column(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: WebViewWidget(controller: _webViewController!),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          onDragUpdate: (details) {},
         ),
-        onDragUpdate: (details) {},
       ),
     );
   }
@@ -328,4 +343,12 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   String _colorToHtmlColor(Color color) {
     return '#${color.value.toRadixString(16).substring(2)}';
   }
+}
+
+class RefreshController {
+  RefreshController({required bool initialRefresh});
+
+  void refreshCompleted() {}
+
+  void dispose() {}
 }
