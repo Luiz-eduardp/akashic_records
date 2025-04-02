@@ -32,6 +32,7 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                   plugins[i] = CustomPlugin(
                     name: plugins[i].name,
                     code: plugins[i].code,
+                    use: plugins[i].use,
                     enabled: plugins[i].enabled,
                     priority: i,
                   );
@@ -60,6 +61,7 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                             plugins[index] = CustomPlugin(
                               name: plugin.name,
                               code: plugin.code,
+                              use: plugin.use,
                               enabled: value,
                               priority: plugin.priority,
                             );
@@ -102,6 +104,7 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
   void _showAddDialog(BuildContext context) {
     String name = '';
     String code = '';
+    String use = '';
 
     showDialog(
       context: context,
@@ -116,6 +119,12 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                   decoration: const InputDecoration(labelText: 'Nome'),
                   onChanged: (value) {
                     name = value;
+                  },
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Forma de uso'),
+                  onChanged: (value) {
+                    use = value;
                   },
                 ),
                 TextFormField(
@@ -146,7 +155,7 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                     listen: false,
                   );
                   appState.addCustomPlugin(
-                    CustomPlugin(name: name, code: code),
+                    CustomPlugin(name: name, code: code, use: use),
                   );
                   Navigator.of(context).pop();
                 }
@@ -161,6 +170,7 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
   void _showEditDialog(BuildContext context, int index, CustomPlugin plugin) {
     String name = plugin.name;
     String code = plugin.code;
+    String use = plugin.use;
 
     showDialog(
       context: context,
@@ -176,6 +186,13 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                   initialValue: plugin.name,
                   onChanged: (value) {
                     name = value;
+                  },
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Forma de uso'),
+                  initialValue: plugin.use,
+                  onChanged: (value) {
+                    use = value;
                   },
                 ),
                 TextFormField(
@@ -211,6 +228,7 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                     CustomPlugin(
                       name: name,
                       code: code,
+                      use: use,
                       enabled: plugin.enabled,
                       priority: plugin.priority,
                     ),
