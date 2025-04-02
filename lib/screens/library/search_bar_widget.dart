@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class SearchBarWidget extends StatefulWidget {
   final Function(String) onSearch;
-  final VoidCallback onFilterPressed;
+  final VoidCallback? onFilterPressed;
 
   const SearchBarWidget({
     super.key,
     required this.onSearch,
-    required this.onFilterPressed,
+    this.onFilterPressed,
   });
 
   @override
@@ -16,9 +16,29 @@ class SearchBarWidget extends StatefulWidget {
 
 class _SearchBarWidgetState extends State<SearchBarWidget> {
   final TextEditingController _controller = TextEditingController();
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_updateClearButtonVisibility);
+  }
+
+  void _updateClearButtonVisibility() {
+    if (_controller.text.isEmpty && _hasText) {
+      setState(() {
+        _hasText = false;
+      });
+    } else if (_controller.text.isNotEmpty && !_hasText) {
+      setState(() {
+        _hasText = true;
+      });
+    }
+  }
 
   @override
   void dispose() {
+    _controller.removeListener(_updateClearButtonVisibility);
     _controller.dispose();
     super.dispose();
   }
@@ -28,15 +48,10 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     final ThemeData theme = Theme.of(context);
     final bool isDarkMode = theme.brightness == Brightness.dark;
 
-    final Color darkFillColor = Colors.grey[800]!;
-    final Color darkTextColor = Colors.white;
-    final Color darkIconColor = Colors.white70;
-    final Color darkBorderColor = Colors.grey[700]!;
-
-    final Color lightFillColor = Colors.grey[200]!;
-    final Color lightTextColor = Colors.black;
-    final Color lightIconColor = Colors.grey[600]!;
-    final Color lightBorderColor = Colors.grey[300]!;
+    final Color fillColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
+    final Color textColor = isDarkMode ? Colors.white : Colors.black;
+    final Color iconColor = isDarkMode ? Colors.white70 : Colors.grey[600]!;
+    final Color borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -45,23 +60,14 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
           Expanded(
             child: TextField(
               controller: _controller,
-              style: TextStyle(
-                color: isDarkMode ? darkTextColor : lightTextColor,
-              ),
+              style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 hintText: 'Buscar novels...',
-                hintStyle: TextStyle(
-                  color: isDarkMode ? darkIconColor : lightIconColor,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: isDarkMode ? darkIconColor : lightIconColor,
-                ),
+                hintStyle: TextStyle(color: iconColor),
+                prefixIcon: Icon(Icons.search, color: iconColor),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
-                  borderSide: BorderSide(
-                    color: isDarkMode ? darkBorderColor : lightBorderColor,
-                  ),
+                  borderSide: BorderSide(color: borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
@@ -69,22 +75,22 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
-                  borderSide: BorderSide(
-                    color: isDarkMode ? darkBorderColor : lightBorderColor,
-                  ),
+                  borderSide: BorderSide(color: borderColor),
                 ),
                 filled: true,
-                fillColor: isDarkMode ? darkFillColor : lightFillColor,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: isDarkMode ? darkIconColor : lightIconColor,
-                  ),
-                  onPressed: () {
-                    _controller.clear();
-                    widget.onSearch("");
-                  },
-                ),
+                fillColor: fillColor,
+                suffixIcon: _hasText
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: iconColor),
+                        onPressed: () {
+                          _controller.clear();
+                          widget.onSearch("");
+                          setState(() {
+                            _hasText = false;
+                          });
+                        },
+                      )
+                    : null,
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 15.0,
                   horizontal: 20.0,
@@ -93,19 +99,11 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               onSubmitted: (value) {
                 widget.onSearch(value);
               },
-            ),
-          ),
-          const SizedBox(width: 8.0),
-          Material(
-            color: isDarkMode ? darkFillColor : lightFillColor,
-            borderRadius: BorderRadius.circular(25.0),
-            child: IconButton(
-              icon: Icon(
-                Icons.filter_list,
-                color: isDarkMode ? darkIconColor : lightIconColor,
-              ),
-              onPressed: widget.onFilterPressed,
-              splashRadius: 24.0,
+              onChanged: (value) {
+                setState(() {
+                  _hasText = value.isNotEmpty;
+                });
+              },
             ),
           ),
         ],
