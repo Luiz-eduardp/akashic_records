@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
+import 'package:akashic_records/screens/reader/settings/reader_settings_modal_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:shared_preferences/shared_preferences.dart';

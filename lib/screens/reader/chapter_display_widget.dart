@@ -232,12 +232,15 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=${readerSettings.fontFamily}:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
         <style>
           body {
             margin: 40px 20px 20px 20px;
             padding: 0;
             font-size: ${readerSettings.fontSize}px;
-            font-family: ${readerSettings.fontFamily};
+            font-family: ${readerSettings.fontFamily}!important;
             line-height: ${readerSettings.lineHeight};
             text-align: ${readerSettings.textAlign.toString().split('.').last};
             color: ${_colorToHtmlColor(readerSettings.textColor)};
