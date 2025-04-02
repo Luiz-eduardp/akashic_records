@@ -1,5 +1,5 @@
+import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
-import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
 
 class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -18,14 +18,20 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: readerSettings.backgroundColor,
       foregroundColor: readerSettings.textColor,
+      elevation: 2,
+      centerTitle: true,
       title: Text(
         title ?? "Carregando...",
-        style: TextStyle(color: readerSettings.textColor),
+        style: TextStyle(
+          color: readerSettings.textColor,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       actions: [
         IconButton(
           icon: Icon(Icons.settings, color: readerSettings.textColor),
           onPressed: onSettingsPressed,
+          tooltip: 'Configurações de Leitura',
         ),
       ],
     );

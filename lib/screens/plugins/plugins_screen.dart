@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PluginsScreen extends StatefulWidget {
   const PluginsScreen({super.key});
@@ -10,121 +11,141 @@ class PluginsScreen extends StatefulWidget {
 }
 
 class _PluginsScreenState extends State<PluginsScreen> {
-  List<String> availablePluginsPtBr = [
+  final List<String> availablePluginsPtBr = [
     'NovelMania',
     'Tsundoku',
     'CentralNovel',
     'MtlNovelPt',
   ];
 
-  List<String> availablePluginsEn = ['NovelsOnline'];
+  final List<String> availablePluginsEn = ['NovelsOnline'];
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final appState = Provider.of<AppState>(context, listen: true);
+    Theme.of(context);
+    final appState = Provider.of<AppState>(context);
     final selectedPlugins = appState.selectedPlugins;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Plugins')),
+      appBar: AppBar(title: const Text('Plugins'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'pt-br:',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildPluginList(
+            _buildPluginSection(
+              context,
+              'Português (Brasil)',
               availablePluginsPtBr,
               selectedPlugins,
               appState,
-              isDarkMode,
+            ),
+            const SizedBox(height: 24),
+            _buildPluginSection(
               context,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'english:',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildPluginList(
+              'Inglês',
               availablePluginsEn,
               selectedPlugins,
               appState,
-              isDarkMode,
-              context,
             ),
+            const SizedBox(height: 24),
+            _buildRequestPluginSection(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPluginList(
+  Widget _buildPluginSection(
+    BuildContext context,
+    String title,
     List<String> plugins,
     Set<String> selectedPlugins,
     AppState appState,
-    bool isDarkMode,
-    BuildContext context,
   ) {
-    return Expanded(
-      child: ListView.builder(
-        itemCount: plugins.length,
-        itemBuilder: (context, index) {
-          final plugin = plugins[index];
-          return Card(
-            elevation: 4.0,
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            color: isDarkMode ? const Color(0xFF424242) : Colors.white,
-            child: ListTile(
-              title: Row(
-                children: [
-                  Checkbox(
-                    value: selectedPlugins.contains(plugin),
-                    onChanged: (bool? newValue) {
-                      if (newValue != null) {
-                        final updatedPlugins = Set<String>.from(
-                          selectedPlugins,
-                        );
-                        if (newValue) {
-                          updatedPlugins.add(plugin);
-                        } else {
-                          updatedPlugins.remove(plugin);
-                        }
-                        appState.setSelectedPlugins(updatedPlugins);
-                        print(
-                          "Plugins Selecionados: ${appState.selectedPlugins}",
-                        );
-                      }
-                    },
-                    activeColor: Theme.of(context).colorScheme.primary,
-                  ),
-                  Expanded(
-                    child: Text(
-                      plugin,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: plugins.length,
+          itemBuilder: (context, index) {
+            final plugin = plugins[index];
+            return Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 4.0),
+              child: CheckboxListTile(
+                title: Text(plugin),
+                value: selectedPlugins.contains(plugin),
+                onChanged: (bool? newValue) {
+                  if (newValue != null) {
+                    final updatedPlugins = Set<String>.from(selectedPlugins);
+                    if (newValue) {
+                      updatedPlugins.add(plugin);
+                    } else {
+                      updatedPlugins.remove(plugin);
+                    }
+                    appState.setSelectedPlugins(updatedPlugins);
+                  }
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: theme.colorScheme.secondary,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        ),
+      ],
     );
+  }
+
+  Widget _buildRequestPluginSection(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Não encontrou o que procurava?',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap:
+              () => _launchURL(
+                'https://github.com/AkashicRecordsApp/akashic_records/issues/new/choose',
+              ),
+          child: Text(
+            'Peça para adicionarmos um novo plugin!',
+            style: TextStyle(
+              color: theme.colorScheme.primary,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Clique no link acima para abrir uma solicitação no GitHub.',
+          style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch $url';
+    }
   }
 }

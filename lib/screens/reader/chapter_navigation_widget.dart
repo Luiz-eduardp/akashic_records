@@ -1,5 +1,5 @@
+import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
-import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
 
 class ChapterNavigation extends StatelessWidget {
   final VoidCallback onPreviousChapter;
@@ -22,21 +22,39 @@ class ChapterNavigation extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          ElevatedButton(
+          TextButton(
             onPressed: isLoading ? null : onPreviousChapter,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: readerSettings.backgroundColor,
-              foregroundColor: readerSettings.textColor,
+            style: TextButton.styleFrom(
+              foregroundColor: readerSettings.textColor.withOpacity(
+                isLoading ? 0.5 : 1.0,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              textStyle: const TextStyle(fontSize: 16),
             ),
-            child: const Text('Anterior'),
+            child: Row(
+              children: const [
+                Icon(Icons.arrow_back_ios, size: 16),
+                SizedBox(width: 8),
+                Text('Anterior'),
+              ],
+            ),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: isLoading ? null : onNextChapter,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: readerSettings.backgroundColor,
-              foregroundColor: readerSettings.textColor,
+            style: TextButton.styleFrom(
+              foregroundColor: readerSettings.textColor.withOpacity(
+                isLoading ? 0.5 : 1.0,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              textStyle: const TextStyle(fontSize: 16),
             ),
-            child: const Text('Próximo'),
+            child: Row(
+              children: const [
+                Text('Próximo'),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward_ios, size: 16),
+              ],
+            ),
           ),
         ],
       ),

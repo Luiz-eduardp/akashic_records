@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/library/novel_filter_sort_widget.dart';
+import 'dart:async';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -25,6 +26,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Map<String, dynamic> _filters = {};
   List<Novel> allNovels = [];
   Set<String> _previousPlugins = {};
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -67,12 +69,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void dispose() {
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
   void _scrollListener() {
-    if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        hasMore &&
+        !isLoading) {
       _loadMoreNovels();
     }
   }
@@ -80,12 +85,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _loadNovels({bool search = false}) async {
     if (isLoading) return;
 
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
-    }
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
 
     try {
       List<Novel> newNovels = [];
@@ -105,45 +108,34 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
+      final Set<String> seenNovelIds = {};
       for (final novel in newNovels) {
-        if (!allNovels.any(
-          (existingNovel) =>
-              existingNovel.id == novel.id &&
-              existingNovel.pluginId == novel.pluginId,
-        )) {
+        final novelId = "${novel.id}-${novel.pluginId}";
+        if (!seenNovelIds.contains(novelId)) {
           allNovels.add(novel);
+          seenNovelIds.add(novelId);
         }
       }
 
-      if (mounted) {
-        setState(() {
-          if (search) {
-            novels =
-                allNovels
-                    .where(
-                      (novel) => novel.title.toLowerCase().contains(
-                        _searchTerm.toLowerCase(),
-                      ),
-                    )
-                    .toList();
-          } else {
-            novels = allNovels;
-          }
+      List<Novel> filteredNovels = allNovels;
+      if (search && _searchTerm.isNotEmpty) {
+        filteredNovels = allNovels
+            .where((novel) =>
+                novel.title.toLowerCase().contains(_searchTerm.toLowerCase()))
+            .toList();
+      }
 
-          if (search && novels.isEmpty) {
-            hasMore = false;
-          }
-          isLoading = false;
-        });
-      }
+      setState(() {
+        novels = filteredNovels;
+        hasMore = newNovels.isNotEmpty;
+        isLoading = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          errorMessage = 'Erro ao carregar novels: $e';
-          hasMore = false;
-          isLoading = false;
-        });
-      }
+      setState(() {
+        errorMessage = 'Erro ao carregar novels: $e';
+        hasMore = false;
+        isLoading = false;
+      });
     }
   }
 
@@ -154,36 +146,31 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _refreshNovels() async {
-    if (mounted) {
-      setState(() {
-        allNovels.clear();
-        novels.clear();
-        currentPage = 1;
-        hasMore = true;
-      });
-    }
+    setState(() {
+      allNovels.clear();
+      novels.clear();
+      currentPage = 1;
+      hasMore = true;
+      isLoading = false;
+    });
     await _loadNovels(search: _searchTerm.isNotEmpty);
   }
 
   Future<void> _onFilterChanged(Map<String, dynamic> newFilters) async {
-    if (mounted) {
-      setState(() {
-        _filters = newFilters;
-        novels.clear();
-        allNovels.clear();
-        currentPage = 1;
-        hasMore = true;
-      });
-    }
+    setState(() {
+      _filters = newFilters;
+      novels.clear();
+      allNovels.clear();
+      currentPage = 1;
+      hasMore = true;
+    });
     await _loadNovels();
   }
 
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => NovelDetailsScreen(novelId: novel.id),
-      ),
+      MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
     );
   }
 
@@ -191,13 +178,36 @@ class _LibraryScreenState extends State<LibraryScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
-        return NovelFilterSortWidget(
-          filters: _filters,
-          onFilterChanged: _onFilterChanged,
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: NovelFilterSortWidget(
+            filters: _filters,
+            onFilterChanged: _onFilterChanged,
+          ),
         );
       },
     );
+  }
+
+  void _onSearchChanged(String term) {
+    _searchTerm = term;
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        currentPage = 1;
+        novels.clear();
+        hasMore = true;
+        allNovels.clear();
+      });
+      _loadNovels(search: true);
+    });
   }
 
   @override
@@ -205,20 +215,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Scaffold(
       body: Column(
         children: [
-          SearchBarWidget(
-            onSearch: (term) {
-              if (mounted) {
-                setState(() {
-                  _searchTerm = term;
-                });
-              }
-              _loadNovels(search: true);
-            },
-            onFilterPressed: () => _showFilterModal(context),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SearchBarWidget(
+              onSearch: _onSearchChanged,
+              onFilterPressed: () => _showFilterModal(context),
+            ),
           ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refreshNovels,
+              color: Theme.of(context).colorScheme.secondary,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               child: NovelGridWidget(
                 novels: novels,
                 isLoading: isLoading,
@@ -228,6 +236,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
           ),
+          if (isLoading && novels.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          if (errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(errorMessage!, style: TextStyle(color: Colors.red)),
+            ),
         ],
       ),
     );

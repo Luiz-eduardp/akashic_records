@@ -15,22 +15,22 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-
-  late final List<Widget> _widgetOptions;
+  final PageController _pageController = PageController();
 
   @override
-  void initState() {
-    super.initState();
-    _widgetOptions = <Widget>[
-      LibraryScreen(),
-      FavoritesScreen(),
-      HistoryScreen(),
-    ];
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: 'Akashic Records',
         actions: [
           PopupMenuButton<String>(
+            tooltip: 'Opções',
             onSelected: (value) {
               if (value == 'settings') {
                 Navigator.pushNamed(context, '/settings');
@@ -52,25 +53,17 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             itemBuilder: (BuildContext context) {
               return [
-                const PopupMenuItem<String>(
-                  value: 'settings',
-                  child: Row(
-                    children: [
-                      Icon(Icons.settings),
-                      SizedBox(width: 8),
-                      Text('Configurações'),
-                    ],
-                  ),
+                _buildPopupMenuItem(
+                  'Configurações',
+                  Icons.settings,
+                  'settings',
+                  tooltip: 'Configurações do aplicativo',
                 ),
-                const PopupMenuItem<String>(
-                  value: 'plugins',
-                  child: Row(
-                    children: [
-                      Icon(Icons.extension),
-                      SizedBox(width: 8),
-                      Text('Plugins'),
-                    ],
-                  ),
+                _buildPopupMenuItem(
+                  'Plugins',
+                  Icons.extension,
+                  'plugins',
+                  tooltip: 'Gerenciar plugins',
                 ),
               ];
             },
@@ -78,7 +71,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: const [LibraryScreen(), FavoritesScreen(), HistoryScreen()],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -97,6 +98,24 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).colorScheme.primary,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupMenuItem(
+    String text,
+    IconData icon,
+    String value, {
+    String? tooltip,
+  }) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Tooltip(
+        message: tooltip ?? text,
+        child: Row(
+          children: [Icon(icon), const SizedBox(width: 8), Text(text)],
+        ),
       ),
     );
   }
