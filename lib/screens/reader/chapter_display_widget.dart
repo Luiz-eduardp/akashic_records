@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
@@ -10,22 +11,18 @@ class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
   final ReaderSettings readerSettings;
 
-  const ChapterDisplay({
-    super.key,
-    required this.chapterContent,
-    required this.readerSettings,
-  });
+  const ChapterDisplay({super.key, required this.chapterContent, required this.readerSettings});
 
   @override
   State<ChapterDisplay> createState() => _ChapterDisplayState();
 }
 
-class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAliveClientMixin {
+class _ChapterDisplayState extends State<ChapterDisplay>
+    with AutomaticKeepAliveClientMixin {
   List<String> _paragraphs = [];
   final ItemScrollController _scrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
   int _currentFocusedIndex = 0;
-  bool _isScrolling = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -43,7 +40,20 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
     if (oldWidget.chapterContent != widget.chapterContent ||
         oldWidget.readerSettings != widget.readerSettings) {
       _processContent();
-      _scrollToIndex(_currentFocusedIndex, animate: false);
+    }
+  }
+
+  void _onItemPositionsChanged() {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isNotEmpty) {
+      final firstVisibleIndex = positions
+          .where((position) => position.itemLeadingEdge >= 0)
+          .map((position) => position.index)
+          .reduce((value, element) => value < element ? value : element);
+
+      setState(() {
+        _currentFocusedIndex = firstVisibleIndex;
+      });
     }
   }
 
@@ -75,9 +85,10 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
         .where((element) => element.text.toLowerCase().contains('discord.com'))
         .forEach((element) => element.remove());
 
-    // Remover divs desnecessárias que podem adicionar espaçamento
     document.querySelectorAll('div').forEach((element) {
-      if (element.children.length == 1 && element.attributes.isEmpty && element.text.trim().isEmpty) {
+      if (element.children.length == 1 &&
+          element.attributes.isEmpty &&
+          element.text.trim().isEmpty) {
         element.remove();
       }
     });
@@ -90,16 +101,24 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
     _paragraphs = document.querySelectorAll('p').map((e) => e.innerHtml).toList();
   }
 
+
+  void _updateFocusedIndex(int delta) {
+      final newIndex = (_currentFocusedIndex + delta).clamp(0, _paragraphs.length - 1);
+      setState(() {
+        _currentFocusedIndex = newIndex;
+      });
+    if (newIndex > _currentFocusedIndex) {
+      _scrollToIndex(newIndex);
+    } else {
+      _scrollToIndex(newIndex);
+    }
+  }
+
   void _scrollToIndex(int index, {bool animate = true}) async {
     if (_paragraphs.isEmpty) return;
 
     final validIndex = index.clamp(0, _paragraphs.length - 1);
 
-    setState(() {
-      _currentFocusedIndex = validIndex;
-    });
-
-    _isScrolling = true;
 
     try {
       await _scrollController.scrollTo(
@@ -109,30 +128,6 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
         alignment: 0.0,
       );
     } finally {
-      _isScrolling = false;
-    }
-  }
-
-  void _onItemPositionsChanged() {
-    if (_isScrolling) return;
-
-    final positions = _itemPositionsListener.itemPositions.value;
-    if (positions.isNotEmpty) {
-      final mostVisibleIndex = positions.reduce((a, b) {
-        if (a.itemLeadingEdge < 0 && b.itemLeadingEdge >= 0) {
-          return b;
-        } else if (b.itemLeadingEdge < 0 && a.itemLeadingEdge >= 0) {
-          return a;
-        } else {
-          return a.itemLeadingEdge.abs() < b.itemLeadingEdge.abs() ? a : b;
-        }
-      }).index;
-
-      if (mostVisibleIndex != _currentFocusedIndex) {
-        setState(() {
-          _currentFocusedIndex = mostVisibleIndex;
-        });
-      }
     }
   }
 
@@ -141,22 +136,31 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
     super.build(context);
     final readerSettings = widget.readerSettings;
 
-    return ScrollablePositionedList.builder(
-      itemCount: _paragraphs.length,
-      itemScrollController: _scrollController,
-      itemPositionsListener: _itemPositionsListener,
-      padding: const EdgeInsets.all(16.0),
-      itemBuilder: (context, index) {
-        final isFocused = readerSettings.focusMode && index == _currentFocusedIndex;
-        final paragraph = _paragraphs[index];
+    return Listener(
+      onPointerSignal: (pointerSignal) {
+        if (pointerSignal is PointerScrollEvent) {
+          final scrollDelta = pointerSignal.scrollDelta.dy;
+          _updateFocusedIndex(scrollDelta > 0 ? 1 : -1);
+        }
+      },
+      child: LongPressDraggable(
+        hapticFeedbackOnStart: false,
+        axis: Axis.vertical,
+        dragAnchorStrategy: pointerDragAnchorStrategy,
+        feedback: SizedBox.shrink(),
+        child: ScrollablePositionedList.builder(
+          itemCount: _paragraphs.length,
+          itemScrollController: _scrollController,
+          itemPositionsListener: _itemPositionsListener,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(16.0),
+          initialScrollIndex: _currentFocusedIndex,
+          itemBuilder: (context, index) {
+            final isFocused = readerSettings.focusMode && index == _currentFocusedIndex;
+            final paragraph = _paragraphs[index];
 
-        return GestureDetector(
-          onTap: () => _scrollToIndex(index),
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),  // Reduzindo o espaçamento
-            child: AnimatedScale(
-              scale: isFocused ? 1.05 : 1.0,
-              duration: const Duration(milliseconds: 200),
+            return Container(
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -175,14 +179,14 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
                     data: paragraph,
                     style: {
                       "body": Style(
-                        margin: Margins.zero, // Removendo margens padrão
-                        padding: HtmlPaddings.zero, // Removendo paddings padrão
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
                         fontSize: FontSize(readerSettings.fontSize),
                         fontFamily: readerSettings.fontFamily,
                         lineHeight: LineHeight(readerSettings.lineHeight),
                         textAlign: readerSettings.textAlign,
                         color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                        fontWeight: readerSettings.fontWeight,
+                        fontWeight: isFocused ? FontWeight.w600 : readerSettings.fontWeight,
                       ),
                       "h1": Style(
                         margin: Margins.zero,
@@ -228,10 +232,14 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
                   ),
                 ],
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+        onDragUpdate: (details) {
+          final scrollDelta = details.delta.dy;
+          _updateFocusedIndex(scrollDelta > 0 ? -1 : 1);
+        },
+      ),
     );
   }
 }
