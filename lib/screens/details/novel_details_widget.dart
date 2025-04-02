@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'chapter_list_widget.dart';
 
-class NovelDetailsWidget extends StatelessWidget {
+class NovelDetailsWidget extends StatefulWidget {
   final Novel novel;
   final String? lastReadChapterId;
   final int? lastReadChapterIndex;
@@ -20,9 +21,38 @@ class NovelDetailsWidget extends StatelessWidget {
   });
 
   @override
+  State<NovelDetailsWidget> createState() => _NovelDetailsWidgetState();
+}
+
+class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
+  bool _showFullSynopsis = false;
+  late List<String> _paragraphs;
+
+  @override
+  void initState() {
+    super.initState();
+    _paragraphs = _splitSynopsis(widget.novel.description);
+  }
+
+  List<String> _splitSynopsis(String synopsis) {
+    List<String> paragraphs =
+        synopsis.split('\n').where((p) => p.trim().isNotEmpty).toList();
+    if (paragraphs.length >= 2) {
+      return paragraphs;
+    } else if (paragraphs.length == 1) {
+      int mid = paragraphs[0].length ~/ 2;
+      return [paragraphs[0].substring(0, mid), paragraphs[0].substring(mid)];
+    } else {
+      return ["", ""];
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
+    final String firstParagraph = _paragraphs.isNotEmpty ? _paragraphs[0] : '';
+    final bool hasMoreThanOneParagraph = _paragraphs.length > 1;
 
     return SingleChildScrollView(
       child: Column(
@@ -36,7 +66,9 @@ class NovelDetailsWidget extends StatelessWidget {
                 height: 280,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: CachedNetworkImageProvider(novel.coverImageUrl),
+                    image: CachedNetworkImageProvider(
+                      widget.novel.coverImageUrl,
+                    ),
                     fit: BoxFit.cover,
                     colorFilter: ColorFilter.mode(
                       Colors.black.withOpacity(0.5),
@@ -51,7 +83,7 @@ class NovelDetailsWidget extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    novel.title,
+                    widget.novel.title,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -80,7 +112,7 @@ class NovelDetailsWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: CachedNetworkImage(
-                      imageUrl: novel.coverImageUrl,
+                      imageUrl: widget.novel.coverImageUrl,
                       fit: BoxFit.cover,
                       placeholder:
                           (context, url) =>
@@ -100,30 +132,62 @@ class NovelDetailsWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (novel.author != null && novel.author.isNotEmpty)
+                if (widget.novel.author != null &&
+                    widget.novel.author.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
-                      novel.author.startsWith('por')
-                          ? novel.author
-                          : 'por ${novel.author}',
+                      widget.novel.author.startsWith('por')
+                          ? widget.novel.author
+                          : 'por ${widget.novel.author}',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: theme.hintColor,
                       ),
                     ),
                   ),
 
-                Text(
-                  novel.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+                Html(
+                  data:
+                      _showFullSynopsis
+                          ? widget.novel.description
+                          : firstParagraph,
+                  style: {
+                    "body": Style(
+                      margin: Margins.zero,
+                      padding: HtmlPaddings.zero,
+                      color: theme.textTheme.bodyMedium?.color,
+                      fontSize: FontSize(
+                        theme.textTheme.bodyMedium?.fontSize ?? 14,
+                      ),
+                      lineHeight: LineHeight(1.4),
+                    ),
+                  },
                 ),
+                if (hasMoreThanOneParagraph)
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _showFullSynopsis = !_showFullSynopsis;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        _showFullSynopsis ? 'Ver Menos' : 'Ver Mais',
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 24),
 
-                if (onContinueReading != null)
+                if (widget.onContinueReading != null)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: onContinueReading,
+                      onPressed: widget.onContinueReading,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.secondary,
                         foregroundColor: theme.colorScheme.onSecondary,
@@ -147,9 +211,9 @@ class NovelDetailsWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 ChapterListWidget(
-                  chapters: novel.chapters,
-                  onChapterTap: onChapterTap,
-                  lastReadChapterId: lastReadChapterId,
+                  chapters: widget.novel.chapters,
+                  onChapterTap: widget.onChapterTap,
+                  lastReadChapterId: widget.lastReadChapterId,
                 ),
               ],
             ),
