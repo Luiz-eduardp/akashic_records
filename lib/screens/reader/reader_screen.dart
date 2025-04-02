@@ -17,8 +17,9 @@ import 'package:akashic_records/widgets/loading_indicator_widget.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String novelId;
+  final String? chapterId;
 
-  const ReaderScreen({super.key, required this.novelId});
+  const ReaderScreen({super.key, required this.novelId, this.chapterId});
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
@@ -40,8 +41,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   void initState() {
     super.initState();
-    _initSharedPreferences();
+    _initSharedPreferences().then((_) {
+      if (widget.chapterId != null) {
+        _loadNovelAndChapter(widget.chapterId!);
+      } else {
+        _loadNovel();
+      }
+    });
     _startUiHideTimer();
+  }
+
+  Future<void> _loadNovelAndChapter(String chapterId) async {
+    await _loadNovel(initialChapterId: chapterId);
   }
 
   @override
@@ -53,7 +64,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<void> _initSharedPreferences() async {
     _prefs = await SharedPreferences.getInstance();
-    await _loadNovel();
   }
 
   Future<void> _loadLastReadChapter() async {
@@ -84,7 +94,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  Future<void> _loadNovel() async {
+  Future<void> _loadNovel({String? initialChapterId}) async {
     setState(() {
       _mounted = true;
       isLoading = true;
@@ -122,7 +132,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
       if (plugin != null && novel != null) {
         novel!.pluginId = correctPluginName!;
-        await _loadLastReadChapter();
+
+        if (initialChapterId != null) {
+          currentChapterIndex = novel!.chapters.indexWhere(
+            (chapter) => chapter.id == initialChapterId,
+          );
+          if (currentChapterIndex != -1) {
+            currentChapter = novel!.chapters[currentChapterIndex];
+            await _loadChapterContent();
+          } else {
+            await _loadLastReadChapter();
+          }
+        } else {
+          await _loadLastReadChapter();
+        }
       } else {
         setState(() {
           errorMessage = 'Novel não encontrada em nenhum plugin selecionado.';

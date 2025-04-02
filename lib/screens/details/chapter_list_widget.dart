@@ -40,7 +40,6 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     return reversedChapters.sublist(0, endIndex);
   }
 
-
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
@@ -61,7 +60,10 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
       _isLoading = true;
     });
 
-    List<Chapter> newChapters = await _fetchChaptersFromApi(_page + 1, _pageSize);
+    List<Chapter> newChapters = await _fetchChaptersFromApi(
+      _page + 1,
+      _pageSize,
+    );
 
     setState(() {
       _displayedChapters.addAll(newChapters);
@@ -71,7 +73,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   }
 
   Future<List<Chapter>> _fetchChaptersFromApi(int page, int pageSize) async {
-     await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
     List<Chapter> reversedChapters = widget.chapters.reversed.toList();
     int startIndex = (page - 1) * pageSize;
     int endIndex = startIndex + pageSize;
@@ -145,9 +147,9 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
             } else {
               return _isLoading
                   ? const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
                   : Container();
             }
           },
