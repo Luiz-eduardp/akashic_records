@@ -39,22 +39,28 @@ class NovelCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    novel.title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Tooltip(
+                    message: novel.title,
+                    child: Text(
+                      novel.title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   if (novel.author != null && novel.author.isNotEmpty)
-                    Text(
-                      novel.author,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
+                    Tooltip(
+                      message: novel.author,
+                      child: Text(
+                        novel.author,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.hintColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                 ],
               ),
