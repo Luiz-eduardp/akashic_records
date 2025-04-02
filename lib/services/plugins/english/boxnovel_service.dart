@@ -179,7 +179,7 @@ class BoxNovel implements PluginService {
               l?.attributes['data-src'] ??
               l?.attributes['src'] ??
               l?.attributes['data-lazy-srcset'] ??
-              'https://via.placeholder.com/150x200?text=No+Cover',
+              'https://placehold.co/400x450.png?text=Sem%20Capa',
           author: '',
           description: '',
           genres: [],
@@ -279,7 +279,7 @@ class BoxNovel implements PluginService {
                 .querySelector('.summary_image > a > img')
                 ?.attributes['data-lazy-src'] ??
             $.querySelector('.summary_image > a > img')?.attributes['src'] ??
-            'https://via.placeholder.com/150x200?text=No+Cover',
+            'https://placehold.co/400x450.png?text=Sem%20Capa',
         description:
             $.querySelector('div.summary__content > p')?.text.trim() ?? '',
         chapters: [],

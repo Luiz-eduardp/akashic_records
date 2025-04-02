@@ -92,7 +92,7 @@ class Tsundoku implements PluginService {
   final String site = 'https://tsundoku.com.br';
   final String version = '1.0.1';
   static const String defaultCover =
-      'https://via.placeholder.com/150x200?text=No+Cover';
+      'https://placehold.co/400x450.png?text=Sem%20Capa';
 
   Future<String> _fetchApi(String url) async {
     final response = await http.get(Uri.parse(url));

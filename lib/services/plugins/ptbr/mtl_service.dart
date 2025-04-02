@@ -89,7 +89,7 @@ class MtlNovelPt implements PluginService {
       String cover = el.querySelector('amp-img')?.attributes['src'] ?? '';
       if (cover.isNotEmpty &&
           cover == 'https://www.mtlnovel.net/no-image.jpg.webp') {
-        cover = 'https://via.placeholder.com/150x200?text=No+Cover';
+        cover = 'https://placehold.co/400x450.png?text=Sem%20Capa';
       }
       final path = el.querySelector('a.list-title')?.attributes['href'];
       if (path != null) {
@@ -126,7 +126,7 @@ class MtlNovelPt implements PluginService {
       title: $.querySelector('h1.entry-title')?.text.trim() ?? 'Untitled',
       coverImageUrl:
           $.querySelector('.nov-head > amp-img')?.attributes['src'] ??
-          'https://via.placeholder.com/150x200?text=No+Cover',
+          'https://placehold.co/400x450.png?text=Sem%20Capa',
       description:
           $.querySelector('div.desc > h2')?.nextElementSibling?.text.trim() ??
           '',

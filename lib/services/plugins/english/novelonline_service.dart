@@ -165,7 +165,7 @@ class NovelsOnline implements PluginService {
                 .querySelector('.novel-cover')
                 ?.querySelector('a > img')
                 ?.attributes['src'] ??
-            'https://via.placeholder.com/150x200?text=No+Cover',
+            'https://placehold.co/400x450.png?text=Sem%20Capa',
         description: '',
         chapters: [],
         author: '',

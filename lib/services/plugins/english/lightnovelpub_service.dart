@@ -22,7 +22,7 @@ class LightNovelPub {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
 
   static const String defaultCover =
-      'https://via.placeholder.com/150x200?text=No+Cover';
+      'https://placehold.co/400x450.png?text=Sem%20Capa';
 
   LightNovelPub() {
     HttpOverrides.global = MyHttpOverrides();

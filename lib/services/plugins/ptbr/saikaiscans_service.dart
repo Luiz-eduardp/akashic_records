@@ -13,7 +13,7 @@ class SaikaiScans {
   final String apiUrl = 'https://api.saikaiscans.net/api/stories';
   final String version = '1.0.0';
   static const String defaultCover =
-      'https://via.placeholder.com/150x200?text=No+Cover';
+      'https://placehold.co/400x450.png?text=Sem%20Capa';
 
   Future<String> _fetchApi(String url) async {
     final response = await http.get(Uri.parse(url));
