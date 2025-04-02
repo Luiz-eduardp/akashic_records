@@ -23,7 +23,7 @@ class ChapterNavigation extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           TextButton(
-            onPressed: isLoading ? null : onNextChapter,
+            onPressed: isLoading ? null : onPreviousChapter,
             style: TextButton.styleFrom(
               foregroundColor: readerSettings.textColor.withOpacity(
                 isLoading ? 0.5 : 1.0,
@@ -40,7 +40,7 @@ class ChapterNavigation extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: isLoading ? null : onPreviousChapter,
+            onPressed: isLoading ? null : onNextChapter,
             style: TextButton.styleFrom(
               foregroundColor: readerSettings.textColor.withOpacity(
                 isLoading ? 0.5 : 1.0,

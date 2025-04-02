@@ -18,7 +18,7 @@ class ChapterListWidget extends StatefulWidget {
 }
 
 class _ChapterListWidgetState extends State<ChapterListWidget> {
-  final List<Chapter> _displayedChapters = [];
+  List<Chapter> _displayedChapters = [];
   int _page = 1;
   final int _pageSize = 20;
   bool _isLoading = false;
@@ -27,9 +27,19 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   @override
   void initState() {
     super.initState();
-    _loadMoreChapters();
+    _displayedChapters = _getInitialChapters();
     _scrollController.addListener(_onScroll);
   }
+
+  List<Chapter> _getInitialChapters() {
+    List<Chapter> reversedChapters = widget.chapters.reversed.toList();
+    int endIndex = _page * _pageSize;
+    if (endIndex > reversedChapters.length) {
+      endIndex = reversedChapters.length;
+    }
+    return reversedChapters.sublist(0, endIndex);
+  }
+
 
   @override
   void dispose() {
@@ -51,8 +61,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
       _isLoading = true;
     });
 
-    // Simula uma chamada de API
-    List<Chapter> newChapters = await _fetchChaptersFromApi(_page, _pageSize);
+    List<Chapter> newChapters = await _fetchChaptersFromApi(_page + 1, _pageSize);
 
     setState(() {
       _displayedChapters.addAll(newChapters);
@@ -62,24 +71,24 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   }
 
   Future<List<Chapter>> _fetchChaptersFromApi(int page, int pageSize) async {
-    // Simula uma chamada de API (substitua pela sua lógica real)
-    await Future.delayed(const Duration(milliseconds: 500));
+     await Future.delayed(const Duration(milliseconds: 500));
+    List<Chapter> reversedChapters = widget.chapters.reversed.toList();
     int startIndex = (page - 1) * pageSize;
     int endIndex = startIndex + pageSize;
-    if (startIndex >= widget.chapters.length) {
-      return []; // Retorna uma lista vazia se não houver mais capítulos
+    if (startIndex >= reversedChapters.length) {
+      return [];
     }
-    endIndex = endIndex > widget.chapters.length ? widget.chapters.length : endIndex;
-    return widget.chapters.sublist(startIndex, endIndex);
+    endIndex =
+        endIndex > reversedChapters.length ? reversedChapters.length : endIndex;
+    return reversedChapters.sublist(startIndex, endIndex);
   }
-
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return SizedBox(
-      height: 400, // Defina uma altura fixa para o ListView
+      height: 400,
       child: ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
         child: ListView.builder(
@@ -108,18 +117,22 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                               child: Text(
                                 chapter.title,
                                 style: theme.textTheme.bodyLarge?.copyWith(
-                                  fontWeight: isLastRead
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isLastRead
-                                      ? theme.colorScheme.secondary
-                                      : theme.colorScheme.onSurface,
+                                  fontWeight:
+                                      isLastRead
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                  color:
+                                      isLastRead
+                                          ? theme.colorScheme.secondary
+                                          : theme.colorScheme.onSurface,
                                 ),
                               ),
                             ),
                             if (isLastRead)
-                              Icon(Icons.bookmark,
-                                  color: theme.colorScheme.secondary),
+                              Icon(
+                                Icons.bookmark,
+                                color: theme.colorScheme.secondary,
+                              ),
                           ],
                         ),
                       ),
@@ -135,7 +148,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                       padding: EdgeInsets.all(8.0),
                       child: Center(child: CircularProgressIndicator()),
                     )
-                  : Container(); // Ou uma mensagem de "Fim da Lista"
+                  : Container();
             }
           },
         ),
