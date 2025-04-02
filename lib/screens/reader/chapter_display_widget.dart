@@ -184,20 +184,22 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       <!DOCTYPE html>
       <html>
       <head>
+        <meta charset="UTF-8">
         <style>
           body {
-            margin: 40px;
+            margin: 40px 20px 20px 20px;
             padding: 0;
             font-size: ${readerSettings.fontSize}px;
             font-family: ${readerSettings.fontFamily};
             line-height: ${readerSettings.lineHeight};
             text-align: ${readerSettings.textAlign.toString().split('.').last};
             color: ${_colorToHtmlColor(readerSettings.textColor)};
+            background-color: ${_colorToHtmlColor(readerSettings.backgroundColor)};
             font-weight: $fontWeight;
             opacity: $opacity;
-            /* Adicionando padding para simular margem */
             padding-top: ${_headerMargin}px;
             padding-bottom: ${_bottomMargin}px;
+            word-wrap: break-word; 
           }
           h1 {
             font-size: ${readerSettings.fontSize + 6}px;
@@ -212,6 +214,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           p {
             color: ${_colorToHtmlColor(readerSettings.textColor)};
             opacity: $opacity;
+            margin-bottom: 1em; 
           }
           a {
             color: ${_colorToHtmlColor(readerSettings.textColor)};
@@ -223,10 +226,12 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             color: ${_colorToHtmlColor(readerSettings.textColor)};
             opacity: $opacity;
           }
+          ${readerSettings.customCss ?? ''}
         </style>
       </head>
       <body>
         ${_paragraphs.join("<br><br>")}
+
       </body>
       </html>
     ''';

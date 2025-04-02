@@ -37,6 +37,8 @@ class ReaderSettings {
   FontWeight fontWeight;
   CustomColors? customColors;
   bool focusMode;
+  String? customJs;
+  String? customCss;
 
   ReaderSettings({
     this.theme = ReaderTheme.light,
@@ -49,6 +51,8 @@ class ReaderSettings {
     this.fontWeight = FontWeight.normal,
     this.customColors,
     this.focusMode = false,
+    this.customJs,
+    this.customCss,
   });
 
   Map<String, dynamic> toMap() {
@@ -64,6 +68,8 @@ class ReaderSettings {
       'customBackgroundColor': customColors?.backgroundColor?.value,
       'customTextColor': customColors?.textColor?.value,
       'focusMode': focusMode,
+      'customJs': customJs,
+      'customCss': customCss,
     };
   }
 
@@ -91,6 +97,8 @@ class ReaderSettings {
               )
               : null,
       focusMode: map['focusMode'] ?? false,
+      customJs: map['customJs'],
+      customCss: map['customCss'],
     );
   }
 }
