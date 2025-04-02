@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:akashic_records/services/plugins/english/boxnovel_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/mtl_service.dart';
@@ -36,7 +37,6 @@ class ReaderSettings {
   Color textColor;
   FontWeight fontWeight;
   CustomColors? customColors;
-  bool focusMode;
   String? customJs;
   String? customCss;
 
@@ -50,7 +50,6 @@ class ReaderSettings {
     this.textColor = Colors.black,
     this.fontWeight = FontWeight.normal,
     this.customColors,
-    this.focusMode = false,
     this.customJs,
     this.customCss,
   });
@@ -67,7 +66,6 @@ class ReaderSettings {
       'fontWeight': fontWeight.index,
       'customBackgroundColor': customColors?.backgroundColor?.value,
       'customTextColor': customColors?.textColor?.value,
-      'focusMode': focusMode,
       'customJs': customJs,
       'customCss': customCss,
     };
@@ -96,11 +94,38 @@ class ReaderSettings {
                         : null,
               )
               : null,
-      focusMode: map['focusMode'] ?? false,
       customJs: map['customJs'],
       customCss: map['customCss'],
     );
   }
+}
+
+class CustomPlugin {
+  String name;
+  String code;
+  bool enabled;
+  int priority;
+
+  CustomPlugin({
+    required this.name,
+    required this.code,
+    this.enabled = true,
+    this.priority = 0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'code': code,
+    'enabled': enabled,
+    'priority': priority,
+  };
+
+  factory CustomPlugin.fromJson(Map<String, dynamic> json) => CustomPlugin(
+    name: json['name'],
+    code: json['code'],
+    enabled: json['enabled'] ?? true,
+    priority: json['priority'] ?? 0,
+  );
 }
 
 class AppState with ChangeNotifier {
@@ -109,6 +134,7 @@ class AppState with ChangeNotifier {
   bool _settingsLoaded = false;
   Set<String> _selectedPlugins = {};
   ReaderSettings _readerSettings = ReaderSettings();
+  List<CustomPlugin> _customPlugins = [];
 
   final Map<String, PluginService> _pluginServices = {};
 
@@ -126,6 +152,7 @@ class AppState with ChangeNotifier {
   bool get settingsLoaded => _settingsLoaded;
   Set<String> get selectedPlugins => _selectedPlugins;
   ReaderSettings get readerSettings => _readerSettings;
+  List<CustomPlugin> get customPlugins => _customPlugins;
 
   Map<String, PluginService> get pluginServices => _pluginServices;
 
@@ -153,6 +180,30 @@ class AppState with ChangeNotifier {
     notifyListeners();
   }
 
+  void addCustomPlugin(CustomPlugin plugin) {
+    _customPlugins.add(plugin);
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
+  void updateCustomPlugin(int index, CustomPlugin plugin) {
+    _customPlugins[index] = plugin;
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
+  void removeCustomPlugin(int index) {
+    _customPlugins.removeAt(index);
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
+  void setCustomPlugins(List<CustomPlugin> plugins) {
+    _customPlugins = plugins;
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -175,6 +226,14 @@ class AppState with ChangeNotifier {
       }
       if (readerSettingsMap.isNotEmpty) {
         _readerSettings = ReaderSettings.fromMap(readerSettingsMap);
+      }
+
+      final customPluginsJson = prefs.getStringList('customPlugins');
+      if (customPluginsJson != null) {
+        _customPlugins =
+            customPluginsJson
+                .map((json) => CustomPlugin.fromJson(jsonDecode(json)))
+                .toList();
       }
 
       _settingsLoaded = true;
@@ -229,6 +288,17 @@ class AppState with ChangeNotifier {
       }
     } catch (e) {
       debugPrint("Erro ao salvar configurações do leitor: $e");
+    }
+  }
+
+  Future<void> _saveCustomPlugins() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customPluginsJson =
+          _customPlugins.map((plugin) => jsonEncode(plugin.toJson())).toList();
+      await prefs.setStringList('customPlugins', customPluginsJson);
+    } catch (e) {
+      debugPrint("Erro ao salvar plugins customizados: $e");
     }
   }
 }
