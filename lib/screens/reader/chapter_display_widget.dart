@@ -20,13 +20,15 @@ class ChapterDisplay extends StatefulWidget {
   State<ChapterDisplay> createState() => _ChapterDisplayState();
 }
 
-class _ChapterDisplayState extends State<ChapterDisplay> {
+class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAliveClientMixin {
   List<String> _paragraphs = [];
   final ItemScrollController _scrollController = ItemScrollController();
-  final ItemPositionsListener _itemPositionsListener =
-      ItemPositionsListener.create();
+  final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
   int _currentFocusedIndex = 0;
   bool _isScrolling = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -47,9 +49,7 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
 
   @override
   void dispose() {
-    _itemPositionsListener.itemPositions.removeListener(
-      _onItemPositionsChanged,
-    );
+    _itemPositionsListener.itemPositions.removeListener(_onItemPositionsChanged);
     super.dispose();
   }
 
@@ -67,9 +67,7 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
 
     const selectorsToRemove = ['p:empty', '.ad-container', '.ads'];
     for (final selector in selectorsToRemove) {
-      document
-          .querySelectorAll(selector)
-          .forEach((element) => element.remove());
+      document.querySelectorAll(selector).forEach((element) => element.remove());
     }
 
     document
@@ -77,13 +75,19 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
         .where((element) => element.text.toLowerCase().contains('discord.com'))
         .forEach((element) => element.remove());
 
+    // Remover divs desnecessárias que podem adicionar espaçamento
+    document.querySelectorAll('div').forEach((element) {
+      if (element.children.length == 1 && element.attributes.isEmpty && element.text.trim().isEmpty) {
+        element.remove();
+      }
+    });
+
     return document.body?.innerHtml ?? "";
   }
 
   void _splitIntoParagraphs(String cleanedContent) {
     final document = htmlParser.parse(cleanedContent);
-    _paragraphs =
-        document.querySelectorAll('p').map((e) => e.innerHtml).toList();
+    _paragraphs = document.querySelectorAll('p').map((e) => e.innerHtml).toList();
   }
 
   void _scrollToIndex(int index, {bool animate = true}) async {
@@ -114,16 +118,15 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
 
     final positions = _itemPositionsListener.itemPositions.value;
     if (positions.isNotEmpty) {
-      final mostVisibleIndex =
-          positions.reduce((a, b) {
-            if (a.itemLeadingEdge < 0 && b.itemLeadingEdge >= 0) {
-              return b;
-            } else if (b.itemLeadingEdge < 0 && a.itemLeadingEdge >= 0) {
-              return a;
-            } else {
-              return a.itemLeadingEdge.abs() < b.itemLeadingEdge.abs() ? a : b;
-            }
-          }).index;
+      final mostVisibleIndex = positions.reduce((a, b) {
+        if (a.itemLeadingEdge < 0 && b.itemLeadingEdge >= 0) {
+          return b;
+        } else if (b.itemLeadingEdge < 0 && a.itemLeadingEdge >= 0) {
+          return a;
+        } else {
+          return a.itemLeadingEdge.abs() < b.itemLeadingEdge.abs() ? a : b;
+        }
+      }).index;
 
       if (mostVisibleIndex != _currentFocusedIndex) {
         setState(() {
@@ -135,6 +138,7 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final readerSettings = widget.readerSettings;
 
     return ScrollablePositionedList.builder(
@@ -143,14 +147,13 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
       itemPositionsListener: _itemPositionsListener,
       padding: const EdgeInsets.all(16.0),
       itemBuilder: (context, index) {
-        final isFocused =
-            readerSettings.focusMode && index == _currentFocusedIndex;
+        final isFocused = readerSettings.focusMode && index == _currentFocusedIndex;
         final paragraph = _paragraphs[index];
 
         return GestureDetector(
           onTap: () => _scrollToIndex(index),
           child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 40.0),
+            margin: const EdgeInsets.symmetric(vertical: 8.0),  // Reduzindo o espaçamento
             child: AnimatedScale(
               scale: isFocused ? 1.05 : 1.0,
               duration: const Duration(milliseconds: 200),
@@ -163,9 +166,7 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
                         child: ImageFiltered(
                           imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Container(
-                            color: readerSettings.backgroundColor.withOpacity(
-                              0.7,
-                            ),
+                            color: readerSettings.backgroundColor.withOpacity(0.7),
                           ),
                         ),
                       ),
@@ -174,57 +175,52 @@ class _ChapterDisplayState extends State<ChapterDisplay> {
                     data: paragraph,
                     style: {
                       "body": Style(
+                        margin: Margins.zero, // Removendo margens padrão
+                        padding: HtmlPaddings.zero, // Removendo paddings padrão
                         fontSize: FontSize(readerSettings.fontSize),
                         fontFamily: readerSettings.fontFamily,
                         lineHeight: LineHeight(readerSettings.lineHeight),
                         textAlign: readerSettings.textAlign,
-                        color: readerSettings.textColor.withOpacity(
-                          readerSettings.focusMode && !isFocused ? 0.4 : 1.0,
-                        ),
+                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
                         fontWeight: readerSettings.fontWeight,
                       ),
                       "h1": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
                         fontSize: FontSize(readerSettings.fontSize + 6),
-                        color: readerSettings.textColor.withOpacity(
-                          readerSettings.focusMode && !isFocused ? 0.4 : 1.0,
-                        ),
+                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
                       ),
                       "h2": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
                         fontSize: FontSize(readerSettings.fontSize + 4),
-                        color: readerSettings.textColor.withOpacity(
-                          readerSettings.focusMode && !isFocused ? 0.4 : 1.0,
-                        ),
+                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
                       ),
                       "p": Style(
-                        margin: Margins.only(bottom: 0),
-                        color: readerSettings.textColor.withOpacity(
-                          readerSettings.focusMode && !isFocused ? 0.4 : 1.0,
-                        ),
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
+                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
                       ),
                       "a": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
                         textDecoration: TextDecoration.underline,
-                        color: readerSettings.textColor.withOpacity(
-                          readerSettings.focusMode && !isFocused ? 0.4 : 1.0,
-                        ),
+                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
                       ),
                       "b": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
                         fontWeight: FontWeight.bold,
-                        color: readerSettings.textColor.withOpacity(
-                          readerSettings.focusMode && !isFocused ? 0.4 : 1.0,
-                        ),
+                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
                       ),
                       "strong": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
                         fontWeight: FontWeight.bold,
-                        color: readerSettings.textColor.withOpacity(
-                          readerSettings.focusMode && !isFocused ? 0.4 : 1.0,
-                        ),
+                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
                       ),
                     },
-                    onLinkTap: (
-                      String? url,
-                      Map<String, String> attributes,
-                      dom.Element? element,
-                    ) {
+                    onLinkTap: (String? url, Map<String, String> attributes, dom.Element? element) {
                       if (url != null) {
                         debugPrint("Abrindo URL: $url");
                       }
