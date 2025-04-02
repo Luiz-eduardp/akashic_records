@@ -60,12 +60,64 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     _processContent();
     _itemPositionsListener.itemPositions.addListener(_onItemPositionsChanged);
 
-    _webViewController =
-        WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..enableZoom(false)
-          ..setBackgroundColor(Colors.transparent);
-    _updateWebViewContent();
+    _webViewController = WebViewController();
+    _initializeWebViewController();
+  }
+
+  Future<void> _initializeWebViewController() async {
+    await _webViewController!.setJavaScriptMode(JavaScriptMode.unrestricted);
+    await _webViewController!.enableZoom(false);
+    await _webViewController!.setBackgroundColor(Colors.transparent);
+
+    _webViewController!.setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (String url) async {
+          await _webViewController!.runJavaScript('''
+            document.addEventListener('touchstart', function(event) {
+              if (event.touches.length > 1) {
+                event.preventDefault();
+              }
+            }, { passive: false });
+
+            document.addEventListener('touchmove', function(event) {
+              if (event.touches.length > 1) {
+                event.preventDefault();
+              }
+            }, { passive: false });
+
+            document.addEventListener('touchend', function(event) {
+              if (event.touches.length > 1) {
+                event.preventDefault();
+              }
+            }, { passive: false });
+
+            document.addEventListener('gesturestart', function(event) {
+              event.preventDefault();
+            });
+
+            document.addEventListener('gesturechange', function(event) {
+              event.preventDefault();
+            });
+
+            document.addEventListener('gestureend', function(event) {
+              event.preventDefault();
+            });
+          ''');
+          _injectCustomJavaScript(widget.readerSettings.customJs);
+        },
+      ),
+    );
+    await _updateWebViewContent();
+  }
+
+  Future<void> _injectCustomJavaScript(String? customJs) async {
+    if (customJs != null && customJs.isNotEmpty) {
+      try {
+        await _webViewController?.runJavaScript(customJs);
+      } catch (e) {
+        debugPrint("Erro ao injetar JavaScript: $e");
+      }
+    }
   }
 
   @override
@@ -185,6 +237,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       <html>
       <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
           body {
             margin: 40px 20px 20px 20px;
