@@ -41,7 +41,7 @@ class ReaderSettings {
   String? customCss;
 
   ReaderSettings({
-    this.theme = ReaderTheme.light,
+    this.theme = ReaderTheme.dark,
     this.fontSize = 30.0,
     this.fontFamily = 'Courier New',
     this.lineHeight = 1.5,
@@ -103,12 +103,14 @@ class ReaderSettings {
 class CustomPlugin {
   String name;
   String code;
+  String use;
   bool enabled;
   int priority;
 
   CustomPlugin({
     required this.name,
     required this.code,
+    required this.use,
     this.enabled = true,
     this.priority = 0,
   });
@@ -116,6 +118,7 @@ class CustomPlugin {
   Map<String, dynamic> toJson() => {
     'name': name,
     'code': code,
+    'use': use,
     'enabled': enabled,
     'priority': priority,
   };
@@ -123,6 +126,7 @@ class CustomPlugin {
   factory CustomPlugin.fromJson(Map<String, dynamic> json) => CustomPlugin(
     name: json['name'],
     code: json['code'],
+    use: json['use'],
     enabled: json['enabled'] ?? true,
     priority: json['priority'] ?? 0,
   );
@@ -137,6 +141,154 @@ class AppState with ChangeNotifier {
   List<CustomPlugin> _customPlugins = [];
 
   final Map<String, PluginService> _pluginServices = {};
+
+  final List<CustomPlugin> _defaultPlugins = [
+    CustomPlugin(
+      name: 'Focus Mode',
+      use: 'Duplo toque no texto para ativar e desativar o modo de foco',
+      code: '''
+     (() => {
+  function loadScript(src, callback) {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = callback;
+    document.head.appendChild(script);
+  }
+
+  function createStyle() {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .focus-overlay {
+        position: fixed;
+        top: -10px;
+        left: -2px;
+        right: -2px;
+        height: var(--focus-area-height, 30%);
+        background: rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        z-index: 9999;
+        filter: blur(1px);
+        transition: opacity 0.3s ease;
+      }
+      .focus-overlay-bottom {
+        position: fixed;
+        bottom: -10px;
+        left: -2px;
+        right: -2px;
+        height: var(--focus-area-height, 30%);
+        background: rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        z-index: 9999;
+        filter: blur(1px);
+        transition: opacity 0.3s ease;
+      }
+      .toast {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 9999;
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createFocusOverlays() {
+    const focusOverlayTop = document.createElement("div");
+    focusOverlayTop.className = "focus-overlay";
+
+    const focusOverlayBottom = document.createElement("div");
+    focusOverlayBottom.className = "focus-overlay-bottom";
+
+    return { focusOverlayTop, focusOverlayBottom };
+  }
+
+  function createToast() {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    document.body.appendChild(toast); 
+    return toast;
+  }
+
+  let staticFocusMode = false;
+  const focusAreaHeight = 30;
+  const { focusOverlayTop, focusOverlayBottom } = createFocusOverlays();
+  const toast = createToast();
+
+  function toggleStaticFocusMode() {
+    staticFocusMode = !staticFocusMode;
+
+    if (staticFocusMode) {
+      document.documentElement.style.setProperty(
+        "--focus-area-height",
+        `30%`
+      );
+      document.body.appendChild(focusOverlayTop);
+      document.body.appendChild(focusOverlayBottom);
+      showToast("Focus Mode Activated");
+      adjustOverlayOpacity();
+    } else {
+      if (focusOverlayTop.parentNode) {
+        focusOverlayTop.parentNode.removeChild(focusOverlayTop);
+      }
+      if (focusOverlayBottom.parentNode) {
+        focusOverlayBottom.parentNode.removeChild(focusOverlayBottom);
+      }
+      showToast("Focus Mode Disabled");
+    }
+  }
+
+  function adjustOverlayOpacity() {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    const scrollPosition = scrollTop + windowHeight;
+
+    const topOffset = Math.min(scrollTop / 100, 1);
+    const distanceFromBottom = docHeight - scrollPosition;
+    const bottomOffset = Math.max(distanceFromBottom / 100, 0);
+
+    focusOverlayTop.style.opacity = topOffset.toString();
+    focusOverlayBottom.style.opacity = bottomOffset.toString();
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.style.display = "block";
+
+    setTimeout(() => {
+      toast.style.display = "none";
+    }, 1000);
+  }
+
+  function handleTripleClick(event) {
+    if (event.detail === 3) {
+      toggleStaticFocusMode();
+    }
+  }
+
+  function handleScroll() {
+    if (staticFocusMode) {
+      adjustOverlayOpacity();
+    }
+  }
+
+  createStyle();
+  document.addEventListener("click", handleTripleClick);
+  window.addEventListener("scroll", handleScroll);
+  toggleStaticFocusMode();
+})();
+      ''',
+      enabled: true,
+      priority: 1,
+    ),
+  ];
 
   AppState() {
     _pluginServices['NovelMania'] = NovelMania();
@@ -229,11 +381,14 @@ class AppState with ChangeNotifier {
       }
 
       final customPluginsJson = prefs.getStringList('customPlugins');
-      if (customPluginsJson != null) {
+      if (customPluginsJson != null && customPluginsJson.isNotEmpty) {
         _customPlugins =
             customPluginsJson
                 .map((json) => CustomPlugin.fromJson(jsonDecode(json)))
                 .toList();
+      } else {
+        _customPlugins = _defaultPlugins;
+        _saveCustomPlugins();
       }
 
       _settingsLoaded = true;
