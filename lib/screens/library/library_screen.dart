@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/library/novel_filter_sort_widget.dart';
+import 'dart:async';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -25,6 +26,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Map<String, dynamic> _filters = {};
   List<Novel> allNovels = [];
   Set<String> _previousPlugins = {};
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -67,6 +69,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void dispose() {
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -114,20 +117,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
-      setState(() {
-        if (search) {
-          novels =
-              allNovels
-                  .where(
-                    (novel) => novel.title.toLowerCase().contains(
-                      _searchTerm.toLowerCase(),
-                    ),
-                  )
-                  .toList();
-        } else {
-          novels = allNovels;
-        }
+      List<Novel> filteredNovels = allNovels;
+      if (search && _searchTerm.isNotEmpty) {
+        filteredNovels = allNovels
+            .where((novel) =>
+                novel.title.toLowerCase().contains(_searchTerm.toLowerCase()))
+            .toList();
+      }
 
+      setState(() {
+        novels = filteredNovels;
         hasMore = newNovels.isNotEmpty;
         isLoading = false;
       });
@@ -196,6 +195,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
+  void _onSearchChanged(String term) {
+    _searchTerm = term;
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        currentPage = 1;
+        novels.clear();
+        hasMore = true;
+        allNovels.clear();
+      });
+      _loadNovels(search: true);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -204,16 +218,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: SearchBarWidget(
-              onSearch: (term) {
-                setState(() {
-                  _searchTerm = term;
-                  currentPage = 1;
-                  allNovels.clear();
-                  novels.clear();
-                  hasMore = true;
-                });
-                _loadNovels(search: true);
-              },
+              onSearch: _onSearchChanged,
               onFilterPressed: () => _showFilterModal(context),
             ),
           ),
