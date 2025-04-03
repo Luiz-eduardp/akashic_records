@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/screens/history/history_card_widget.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  const HistoryScreen({Key? key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -13,6 +13,9 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   List<Map<String, dynamic>> _history = [];
+  List<Map<String, dynamic>> _fullHistory = [];
+  List<String> _availableNovels = [];
+  String? _selectedNovel;
   bool _isLoading = true;
   bool _mounted = false;
 
@@ -39,6 +42,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       List<Map<String, dynamic>> loadedHistory = [];
+      Set<String> novels = {};
 
       final historyKeys =
           prefs.getKeys().where((key) => key.startsWith('history_')).toList();
@@ -47,7 +51,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final historyString = prefs.getString(historyKey) ?? '[]';
         try {
           List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
-
           loadedHistory.addAll(
             history.map((item) => Map<String, dynamic>.from(item)),
           );
@@ -85,9 +88,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return dateB.compareTo(dateA);
       });
 
+      for (var item in loadedHistory) {
+        novels.add(item['novelTitle']);
+      }
+
       if (_mounted) {
         setState(() {
-          _history = loadedHistory;
+          _fullHistory = loadedHistory;
+          _availableNovels = novels.toList();
+          _filterHistory();
           _isLoading = false;
         });
       }
@@ -99,6 +108,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
         });
       }
     }
+  }
+
+  void _filterHistory() {
+    List<Map<String, dynamic>> filteredHistory = [];
+
+    if (_selectedNovel == null) {
+      filteredHistory = List.from(_fullHistory);
+    } else if (_selectedNovel == 'Todas as Novels') {
+      filteredHistory = List.from(_fullHistory);
+    } else {
+      filteredHistory =
+          _fullHistory
+              .where((item) => item['novelTitle'] == _selectedNovel)
+              .toList();
+    }
+
+    setState(() {
+      _history = filteredHistory;
+    });
   }
 
   void _handleHistoryTap(String novelId, String pluginId, String chapterId) {
@@ -115,9 +143,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
     await _loadHistory();
   }
 
+  void _updateSelectedNovel(String? novel) {
+    setState(() {
+      _selectedNovel = novel;
+    });
+    _filterHistory();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _buildBody());
+    return Scaffold(
+      appBar: AppBar(
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.filter_list),
+            onSelected: _updateSelectedNovel,
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<String>(
+                  value: 'Todas as Novels',
+                  child: Text('Todas as Novels'),
+                ),
+                ..._availableNovels.map((novel) {
+                  return PopupMenuItem<String>(
+                    value: novel,
+                    child: Text(novel),
+                  );
+                }),
+              ];
+            },
+          ),
+        ],
+      ),
+      body: _buildBody(),
+    );
   }
 
   Widget _buildBody() {
@@ -158,32 +217,81 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _refreshHistory,
-      color: Theme.of(context).colorScheme.secondary,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(8),
-        itemCount: _history.length,
-        separatorBuilder:
-            (context, index) => const Divider(height: 1, color: Colors.grey),
-        itemBuilder: (context, index) {
-          final item = _history[index];
-          return HistoryCardWidget(
-            novelTitle: item['novelTitle'],
-            chapterTitle: item['chapterTitle'],
-            pluginId: item['pluginId'] ?? '',
-            lastRead: DateTime.parse(
-              item['lastRead'] ?? DateTime.now().toIso8601String(),
+    return Column(
+      children: [
+        _buildMetricsWidget(),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _refreshHistory,
+            color: Theme.of(context).colorScheme.secondary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            child: ListView.separated(
+              padding: const EdgeInsets.all(8),
+              itemCount: _history.length,
+              separatorBuilder:
+                  (context, index) =>
+                      const Divider(height: 1, color: Colors.grey),
+              itemBuilder: (context, index) {
+                final item = _history[index];
+                return HistoryCardWidget(
+                  novelTitle: item['novelTitle'],
+                  chapterTitle: item['chapterTitle'],
+                  pluginId: item['pluginId'] ?? '',
+                  lastRead: DateTime.parse(
+                    item['lastRead'] ?? DateTime.now().toIso8601String(),
+                  ),
+                  onTap:
+                      () => _handleHistoryTap(
+                        item['novelId'],
+                        item['pluginId'],
+                        item['chapterId'],
+                      ),
+                );
+              },
             ),
-            onTap:
-                () => _handleHistoryTap(
-                  item['novelId'],
-                  item['pluginId'],
-                  item['chapterId'],
-                ),
-          );
-        },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetricsWidget() {
+    int totalReadingTimeInMinutes = _history.length * 10;
+    int totalChaptersRead = _history.length;
+
+    Map<String, int> novelChapterCounts = {};
+    for (var item in _history) {
+      novelChapterCounts.update(
+        item['novelTitle'],
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
+    }
+
+    String mostReadNovel =
+        novelChapterCounts.entries.isNotEmpty
+            ? novelChapterCounts.entries
+                .reduce((a, b) => a.value > b.value ? a : b)
+                .key
+            : 'Nenhuma';
+
+    return Card(
+      margin: const EdgeInsets.all(8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Estatísticas de Leitura',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 10),
+            Text('Tempo Total de Leitura: $totalReadingTimeInMinutes minutos'),
+            Text('Total de Capítulos Lidos: $totalChaptersRead'),
+            Text('Novel Mais Lida: $mostReadNovel'),
+          ],
+        ),
       ),
     );
   }
