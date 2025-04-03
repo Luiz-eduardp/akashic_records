@@ -308,46 +308,59 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    return GestureDetector(
-      onTap: _toggleUiVisibility,
-      child: Scaffold(
-        backgroundColor: appState.readerSettings.backgroundColor,
-        appBar:
-            _isUiVisible
-                ? ReaderAppBar(
-                  title:
-                      isLoading ||
-                              errorMessage != null ||
-                              currentChapter == null
-                          ? null
-                          : currentChapter!.title,
-                  readerSettings: appState.readerSettings,
-                  onSettingsPressed: () => _showSettingsModal(context),
-                )
-                : null,
-        body:
-            isLoading
-                ? const Center(child: LoadingIndicatorWidget())
-                : errorMessage != null
-                ? Center(child: ErrorMessageWidget(errorMessage: errorMessage!))
-                : Column(
-                  children: [
-                    Expanded(
-                      child: ChapterDisplay(
-                        chapterContent: currentChapter?.content,
-                        readerSettings: appState.readerSettings,
+    return Scaffold(
+      backgroundColor: appState.readerSettings.backgroundColor,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: GestureDetector(
+          onTap: _toggleUiVisibility,
+          child:
+              _isUiVisible
+                  ? ReaderAppBar(
+                    title:
+                        isLoading ||
+                                errorMessage != null ||
+                                currentChapter == null
+                            ? null
+                            : currentChapter!.title,
+                    readerSettings: appState.readerSettings,
+                    onSettingsPressed: () => _showSettingsModal(context),
+                  )
+                  : AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white.withOpacity(0.5),
                       ),
+                      onPressed: _toggleUiVisibility,
                     ),
-                    if (_isUiVisible)
-                      ChapterNavigation(
-                        onPreviousChapter: _goToPreviousChapter,
-                        onNextChapter: _goToNextChapter,
-                        isLoading: isLoading || _isFetchingNextChapter,
-                        readerSettings: appState.readerSettings,
-                      ),
-                  ],
-                ),
+                  ),
+        ),
       ),
+      body:
+          isLoading
+              ? const Center(child: LoadingIndicatorWidget())
+              : errorMessage != null
+              ? Center(child: ErrorMessageWidget(errorMessage: errorMessage!))
+              : Column(
+                children: [
+                  Expanded(
+                    child: ChapterDisplay(
+                      chapterContent: currentChapter?.content,
+                      readerSettings: appState.readerSettings,
+                    ),
+                  ),
+                  if (_isUiVisible)
+                    ChapterNavigation(
+                      onPreviousChapter: _goToPreviousChapter,
+                      onNextChapter: _goToNextChapter,
+                      isLoading: isLoading || _isFetchingNextChapter,
+                      readerSettings: appState.readerSettings,
+                    ),
+                ],
+              ),
     );
   }
 
