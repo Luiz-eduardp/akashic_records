@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:akashic_records/services/plugins/english/boxnovel_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/mtl_service.dart';
@@ -36,19 +37,21 @@ class ReaderSettings {
   Color textColor;
   FontWeight fontWeight;
   CustomColors? customColors;
-  bool focusMode;
+  String? customJs;
+  String? customCss;
 
   ReaderSettings({
-    this.theme = ReaderTheme.light,
-    this.fontSize = 18.0,
-    this.fontFamily = 'Roboto',
+    this.theme = ReaderTheme.dark,
+    this.fontSize = 30.0,
+    this.fontFamily = 'Courier New',
     this.lineHeight = 1.5,
     this.textAlign = TextAlign.justify,
     this.backgroundColor = Colors.white,
     this.textColor = Colors.black,
     this.fontWeight = FontWeight.normal,
     this.customColors,
-    this.focusMode = false,
+    this.customJs,
+    this.customCss,
   });
 
   Map<String, dynamic> toMap() {
@@ -63,7 +66,8 @@ class ReaderSettings {
       'fontWeight': fontWeight.index,
       'customBackgroundColor': customColors?.backgroundColor?.value,
       'customTextColor': customColors?.textColor?.value,
-      'focusMode': focusMode,
+      'customJs': customJs,
+      'customCss': customCss,
     };
   }
 
@@ -90,9 +94,42 @@ class ReaderSettings {
                         : null,
               )
               : null,
-      focusMode: map['focusMode'] ?? false,
+      customJs: map['customJs'],
+      customCss: map['customCss'],
     );
   }
+}
+
+class CustomPlugin {
+  String name;
+  String code;
+  String use;
+  bool enabled;
+  int priority;
+
+  CustomPlugin({
+    required this.name,
+    required this.code,
+    required this.use,
+    this.enabled = true,
+    this.priority = 0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'code': code,
+    'use': use,
+    'enabled': enabled,
+    'priority': priority,
+  };
+
+  factory CustomPlugin.fromJson(Map<String, dynamic> json) => CustomPlugin(
+    name: json['name'],
+    code: json['code'],
+    use: json['use'],
+    enabled: json['enabled'] ?? true,
+    priority: json['priority'] ?? 0,
+  );
 }
 
 class AppState with ChangeNotifier {
@@ -101,8 +138,157 @@ class AppState with ChangeNotifier {
   bool _settingsLoaded = false;
   Set<String> _selectedPlugins = {};
   ReaderSettings _readerSettings = ReaderSettings();
+  List<CustomPlugin> _customPlugins = [];
 
   final Map<String, PluginService> _pluginServices = {};
+
+  final List<CustomPlugin> _defaultPlugins = [
+    CustomPlugin(
+      name: 'Focus Mode',
+      use: 'Duplo toque no texto para ativar e desativar o modo de foco',
+      code: '''
+     (() => {
+  function loadScript(src, callback) {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = callback;
+    document.head.appendChild(script);
+  }
+
+  function createStyle() {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .focus-overlay {
+        position: fixed;
+        top: -10px;
+        left: -2px;
+        right: -2px;
+        height: var(--focus-area-height, 30%);
+        background: rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        z-index: 9999;
+        filter: blur(1px);
+        transition: opacity 0.3s ease;
+      }
+      .focus-overlay-bottom {
+        position: fixed;
+        bottom: -10px;
+        left: -2px;
+        right: -2px;
+        height: var(--focus-area-height, 30%);
+        background: rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        z-index: 9999;
+        filter: blur(1px);
+        transition: opacity 0.3s ease;
+      }
+      .toast {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 14px;
+        z-index: 9999;
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createFocusOverlays() {
+    const focusOverlayTop = document.createElement("div");
+    focusOverlayTop.className = "focus-overlay";
+
+    const focusOverlayBottom = document.createElement("div");
+    focusOverlayBottom.className = "focus-overlay-bottom";
+
+    return { focusOverlayTop, focusOverlayBottom };
+  }
+
+  function createToast() {
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    document.body.appendChild(toast); 
+    return toast;
+  }
+
+  let staticFocusMode = false;
+  const focusAreaHeight = 30;
+  const { focusOverlayTop, focusOverlayBottom } = createFocusOverlays();
+  const toast = createToast();
+
+  function toggleStaticFocusMode() {
+    staticFocusMode = !staticFocusMode;
+
+    if (staticFocusMode) {
+      document.documentElement.style.setProperty(
+        "--focus-area-height",
+        `30%`
+      );
+      document.body.appendChild(focusOverlayTop);
+      document.body.appendChild(focusOverlayBottom);
+      showToast("Focus Mode Activated");
+      adjustOverlayOpacity();
+    } else {
+      if (focusOverlayTop.parentNode) {
+        focusOverlayTop.parentNode.removeChild(focusOverlayTop);
+      }
+      if (focusOverlayBottom.parentNode) {
+        focusOverlayBottom.parentNode.removeChild(focusOverlayBottom);
+      }
+      showToast("Focus Mode Disabled");
+    }
+  }
+
+  function adjustOverlayOpacity() {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    const scrollPosition = scrollTop + windowHeight;
+
+    const topOffset = Math.min(scrollTop / 100, 1);
+    const distanceFromBottom = docHeight - scrollPosition;
+    const bottomOffset = Math.max(distanceFromBottom / 100, 0);
+
+    focusOverlayTop.style.opacity = topOffset.toString();
+    focusOverlayBottom.style.opacity = bottomOffset.toString();
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.style.display = "block";
+
+    setTimeout(() => {
+      toast.style.display = "none";
+    }, 1000);
+  }
+
+  function handleTripleClick(event) {
+    if (event.detail === 3) {
+      toggleStaticFocusMode();
+    }
+  }
+
+  function handleScroll() {
+    if (staticFocusMode) {
+      adjustOverlayOpacity();
+    }
+  }
+
+  createStyle();
+  document.addEventListener("click", handleTripleClick);
+  window.addEventListener("scroll", handleScroll);
+  toggleStaticFocusMode();
+})();
+      ''',
+      enabled: true,
+      priority: 1,
+    ),
+  ];
 
   AppState() {
     _pluginServices['NovelMania'] = NovelMania();
@@ -118,6 +304,7 @@ class AppState with ChangeNotifier {
   bool get settingsLoaded => _settingsLoaded;
   Set<String> get selectedPlugins => _selectedPlugins;
   ReaderSettings get readerSettings => _readerSettings;
+  List<CustomPlugin> get customPlugins => _customPlugins;
 
   Map<String, PluginService> get pluginServices => _pluginServices;
 
@@ -145,6 +332,30 @@ class AppState with ChangeNotifier {
     notifyListeners();
   }
 
+  void addCustomPlugin(CustomPlugin plugin) {
+    _customPlugins.add(plugin);
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
+  void updateCustomPlugin(int index, CustomPlugin plugin) {
+    _customPlugins[index] = plugin;
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
+  void removeCustomPlugin(int index) {
+    _customPlugins.removeAt(index);
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
+  void setCustomPlugins(List<CustomPlugin> plugins) {
+    _customPlugins = plugins;
+    _saveCustomPlugins();
+    notifyListeners();
+  }
+
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -167,6 +378,17 @@ class AppState with ChangeNotifier {
       }
       if (readerSettingsMap.isNotEmpty) {
         _readerSettings = ReaderSettings.fromMap(readerSettingsMap);
+      }
+
+      final customPluginsJson = prefs.getStringList('customPlugins');
+      if (customPluginsJson != null && customPluginsJson.isNotEmpty) {
+        _customPlugins =
+            customPluginsJson
+                .map((json) => CustomPlugin.fromJson(jsonDecode(json)))
+                .toList();
+      } else {
+        _customPlugins = _defaultPlugins;
+        _saveCustomPlugins();
       }
 
       _settingsLoaded = true;
@@ -221,6 +443,17 @@ class AppState with ChangeNotifier {
       }
     } catch (e) {
       debugPrint("Erro ao salvar configurações do leitor: $e");
+    }
+  }
+
+  Future<void> _saveCustomPlugins() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customPluginsJson =
+          _customPlugins.map((plugin) => jsonEncode(plugin.toJson())).toList();
+      await prefs.setStringList('customPlugins', customPluginsJson);
+    } catch (e) {
+      debugPrint("Erro ao salvar plugins customizados: $e");
     }
   }
 }

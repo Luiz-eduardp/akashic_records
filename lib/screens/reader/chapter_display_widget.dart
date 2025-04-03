@@ -1,10 +1,10 @@
-import 'dart:ui';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
-import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as htmlParser;
+import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
@@ -20,12 +20,29 @@ class ChapterDisplay extends StatefulWidget {
   State<ChapterDisplay> createState() => _ChapterDisplayState();
 }
 
-class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAliveClientMixin {
+class _ChapterDisplayState extends State<ChapterDisplay>
+    with AutomaticKeepAliveClientMixin {
   List<String> _paragraphs = [];
   final ItemScrollController _scrollController = ItemScrollController();
-  final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
   int _currentFocusedIndex = 0;
-  bool _isScrolling = false;
+  WebViewController? _webViewController;
+  String _currentHtmlContent = "";
+
+  static const double _headerMargin = 20.0;
+  static const double _bottomMargin = 20.0;
+
+  final RefreshController _refreshController = RefreshController(
+    initialRefresh: false,
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    setState(() {});
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -35,6 +52,75 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
     super.initState();
     _processContent();
     _itemPositionsListener.itemPositions.addListener(_onItemPositionsChanged);
+
+    _webViewController = WebViewController();
+    _initializeWebViewController();
+  }
+
+  Future<void> _initializeWebViewController() async {
+    await _webViewController!.setJavaScriptMode(JavaScriptMode.unrestricted);
+    await _webViewController!.enableZoom(false);
+    await _webViewController!.setBackgroundColor(Colors.transparent);
+
+    _webViewController!.setNavigationDelegate(
+      NavigationDelegate(
+        onPageFinished: (String url) async {
+          await _webViewController!.runJavaScript('''
+            document.addEventListener('touchstart', function(event) {
+              if (event.touches.length > 1) {
+                event.preventDefault();
+              }
+            }, { passive: false });
+
+            document.addEventListener('touchmove', function(event) {
+              if (event.touches.length > 1) {
+                event.preventDefault();
+              }
+            }, { passive: false });
+
+            document.addEventListener('touchend', function(event) {
+              if (event.touches.length > 1) {
+                event.preventDefault();
+              }
+            }, { passive: false });
+
+            document.addEventListener('gesturestart', function(event) {
+              event.preventDefault();
+            });
+
+            document.addEventListener('gesturechange', function(event) {
+              event.preventDefault();
+            });
+
+            document.addEventListener('gestureend', function(event) {
+              event.preventDefault();
+            });
+          ''');
+          _injectCustomJavaScript(widget.readerSettings.customJs);
+
+          final appState = Provider.of<AppState>(context, listen: false);
+          List<CustomPlugin> enabledPlugins =
+              appState.customPlugins.where((plugin) => plugin.enabled).toList();
+
+          enabledPlugins.sort((a, b) => a.priority.compareTo(b.priority));
+
+          for (final plugin in enabledPlugins) {
+            _injectCustomJavaScript(plugin.code);
+          }
+        },
+      ),
+    );
+    await updateWebViewContent();
+  }
+
+  Future<void> _injectCustomJavaScript(String? customJs) async {
+    if (customJs != null && customJs.isNotEmpty) {
+      try {
+        await _webViewController?.runJavaScript(customJs);
+      } catch (e) {
+        debugPrint("Erro ao injetar JavaScript: $e");
+      }
+    }
   }
 
   @override
@@ -43,13 +129,30 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
     if (oldWidget.chapterContent != widget.chapterContent ||
         oldWidget.readerSettings != widget.readerSettings) {
       _processContent();
-      _scrollToIndex(_currentFocusedIndex, animate: false);
+      updateWebViewContent();
+    }
+  }
+
+  void _onItemPositionsChanged() {
+    final positions = _itemPositionsListener.itemPositions.value;
+    if (positions.isNotEmpty) {
+      final firstVisibleIndex = positions
+          .where((position) => position.itemLeadingEdge >= 0)
+          .map((position) => position.index)
+          .reduce((value, element) => value < element ? value : element);
+
+      setState(() {
+        _currentFocusedIndex = firstVisibleIndex;
+      });
     }
   }
 
   @override
   void dispose() {
-    _itemPositionsListener.itemPositions.removeListener(_onItemPositionsChanged);
+    _itemPositionsListener.itemPositions.removeListener(
+      _onItemPositionsChanged,
+    );
+    _refreshController.dispose();
     super.dispose();
   }
 
@@ -67,7 +170,9 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
 
     const selectorsToRemove = ['p:empty', '.ad-container', '.ads'];
     for (final selector in selectorsToRemove) {
-      document.querySelectorAll(selector).forEach((element) => element.remove());
+      document
+          .querySelectorAll(selector)
+          .forEach((element) => element.remove());
     }
 
     document
@@ -75,9 +180,10 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
         .where((element) => element.text.toLowerCase().contains('discord.com'))
         .forEach((element) => element.remove());
 
-    // Remover divs desnecessárias que podem adicionar espaçamento
     document.querySelectorAll('div').forEach((element) {
-      if (element.children.length == 1 && element.attributes.isEmpty && element.text.trim().isEmpty) {
+      if (element.children.length == 1 &&
+          element.attributes.isEmpty &&
+          element.text.trim().isEmpty) {
         element.remove();
       }
     });
@@ -87,19 +193,29 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
 
   void _splitIntoParagraphs(String cleanedContent) {
     final document = htmlParser.parse(cleanedContent);
-    _paragraphs = document.querySelectorAll('p').map((e) => e.innerHtml).toList();
+    _paragraphs =
+        document.querySelectorAll('p').map((e) => e.innerHtml).toList();
+  }
+
+  void _updateFocusedIndex(int delta) {
+    final newIndex = (_currentFocusedIndex + delta).clamp(
+      0,
+      _paragraphs.length - 1,
+    );
+    setState(() {
+      _currentFocusedIndex = newIndex;
+    });
+    if (newIndex > _currentFocusedIndex) {
+      _scrollToIndex(newIndex);
+    } else {
+      _scrollToIndex(newIndex);
+    }
   }
 
   void _scrollToIndex(int index, {bool animate = true}) async {
     if (_paragraphs.isEmpty) return;
 
     final validIndex = index.clamp(0, _paragraphs.length - 1);
-
-    setState(() {
-      _currentFocusedIndex = validIndex;
-    });
-
-    _isScrolling = true;
 
     try {
       await _scrollController.scrollTo(
@@ -108,130 +224,131 @@ class _ChapterDisplayState extends State<ChapterDisplay> with AutomaticKeepAlive
         curve: Curves.easeInOut,
         alignment: 0.0,
       );
-    } finally {
-      _isScrolling = false;
+    } finally {}
+  }
+
+  String _buildHtmlContent(ReaderSettings readerSettings) {
+    final fontWeight =
+        (readerSettings.fontWeight == FontWeight.bold ? 'bold' : 'normal');
+
+    return '''
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=${readerSettings.fontFamily}:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+        <style>
+          body {
+            margin: 40px 20px 20px 20px;
+            padding: 0;
+            font-size: ${readerSettings.fontSize}px;
+            font-family: ${readerSettings.fontFamily}!important;
+            line-height: ${readerSettings.lineHeight};
+            text-align: ${readerSettings.textAlign.toString().split('.').last};
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            background-color: ${_colorToHtmlColor(readerSettings.backgroundColor)};
+            font-weight: $fontWeight;
+            padding-top: ${_headerMargin}px;
+            padding-bottom: ${_bottomMargin}px;
+            word-wrap: break-word; 
+          }
+          h1 {
+            font-size: ${readerSettings.fontSize + 6}px;
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+          }
+          h2 {
+            font-size: ${readerSettings.fontSize + 4}px;
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+          }
+          p {
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            margin-bottom: 1em; 
+          }
+          a {
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+            text-decoration: underline;          }
+          b, strong {
+            font-weight: bold;
+            color: ${_colorToHtmlColor(readerSettings.textColor)};
+          }
+          ${readerSettings.customCss ?? ''}
+        </style>
+      </head>
+      <body>
+        <div class="reader-content">
+            ${_paragraphs.join("<br><br>")}
+        </div>
+      </body>
+      </html>
+    ''';
+  }
+
+  Future<void> updateWebViewContent() async {
+    if (_webViewController == null) return;
+
+    final readerSettings = widget.readerSettings;
+
+    final newHtmlContent = _buildHtmlContent(readerSettings);
+
+    if (newHtmlContent != _currentHtmlContent) {
+      await _webViewController!.loadHtmlString(newHtmlContent);
+      _currentHtmlContent = newHtmlContent;
     }
   }
 
-  void _onItemPositionsChanged() {
-    if (_isScrolling) return;
+  Future<void> _onRefresh() async {
+    _processContent();
+    await updateWebViewContent();
 
-    final positions = _itemPositionsListener.itemPositions.value;
-    if (positions.isNotEmpty) {
-      final mostVisibleIndex = positions.reduce((a, b) {
-        if (a.itemLeadingEdge < 0 && b.itemLeadingEdge >= 0) {
-          return b;
-        } else if (b.itemLeadingEdge < 0 && a.itemLeadingEdge >= 0) {
-          return a;
-        } else {
-          return a.itemLeadingEdge.abs() < b.itemLeadingEdge.abs() ? a : b;
-        }
-      }).index;
-
-      if (mostVisibleIndex != _currentFocusedIndex) {
-        setState(() {
-          _currentFocusedIndex = mostVisibleIndex;
-        });
-      }
-    }
+    _refreshController.refreshCompleted();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final readerSettings = widget.readerSettings;
 
-    return ScrollablePositionedList.builder(
-      itemCount: _paragraphs.length,
-      itemScrollController: _scrollController,
-      itemPositionsListener: _itemPositionsListener,
-      padding: const EdgeInsets.all(16.0),
-      itemBuilder: (context, index) {
-        final isFocused = readerSettings.focusMode && index == _currentFocusedIndex;
-        final paragraph = _paragraphs[index];
-
-        return GestureDetector(
-          onTap: () => _scrollToIndex(index),
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),  // Reduzindo o espaçamento
-            child: AnimatedScale(
-              scale: isFocused ? 1.05 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (readerSettings.focusMode && !isFocused)
-                    Positioned.fill(
-                      child: ClipRect(
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            color: readerSettings.backgroundColor.withOpacity(0.7),
-                          ),
-                        ),
-                      ),
-                    ),
-                  Html(
-                    data: paragraph,
-                    style: {
-                      "body": Style(
-                        margin: Margins.zero, // Removendo margens padrão
-                        padding: HtmlPaddings.zero, // Removendo paddings padrão
-                        fontSize: FontSize(readerSettings.fontSize),
-                        fontFamily: readerSettings.fontFamily,
-                        lineHeight: LineHeight(readerSettings.lineHeight),
-                        textAlign: readerSettings.textAlign,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                        fontWeight: readerSettings.fontWeight,
-                      ),
-                      "h1": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontSize: FontSize(readerSettings.fontSize + 6),
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "h2": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontSize: FontSize(readerSettings.fontSize + 4),
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "p": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "a": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        textDecoration: TextDecoration.underline,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "b": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontWeight: FontWeight.bold,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                      "strong": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontWeight: FontWeight.bold,
-                        color: readerSettings.textColor.withOpacity(readerSettings.focusMode && !isFocused ? 0.4 : 1.0),
-                      ),
-                    },
-                    onLinkTap: (String? url, Map<String, String> attributes, dom.Element? element) {
-                      if (url != null) {
-                        debugPrint("Abrindo URL: $url");
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
+    return Listener(
+      onPointerSignal: (pointerSignal) {
+        if (pointerSignal is PointerScrollEvent) {
+          final scrollDelta = pointerSignal.scrollDelta.dy;
+          _updateFocusedIndex(scrollDelta > 0 ? 1 : -1);
+        }
       },
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: LongPressDraggable(
+          hapticFeedbackOnStart: false,
+          axis: Axis.vertical,
+          dragAnchorStrategy: pointerDragAnchorStrategy,
+          feedback: SizedBox.shrink(),
+          child: Column(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: WebViewWidget(controller: _webViewController!),
+                ),
+              ),
+            ],
+          ),
+          onDragUpdate: (details) {},
+        ),
+      ),
     );
   }
+
+  String _colorToHtmlColor(Color color) {
+    return '#${color.value.toRadixString(16).substring(2)}';
+  }
+}
+
+class RefreshController {
+  RefreshController({required bool initialRefresh});
+
+  void refreshCompleted() {}
+
+  void dispose() {}
 }

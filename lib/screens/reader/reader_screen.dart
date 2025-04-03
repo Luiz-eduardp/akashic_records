@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:akashic_records/screens/reader/reader_settings_modal_widget.dart';
+import 'package:akashic_records/screens/reader/settings/reader_settings_modal_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,6 +37,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final bool _isFetchingNextChapter = false;
   bool _isUiVisible = true;
   Timer? _hideUiTimer;
+  Timer? _tapTimer;
 
   @override
   void initState() {
@@ -48,7 +49,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
         _loadNovel();
       }
     });
-    _startUiHideTimer();
   }
 
   Future<void> _loadNovelAndChapter(String chapterId) async {
@@ -59,6 +59,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void dispose() {
     _mounted = false;
     _hideUiTimer?.cancel();
+    _tapTimer?.cancel();
     super.dispose();
   }
 
@@ -241,15 +242,21 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _toggleUiVisibility() {
+    if (_tapTimer?.isActive ?? false) {
+      return;
+    }
+
     setState(() {
       _isUiVisible = !_isUiVisible;
-
-      if (_isUiVisible) {
-        _startUiHideTimer();
-      } else {
-        _hideUiTimer?.cancel();
-      }
     });
+
+    if (_isUiVisible) {
+      _startUiHideTimer();
+    } else {
+      _hideUiTimer?.cancel();
+    }
+
+    _tapTimer = Timer(const Duration(milliseconds: 200), () {});
   }
 
   void _startUiHideTimer() {
