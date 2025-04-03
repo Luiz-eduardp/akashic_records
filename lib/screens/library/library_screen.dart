@@ -27,10 +27,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
   List<Novel> allNovels = [];
   Set<String> _previousPlugins = {};
   Timer? _debounce;
+  bool _mounted = false;
 
   @override
   void initState() {
     super.initState();
+    _mounted = true;
     _initializeFilters();
     _scrollController.addListener(_scrollListener);
     _loadNovels();
@@ -58,7 +60,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       }
     }
 
-    if (mounted) {
+    if (_mounted) {
       setState(() {
         _filters = initialFilters;
       });
@@ -67,6 +69,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   void dispose() {
+    _mounted = false;
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     _debounce?.cancel();
@@ -85,10 +88,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _loadNovels({bool search = false}) async {
     if (isLoading) return;
 
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
+    if (_mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+    }
 
     try {
       List<Novel> newNovels = [];
@@ -119,23 +124,31 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
       List<Novel> filteredNovels = allNovels;
       if (search && _searchTerm.isNotEmpty) {
-        filteredNovels = allNovels
-            .where((novel) =>
-                novel.title.toLowerCase().contains(_searchTerm.toLowerCase()))
-            .toList();
+        filteredNovels =
+            allNovels
+                .where(
+                  (novel) => novel.title.toLowerCase().contains(
+                    _searchTerm.toLowerCase(),
+                  ),
+                )
+                .toList();
       }
 
-      setState(() {
-        novels = filteredNovels;
-        hasMore = newNovels.isNotEmpty;
-        isLoading = false;
-      });
+      if (_mounted) {
+        setState(() {
+          novels = filteredNovels;
+          hasMore = newNovels.isNotEmpty;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        errorMessage = 'Erro ao carregar novels: $e';
-        hasMore = false;
-        isLoading = false;
-      });
+      if (_mounted) {
+        setState(() {
+          errorMessage = 'Erro ao carregar novels: $e';
+          hasMore = false;
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -146,24 +159,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _refreshNovels() async {
-    setState(() {
-      allNovels.clear();
-      novels.clear();
-      currentPage = 1;
-      hasMore = true;
-      isLoading = false;
-    });
+    if (_mounted) {
+      setState(() {
+        allNovels.clear();
+        novels.clear();
+        currentPage = 1;
+        hasMore = true;
+        isLoading = false;
+      });
+    }
     await _loadNovels(search: _searchTerm.isNotEmpty);
   }
 
   Future<void> _onFilterChanged(Map<String, dynamic> newFilters) async {
-    setState(() {
-      _filters = newFilters;
-      novels.clear();
-      allNovels.clear();
-      currentPage = 1;
-      hasMore = true;
-    });
+    if (_mounted) {
+      setState(() {
+        _filters = newFilters;
+        novels.clear();
+        allNovels.clear();
+        currentPage = 1;
+        hasMore = true;
+      });
+    }
     await _loadNovels();
   }
 
@@ -200,12 +217,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      setState(() {
-        currentPage = 1;
-        novels.clear();
-        hasMore = true;
-        allNovels.clear();
-      });
+      if (_mounted) {
+        setState(() {
+          currentPage = 1;
+          novels.clear();
+          hasMore = true;
+          allNovels.clear();
+        });
+      }
       _loadNovels(search: true);
     });
   }
