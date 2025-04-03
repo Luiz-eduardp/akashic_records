@@ -154,7 +154,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Histórico'),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list),
