@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -72,6 +73,10 @@ class _SettingsScreenState extends State<SettingsScreen>
           );
           _isLoading = false;
         });
+
+        if (_isUpdateAvailable(_currentVersion, _latestVersion)) {
+          await _resetInitialScreenPreference();
+        }
       } else {
         setState(() {
           _latestVersion = 'Erro ao carregar';
@@ -86,6 +91,12 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       print('Erro: $e');
     }
+  }
+
+  Future<void> _resetInitialScreenPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('hasShownInitialScreen');
+    print('hasShownInitialScreen preference reset.');
   }
 
   bool _isUpdateAvailable(String currentVersion, String latestVersion) {
