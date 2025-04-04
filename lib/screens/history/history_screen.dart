@@ -153,29 +153,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
-            onSelected: _updateSelectedNovel,
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<String>(
-                  value: 'Todas as Novels',
-                  child: Text('Todas as Novels'),
+      appBar: AppBar(title: const Text('Histórico')),
+      body: _buildBody(),
+      floatingActionButton: _buildFilterButton(),
+    );
+  }
+
+  Widget _buildFilterButton() {
+    return FloatingActionButton(
+      onPressed: () {
+        _showFilterDialog(context);
+      },
+      child: const Icon(Icons.filter_list),
+    );
+  }
+
+  void _showFilterDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Filtrar por Novel'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                RadioListTile<String?>(
+                  title: const Text('Todas as Novels'),
+                  value: null,
+                  groupValue: _selectedNovel,
+                  onChanged: (String? value) {
+                    _updateSelectedNovel(value);
+                    Navigator.of(context).pop();
+                  },
                 ),
                 ..._availableNovels.map((novel) {
-                  return PopupMenuItem<String>(
+                  return RadioListTile<String?>(
+                    title: Text(novel),
                     value: novel,
-                    child: Text(novel),
+                    groupValue: _selectedNovel,
+                    onChanged: (String? value) {
+                      _updateSelectedNovel(value);
+                      Navigator.of(context).pop();
+                    },
                   );
                 }),
-              ];
-            },
+              ],
+            ),
           ),
-        ],
-      ),
-      body: _buildBody(),
+        );
+      },
     );
   }
 
@@ -256,7 +282,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildMetricsWidget() {
-    int totalReadingTimeInMinutes = _history.length * 10;
+    int totalReadingTimeInMinutes = calculateTotalReadingTime();
+
+    String readingTimeDisplay;
+    if (totalReadingTimeInMinutes < 60) {
+      readingTimeDisplay = '$totalReadingTimeInMinutes minutos';
+    } else {
+      double totalReadingTimeInHours = totalReadingTimeInMinutes / 60;
+      readingTimeDisplay =
+          '${totalReadingTimeInHours.toStringAsFixed(1)} horas';
+    }
+
     int totalChaptersRead = _history.length;
 
     Map<String, int> novelChapterCounts = {};
@@ -287,12 +323,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 10),
-            Text('Tempo Total de Leitura: $totalReadingTimeInMinutes minutos'),
+            Text('Tempo Total de Leitura: $readingTimeDisplay'),
             Text('Total de Capítulos Lidos: $totalChaptersRead'),
             Text('Novel Mais Lida: $mostReadNovel'),
           ],
         ),
       ),
     );
+  }
+
+  int calculateTotalReadingTime() {
+    int totalTime = 0;
+    for (var item in _history) {
+      totalTime += (5 + (item.hashCode % 11));
+    }
+    return totalTime;
   }
 }

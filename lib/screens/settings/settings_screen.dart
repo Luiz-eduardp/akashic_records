@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,17 +16,26 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with TickerProviderStateMixin {
   String _currentVersion = 'Carregando...';
   String _latestVersion = 'Carregando...';
   String? _downloadUrl;
   bool _updateAvailable = false;
   bool _isLoading = true;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _checkVersion();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkVersion() async {
@@ -63,6 +73,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           );
           _isLoading = false;
         });
+
+        if (_isUpdateAvailable(_currentVersion, _latestVersion)) {
+          await _resetInitialScreenPreference();
+        }
       } else {
         setState(() {
           _latestVersion = 'Erro ao carregar';
@@ -79,8 +93,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _resetInitialScreenPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('hasShownInitialScreen');
+    print('hasShownInitialScreen preference reset.');
+  }
+
   bool _isUpdateAvailable(String currentVersion, String latestVersion) {
-    return latestVersion.compareTo('v$currentVersion') > 0;
+    final cleanedLatestVersion =
+        latestVersion.startsWith('v')
+            ? latestVersion.substring(1)
+            : latestVersion;
+    return cleanedLatestVersion.compareTo(currentVersion) > 0;
   }
 
   Future<void> _downloadAndInstall() async {
@@ -98,64 +122,127 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Configurações')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Aparência',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _ThemeSettings(appState: appState, theme: theme),
-              const SizedBox(height: 24),
-              Text(
-                'Atualização',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: const Text('Versão do Aplicativo'),
-                subtitle: Text('Atual: $_currentVersion'),
-              ),
-              ListTile(
-                title: const Text('Última Versão'),
-                subtitle:
-                    _isLoading
-                        ? const Text('Carregando...')
-                        : Text(_latestVersion),
-              ),
-              if (_updateAvailable)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (kIsWeb) {
-                        launchUrl(
-                          Uri.parse(
-                            'https://github.com/AkashicRecordsApp/akashic_records/releases/latest',
-                          ),
-                          mode: LaunchMode.externalApplication,
-                        );
-                      } else {
-                        _downloadAndInstall();
-                      }
-                    },
-                    child: const Text('Atualizar Aplicativo'),
-                  ),
-                ),
-            ],
-          ),
+      appBar: AppBar(
+        title: const Text('Configurações'),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: theme.colorScheme.secondary,
+          labelColor: theme.colorScheme.onPrimary,
+          unselectedLabelColor: theme.colorScheme.onPrimary.withOpacity(0.7),
+          tabs: const [
+            Tab(text: 'Aparência', icon: Icon(Icons.palette)),
+            Tab(text: 'Atualização', icon: Icon(Icons.system_update)),
+          ],
         ),
       ),
+      backgroundColor: theme.colorScheme.background,
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: _ThemeSettings(appState: appState, theme: theme),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  SettingsTile(
+                    title: 'Versão do Aplicativo',
+                    subtitle: 'Atual: $_currentVersion',
+                  ),
+                  SettingsTile(
+                    title: 'Última Versão',
+                    subtitle: _isLoading ? 'Carregando...' : _latestVersion,
+                  ),
+                  if (_updateAvailable)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (kIsWeb) {
+                            launchUrl(
+                              Uri.parse(
+                                'https://github.com/AkashicRecordsApp/akashic_records/releases/latest',
+                              ),
+                              mode: LaunchMode.externalApplication,
+                            );
+                          } else {
+                            _downloadAndInstall();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.secondary,
+                          foregroundColor: theme.colorScheme.onSecondary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                          textStyle: const TextStyle(fontSize: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text('Atualizar Aplicativo'),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: _AboutButton(),
+    );
+  }
+}
+
+class SettingsTile extends StatelessWidget {
+  const SettingsTile({super.key, required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title, style: theme.textTheme.titleMedium),
+      subtitle: Text(
+        subtitle,
+        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+      ),
     );
   }
 }
@@ -180,6 +267,7 @@ class _ThemeSettings extends StatelessWidget {
             appState.setThemeMode(value!);
           },
           activeColor: theme.colorScheme.secondary,
+          controlAffinity: ListTileControlAffinity.platform,
         ),
         RadioListTile<ThemeMode>(
           title: const Text('Claro'),
@@ -189,6 +277,7 @@ class _ThemeSettings extends StatelessWidget {
             appState.setThemeMode(value!);
           },
           activeColor: theme.colorScheme.secondary,
+          controlAffinity: ListTileControlAffinity.platform,
         ),
         RadioListTile<ThemeMode>(
           title: const Text('Escuro'),
@@ -198,6 +287,7 @@ class _ThemeSettings extends StatelessWidget {
             appState.setThemeMode(value!);
           },
           activeColor: theme.colorScheme.secondary,
+          controlAffinity: ListTileControlAffinity.platform,
         ),
         const SizedBox(height: 16),
         Text('Cor de Destaque:', style: theme.textTheme.titleMedium),
@@ -253,8 +343,8 @@ class _ColorButton extends StatelessWidget {
         appState.setAccentColor(color);
       },
       child: Container(
-        width: 30,
-        height: 30,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
@@ -263,7 +353,7 @@ class _ColorButton extends StatelessWidget {
                 appState.accentColor == color
                     ? Colors.black
                     : Colors.transparent,
-            width: 2,
+            width: 3,
           ),
         ),
       ),
@@ -276,8 +366,18 @@ class _AboutButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: () {
           Navigator.push(
@@ -289,6 +389,9 @@ class _AboutButton extends StatelessWidget {
           backgroundColor: theme.colorScheme.secondary,
           foregroundColor: theme.colorScheme.onSecondary,
           minimumSize: const Size(double.infinity, 50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: const Text('Sobre'),
       ),
