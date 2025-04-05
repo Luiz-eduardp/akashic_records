@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -18,7 +19,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
 
     return ListView(
       children: [
-        Text('Tema:', style: Theme.of(context).textTheme.titleMedium),
+        Text('Tema:'.translate, style: Theme.of(context).textTheme.titleMedium),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -37,7 +38,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
             readerSettings.theme == ReaderTheme.darkGreen) ...[
           const SizedBox(height: 20),
           Text(
-            'Cores Customizadas:',
+            'Cores Customizadas:'.translate,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           Row(
@@ -49,7 +50,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
                       readerSettings.customColors?.backgroundColor ??
                       Colors.grey,
                 ),
-                child: const Text('Fundo'),
+                child: Text('Fundo'.translate),
               ),
               const SizedBox(width: 10),
               ElevatedButton(
@@ -58,7 +59,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
                   backgroundColor:
                       readerSettings.customColors?.textColor ?? Colors.grey,
                 ),
-                child: const Text('Texto'),
+                child: Text('Texto'.translate),
               ),
             ],
           ),
@@ -147,7 +148,7 @@ class _AppearanceTabState extends State<AppearanceTab> {
       builder: (BuildContext context) {
         Color tempColor = currentColor;
         return AlertDialog(
-          title: const Text('Escolha uma cor'),
+          title: Text('Escolha uma cor'.translate),
           content: SingleChildScrollView(
             child: ColorPicker(
               pickerColor: currentColor,
@@ -160,13 +161,13 @@ class _AppearanceTabState extends State<AppearanceTab> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'.translate),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('OK'),
+              child: Text('OK'.translate),
               onPressed: () {
                 final updatedCustomColors = CustomColors(
                   backgroundColor:

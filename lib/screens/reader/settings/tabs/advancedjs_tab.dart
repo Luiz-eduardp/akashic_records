@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -36,20 +37,21 @@ class _AdvancedTabState extends State<AdvancedTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'JavaScript Customizado:',
+            'JavaScript Customizado:'.translate,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 10),
           Text(
-            'Classes e tags úteis: .reader-content, p, h1, h2, a, b, strong',
+            'Classes e tags úteis: .reader-content, p, h1, h2, a, b, strong'
+                .translate,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 10),
           TextFormField(
             controller: _customJsController,
             maxLines: 10,
-            decoration: const InputDecoration(
-              hintText: 'Digite seu JavaScript customizado aqui...',
+            decoration: InputDecoration(
+              hintText: 'Digite seu JavaScript customizado aqui...'.translate,
               border: OutlineInputBorder(),
             ),
             onChanged: (value) {},
@@ -72,10 +74,12 @@ class _AdvancedTabState extends State<AdvancedTab> {
               );
               appState.setReaderSettings(newSettings);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('JavaScript customizado salvo!')),
+                SnackBar(
+                  content: Text('JavaScript customizado salvo!'.translate),
+                ),
               );
             },
-            child: const Text('Salvar JavaScript Customizado'),
+            child: Text('Salvar JavaScript Customizado'.translate),
           ),
         ],
       ),
