@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:akashic_records/screens/library/search_bar_widget.dart';
@@ -144,7 +145,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     } catch (e) {
       if (_mounted) {
         setState(() {
-          errorMessage = 'Erro ao carregar novels: $e';
+          errorMessage = 'Erro ao carregar novels: $e'.translate;
           hasMore = false;
           isLoading = false;
         });

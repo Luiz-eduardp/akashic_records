@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class NovelFilterSortWidget extends StatefulWidget {
   final Map<String, dynamic> filters;
@@ -135,14 +136,14 @@ class _NovelFilterSortWidgetState extends State<NovelFilterSortWidget> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: const Text('Voltar para a Biblioteca'),
+                        child: Text('Voltar para a Biblioteca'.translate),
                       ),
                       ElevatedButton(
                         onPressed: () {
                           widget.onFilterChanged(_currentFilters);
                           Navigator.pop(context);
                         },
-                        child: const Text('Aplicar Filtros'),
+                        child: Text('Aplicar Filtros'.translate),
                       ),
                     ],
                   ),
@@ -159,7 +160,7 @@ class _NovelFilterSortWidgetState extends State<NovelFilterSortWidget> {
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () => _showFilterDialog(context),
-      child: const Text('Filtros'),
+      child: Text('Filtros'.translate),
     );
   }
 }
