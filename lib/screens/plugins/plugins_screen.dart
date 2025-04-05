@@ -21,6 +21,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
   ];
 
   final List<String> availablePluginsEn = ['NovelsOnline', 'RoyalRoad'];
+  final List<String> availablePluginsEspanish = ['SkyNovels'];
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +48,15 @@ class _PluginsScreenState extends State<PluginsScreen> {
               context,
               'Inglês',
               availablePluginsEn,
+              selectedPlugins,
+              appState,
+            ),
+            const SizedBox(height: 24),
+
+            _buildPluginSection(
+              context,
+              'Espanhol',
+              availablePluginsEspanish,
               selectedPlugins,
               appState,
             ),
