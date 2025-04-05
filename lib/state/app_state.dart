@@ -49,7 +49,7 @@ class ReaderSettings {
     this.textAlign = TextAlign.justify,
     this.backgroundColor = Colors.white,
     this.textColor = Colors.black,
-    this.fontWeight = FontWeight.normal,
+    this.fontWeight = FontWeight.w900,
     this.customColors,
     this.customJs,
     this.customCss,
