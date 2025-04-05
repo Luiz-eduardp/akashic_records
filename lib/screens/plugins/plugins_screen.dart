@@ -16,6 +16,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'Tsundoku',
     'CentralNovel',
     'MtlNovelPt',
+    'LightNovelBrasil'
   ];
 
   final List<String> availablePluginsEn = ['NovelsOnline', 'RoyalRoad'];
