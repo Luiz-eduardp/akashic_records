@@ -130,26 +130,34 @@ class _SettingsScreenState extends State<SettingsScreen>
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         actions: [
-          DropdownButton<Locale>(
-            value: I18n.currentLocate,
-            icon: const Icon(Icons.language, color: Colors.white),
-            dropdownColor: theme.colorScheme.primary,
-            style: TextStyle(color: theme.colorScheme.onPrimary),
-            items:
-                I18n.supportedLocales.map((Locale locale) {
-              return DropdownMenuItem<Locale>(
-                value: locale,
-                child: Text(locale.languageCode),
-              );
-            }).toList(),
-            onChanged: (Locale? newLocale) async {
-              if (newLocale != null) {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setString('locale', newLocale.languageCode);
-                await I18n.updateLocate(newLocale);
-                widget.onLocaleChanged(newLocale);
-              }
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<Locale>(
+                value: I18n.currentLocate,
+                icon: const Icon(Icons.language, color: Colors.black),
+                dropdownColor: theme.colorScheme.primary,
+                style: TextStyle(color: theme.colorScheme.onPrimary),
+                items:
+                    I18n.supportedLocales.map((Locale locale) {
+                      return DropdownMenuItem<Locale>(
+                        value: locale,
+                        child: Text(
+                          locale.languageCode,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      );
+                    }).toList(),
+                onChanged: (Locale? newLocale) async {
+                  if (newLocale != null) {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('locale', newLocale.languageCode);
+                    await I18n.updateLocate(newLocale);
+                    widget.onLocaleChanged(newLocale);
+                  }
+                },
+              ),
+            ),
           ),
         ],
         bottom: TabBar(
