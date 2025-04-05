@@ -407,8 +407,8 @@ class RoyalRoad implements PluginService {
         chapterJson.map((chapter) {
           try {
             volumeJson.firstWhere((volume) => volume.id == chapter.volumeId);
+          // ignore: empty_catches
           } catch (e) {
-            print('Volume not found for chapter ${chapter.id}');
           }
 
           return Chapter(
