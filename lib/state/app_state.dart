@@ -1,13 +1,17 @@
 import 'dart:convert';
-import 'package:akashic_records/services/plugins/english/boxnovel_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
-import 'package:akashic_records/services/plugins/ptbr/mtl_service.dart';
+import 'package:akashic_records/services/plugins/english/royalroad_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/mtl_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/saikaiscans_service.dart';
+import 'package:akashic_records/services/plugins/spanish/skynovels_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/models/plugin_service.dart';
-import 'package:akashic_records/services/plugins/ptbr/novelmania_service.dart';
-import 'package:akashic_records/services/plugins/ptbr/tsundoku_service.dart';
-import 'package:akashic_records/services/plugins/ptbr/centralnovel_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/novelmania_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/tsundoku_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/centralnovel_service.dart';
 
 enum ReaderTheme {
   light,
@@ -48,7 +52,7 @@ class ReaderSettings {
     this.textAlign = TextAlign.justify,
     this.backgroundColor = Colors.white,
     this.textColor = Colors.black,
-    this.fontWeight = FontWeight.normal,
+    this.fontWeight = FontWeight.w900,
     this.customColors,
     this.customJs,
     this.customCss,
@@ -295,8 +299,12 @@ class AppState with ChangeNotifier {
     _pluginServices['Tsundoku'] = Tsundoku();
     _pluginServices['CentralNovel'] = CentralNovel();
     _pluginServices['MtlNovelPt'] = MtlNovelPt();
-    _pluginServices['BoxNovel'] = BoxNovel();
     _pluginServices['NovelsOnline'] = NovelsOnline();
+    _pluginServices['RoyalRoad'] = RoyalRoad();
+    _pluginServices['LightNovelBrasil'] = LightNovelBrasil();
+    _pluginServices['BlogDoAmonNovels'] = BlogDoAmonNovels();
+    _pluginServices['SkyNovels'] = SkyNovels();
+    _pluginServices['SaikaiScans'] = SaikaiScans();
   }
 
   ThemeMode get themeMode => _themeMode;

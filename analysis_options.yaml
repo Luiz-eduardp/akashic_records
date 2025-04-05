@@ -18,6 +18,8 @@ analyzer:
     constant_identifier_names: ignore
     use_key_in_widget_constructors: ignore
     library_private_types_in_public_api: ignore
+    prefer_interpolation_to_compose_strings: ignore
+    file_names: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

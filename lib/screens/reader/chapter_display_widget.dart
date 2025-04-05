@@ -245,7 +245,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             margin: 40px 20px 20px 20px;
             padding: 0;
             font-size: ${readerSettings.fontSize}px;
-            font-family: ${readerSettings.fontFamily}!important;
+            font-family: ${readerSettings.fontFamily} !important;
             line-height: ${readerSettings.lineHeight};
             text-align: ${readerSettings.textAlign.toString().split('.').last};
             color: ${_colorToHtmlColor(readerSettings.textColor)};

@@ -249,13 +249,19 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
       );
     } else {
       return Scaffold(
+        appBar: AppBar(
+          title: const Text('Changelog da Versão'),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        ),
         body: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(15.0),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: 50),
                 MarkdownBody(
                   data: _body,
                   onTapLink: (text, url, title) {

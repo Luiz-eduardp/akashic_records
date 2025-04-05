@@ -153,7 +153,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Histórico')),
       body: _buildBody(),
       floatingActionButton: _buildFilterButton(),
     );

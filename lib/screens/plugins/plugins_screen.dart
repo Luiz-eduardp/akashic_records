@@ -16,9 +16,13 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'Tsundoku',
     'CentralNovel',
     'MtlNovelPt',
+    'LightNovelBrasil',
+    'BlogDoAmonNovels',
+    'SaikaiScans'
   ];
 
-  final List<String> availablePluginsEn = ['NovelsOnline'];
+  final List<String> availablePluginsEn = ['NovelsOnline', 'RoyalRoad'];
+  final List<String> availablePluginsEspanish = ['SkyNovels'];
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +32,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Plugins'), centerTitle: true),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,6 +49,15 @@ class _PluginsScreenState extends State<PluginsScreen> {
               context,
               'Inglês',
               availablePluginsEn,
+              selectedPlugins,
+              appState,
+            ),
+            const SizedBox(height: 24),
+
+            _buildPluginSection(
+              context,
+              'Espanhol',
+              availablePluginsEspanish,
               selectedPlugins,
               appState,
             ),
@@ -74,36 +87,30 @@ class _PluginsScreenState extends State<PluginsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: plugins.length,
-          itemBuilder: (context, index) {
-            final plugin = plugins[index];
-            return Card(
-              elevation: 2,
-              margin: const EdgeInsets.symmetric(vertical: 4.0),
-              child: CheckboxListTile(
-                title: Text(plugin),
-                value: selectedPlugins.contains(plugin),
-                onChanged: (bool? newValue) {
-                  if (newValue != null) {
-                    final updatedPlugins = Set<String>.from(selectedPlugins);
-                    if (newValue) {
-                      updatedPlugins.add(plugin);
-                    } else {
-                      updatedPlugins.remove(plugin);
-                    }
-                    appState.setSelectedPlugins(updatedPlugins);
+        ...plugins.map((plugin) {
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
+            child: CheckboxListTile(
+              title: Text(plugin),
+              value: selectedPlugins.contains(plugin),
+              onChanged: (bool? newValue) {
+                if (newValue != null) {
+                  final updatedPlugins = Set<String>.from(selectedPlugins);
+                  if (newValue) {
+                    updatedPlugins.add(plugin);
+                  } else {
+                    updatedPlugins.remove(plugin);
                   }
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-                activeColor: theme.colorScheme.secondary,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-            );
-          },
-        ),
+                  appState.setSelectedPlugins(updatedPlugins);
+                }
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              activeColor: theme.colorScheme.secondary,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          );
+        }),
       ],
     );
   }

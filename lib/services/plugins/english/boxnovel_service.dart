@@ -124,7 +124,6 @@ class BoxNovel implements PluginService {
 
   Future<http.Response> safeFetch(String url, {Map<String, String>? headers}) async {
     final mergedHeaders = {...this.headers};
-     // Adicione o User-Agent aqui
     mergedHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     if (headers != null) {
       mergedHeaders.addAll(headers);
