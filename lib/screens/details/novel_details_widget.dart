@@ -3,6 +3,7 @@ import 'package:akashic_records/models/model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'chapter_list_widget.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class NovelDetailsWidget extends StatefulWidget {
   final Novel novel;
@@ -173,7 +174,9 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Text(
-                        _showFullSynopsis ? 'Ver Menos' : 'Ver Mais',
+                        _showFullSynopsis
+                            ? 'Ver Menos'.translate
+                            : 'Ver Mais'.translate,
                         style: TextStyle(
                           color: theme.colorScheme.secondary,
                           fontWeight: FontWeight.bold,
@@ -197,14 +200,14 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Continuar Leitura'),
+                      child: Text('Continuar Leitura'.translate),
                     ),
                   ),
 
                 const SizedBox(height: 16),
 
                 Text(
-                  'Capítulos:',
+                  'Capítulos:'.translate,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter/material.dart';
 
 class SearchBarWidget extends StatefulWidget {
@@ -51,7 +52,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     final Color fillColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     final Color textColor = isDarkMode ? Colors.white : Colors.black;
     final Color iconColor = isDarkMode ? Colors.white70 : Colors.grey[600]!;
-    final Color borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
+    final Color borderColor =
+        isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -62,7 +64,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               controller: _controller,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
-                hintText: 'Buscar novels...',
+                hintText: 'Buscar novels...'.translate,
                 hintStyle: TextStyle(color: iconColor),
                 prefixIcon: Icon(Icons.search, color: iconColor),
                 border: OutlineInputBorder(
@@ -79,18 +81,19 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 ),
                 filled: true,
                 fillColor: fillColor,
-                suffixIcon: _hasText
-                    ? IconButton(
-                        icon: Icon(Icons.clear, color: iconColor),
-                        onPressed: () {
-                          _controller.clear();
-                          widget.onSearch("");
-                          setState(() {
-                            _hasText = false;
-                          });
-                        },
-                      )
-                    : null,
+                suffixIcon:
+                    _hasText
+                        ? IconButton(
+                          icon: Icon(Icons.clear, color: iconColor),
+                          onPressed: () {
+                            _controller.clear();
+                            widget.onSearch("");
+                            setState(() {
+                              _hasText = false;
+                            });
+                          },
+                        )
+                        : null,
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 15.0,
                   horizontal: 20.0,

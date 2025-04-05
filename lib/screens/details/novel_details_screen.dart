@@ -9,6 +9,7 @@ import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/screens/details/loading_details_skeleton_widget.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class NovelDetailsScreen extends StatefulWidget {
   final Novel novel;
@@ -57,7 +58,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
       if (plugin == null) {
         setState(() {
-          errorMessage = 'Plugin não encontrado para esta novel.';
+          errorMessage = 'Plugin não encontrado para esta novel.'.translate;
           isLoading = false;
         });
         return;
@@ -74,12 +75,13 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
         });
       } else {
         setState(() {
-          errorMessage = 'Falha ao carregar detalhes da novel do plugin.';
+          errorMessage =
+              'Falha ao carregar detalhes da novel do plugin.'.translate;
         });
       }
     } catch (e) {
       setState(() {
-        errorMessage = 'Erro ao carregar detalhes da novel: $e';
+        errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
       });
       debugPrint("Erro ao carregar detalhes da novel: $e");
     } finally {
@@ -150,8 +152,8 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
             onPressed: _toggleFavorite,
             tooltip:
                 isFavorite
-                    ? 'Remover dos Favoritos'
-                    : 'Adicionar aos Favoritos',
+                    ? 'Remover dos Favoritos'.translate
+                    : 'Adicionar aos Favoritos'.translate,
           ),
         ],
       ),
@@ -168,7 +170,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
     } else if (errorMessage != null) {
       return Center(child: ErrorMessageWidget(errorMessage: errorMessage!));
     } else if (_detailedNovel == null) {
-      return const Center(child: Text("Detalhes não encontrados"));
+      return Center(child: Text("Detalhes não encontrados".translate));
     } else {
       return NovelDetailsWidget(
         novel: _detailedNovel!,

@@ -1,14 +1,15 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class TextTab extends StatelessWidget {
   final List<String> fontOptions = [
-    'Pinyon Script, cursive',
-    'Lexend Giga, sans-serif',
-    'Arial',
-    'Times New Roman',
-    'Courier New',
+    'Pinyon Script, cursive'.translate,
+    'Lexend Giga, sans-serif'.translate,
+    'Arial'.translate,
+    'Times New Roman'.translate,
+    'Courier New'.translate,
   ];
 
   TextTab({super.key});
@@ -20,7 +21,7 @@ class TextTab extends StatelessWidget {
     return ListView(
       children: [
         Text(
-          'Tamanho da Fonte:',
+          'Tamanho da Fonte:'.translate,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         Slider(
@@ -46,7 +47,10 @@ class TextTab extends StatelessWidget {
             appState.setReaderSettings(newSettings);
           },
         ),
-        Text('Fonte:', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Fonte:'.translate,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -56,7 +60,10 @@ class TextTab extends StatelessWidget {
                   .toList(),
         ),
         const SizedBox(height: 20),
-        Text('Espaçamento:', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Espaçamento:'.translate,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         Slider(
           value: readerSettings.lineHeight,
           min: 1.0,
@@ -81,7 +88,7 @@ class TextTab extends StatelessWidget {
           },
         ),
         Text(
-          'Alinhamento do Texto:',
+          'Alinhamento do Texto:'.translate,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         Row(
@@ -93,7 +100,10 @@ class TextTab extends StatelessWidget {
             _buildTextAlignButton(TextAlign.justify, context),
           ],
         ),
-        Text('Peso da Fonte:', style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          'Peso da Fonte:'.translate,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/widgets/novel_card.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class FavoriteGridWidget extends StatelessWidget {
   final List<Novel> favoriteNovels;
@@ -17,7 +18,7 @@ class FavoriteGridWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (favoriteNovels.isEmpty) {
-      return const Center(child: Text("Você não possui favoritos!"));
+      return Center(child: Text("Você não possui favoritos!".translate));
     }
 
     return RefreshIndicator(

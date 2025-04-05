@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -110,26 +111,28 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Adicionar Plugin'),
+          title: Text('Adicionar Plugin'.translate),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Nome'),
+                  decoration: InputDecoration(labelText: 'Nome'.translate),
                   onChanged: (value) {
                     name = value;
                   },
                 ),
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Forma de uso'),
+                  decoration: InputDecoration(
+                    labelText: 'Forma de uso'.translate,
+                  ),
                   onChanged: (value) {
                     use = value;
                   },
                 ),
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Código JavaScript',
+                  decoration: InputDecoration(
+                    labelText: 'Código JavaScript'.translate,
                   ),
                   maxLines: 5,
                   onChanged: (value) {
@@ -141,13 +144,13 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'.translate),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('Salvar'),
+              child: Text('Salvar'.translate),
               onPressed: () {
                 if (name.isNotEmpty && code.isNotEmpty) {
                   final appState = Provider.of<AppState>(
@@ -176,28 +179,30 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Editar Plugin'),
+          title: Text('Editar Plugin'.translate),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Nome'),
+                  decoration: InputDecoration(labelText: 'Nome'.translate),
                   initialValue: plugin.name,
                   onChanged: (value) {
                     name = value;
                   },
                 ),
                 TextFormField(
-                  decoration: const InputDecoration(labelText: 'Forma de uso'),
+                  decoration: InputDecoration(
+                    labelText: 'Forma de uso'.translate,
+                  ),
                   initialValue: plugin.use,
                   onChanged: (value) {
                     use = value;
                   },
                 ),
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Código JavaScript',
+                  decoration: InputDecoration(
+                    labelText: 'Código JavaScript'.translate,
                   ),
                   maxLines: 5,
                   initialValue: plugin.code,
@@ -210,13 +215,13 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'.translate),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('Salvar'),
+              child: Text('Salvar'.translate),
               onPressed: () {
                 if (name.isNotEmpty && code.isNotEmpty) {
                   final appState = Provider.of<AppState>(
@@ -248,17 +253,19 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Deletar Plugin'),
-          content: const Text('Tem certeza que deseja deletar este plugin?'),
+          title: Text('Deletar Plugin'.translate),
+          content: Text(
+            'Tem certeza que deseja deletar este plugin?'.translate,
+          ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'.translate),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
-              child: const Text('Deletar'),
+              child: Text('Deletar'.translate),
               onPressed: () {
                 final appState = Provider.of<AppState>(context, listen: false);
                 appState.removeCustomPlugin(index);
