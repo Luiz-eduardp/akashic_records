@@ -216,7 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 children: [
                   SettingsTile(
                     title: 'Versão do Aplicativo'.translate,
-                    subtitle: 'Atual: $_currentVersion'.translate,
+                    subtitle: _currentVersion,
                   ),
                   SettingsTile(
                     title: 'Última Versão'.translate,
