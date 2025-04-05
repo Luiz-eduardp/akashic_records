@@ -27,7 +27,7 @@ void main() async {
 
   await I18n.initialize(
     defaultLocale: initialLocale,
-    supportLocales: [Locale('en'), Locale('pt')],
+    supportLocales: [Locale('en'), Locale('pt'),Locale('es')],
   );
 
   runApp(
