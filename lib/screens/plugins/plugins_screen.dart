@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class PluginsScreen extends StatefulWidget {
   const PluginsScreen({super.key});
@@ -18,7 +19,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'MtlNovelPt',
     'LightNovelBrasil',
     'BlogDoAmonNovels',
-    'SaikaiScans'
+    'SaikaiScans',
   ];
 
   final List<String> availablePluginsEn = ['NovelsOnline', 'RoyalRoad'];
@@ -31,7 +32,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     final selectedPlugins = appState.selectedPlugins;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Plugins'), centerTitle: true),
+      appBar: AppBar(title: Text('Plugins'.translate), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -39,7 +40,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
           children: [
             _buildPluginSection(
               context,
-              'Português (Brasil)',
+              'Português (Brasil)'.translate,
               availablePluginsPtBr,
               selectedPlugins,
               appState,
@@ -47,16 +48,15 @@ class _PluginsScreenState extends State<PluginsScreen> {
             const SizedBox(height: 24),
             _buildPluginSection(
               context,
-              'Inglês',
+              'Inglês'.translate,
               availablePluginsEn,
               selectedPlugins,
               appState,
             ),
             const SizedBox(height: 24),
-
             _buildPluginSection(
               context,
-              'Espanhol',
+              'Espanhol'.translate,
               availablePluginsEspanish,
               selectedPlugins,
               appState,
@@ -121,7 +121,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Não encontrou o que procurava?',
+          'Não encontrou o que procurava?'.translate,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -133,7 +133,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 'https://github.com/AkashicRecordsApp/akashic_records/issues/new/choose',
               ),
           child: Text(
-            'Peça para adicionarmos um novo plugin!',
+            'Peça para adicionarmos um novo plugin!'.translate,
             style: TextStyle(
               color: theme.colorScheme.primary,
               decoration: TextDecoration.underline,
@@ -142,7 +142,8 @@ class _PluginsScreenState extends State<PluginsScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Clique no link acima para abrir uma solicitação no GitHub.',
+          'Clique no link acima para abrir uma solicitação no GitHub.'
+              .translate,
           style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
         ),
       ],
