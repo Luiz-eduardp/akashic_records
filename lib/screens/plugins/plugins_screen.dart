@@ -97,7 +97,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
