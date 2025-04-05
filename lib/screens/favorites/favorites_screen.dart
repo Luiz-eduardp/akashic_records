@@ -8,6 +8,7 @@ import 'package:akashic_records/widgets/loading_indicator_widget.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -76,7 +77,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     } catch (e) {
       if (_mounted) {
         setState(() {
-          errorMessage = 'Erro ao carregar favoritos: $e';
+          errorMessage = 'Erro ao carregar favoritos: $e'.translate;
         });
       }
     } finally {
@@ -135,7 +136,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 onPressed: () => _loadFavorites(true),
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                tooltip: 'Recarregar Favoritos',
+                tooltip: 'Recarregar Favoritos'.translate,
                 child: const Icon(Icons.refresh),
               )
               : null,
@@ -159,7 +160,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Nenhuma novel adicionada aos favoritos.',
+              'Nenhuma novel adicionada aos favoritos.'.translate,
               style: TextStyle(
                 fontSize: 16,
                 color: Theme.of(context).colorScheme.outline,
