@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
 import 'package:akashic_records/services/plugins/english/royalroad_service.dart';
+import 'package:akashic_records/services/plugins/ptbr/blogdoamonnovels_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/lightnovelbrasil_service.dart';
 import 'package:akashic_records/services/plugins/ptbr/mtl_service.dart';
 import 'package:flutter/material.dart';
@@ -299,6 +300,7 @@ class AppState with ChangeNotifier {
     _pluginServices['NovelsOnline'] = NovelsOnline();
     _pluginServices['RoyalRoad'] = RoyalRoad();
     _pluginServices['LightNovelBrasil'] = LightNovelBrasil();
+    _pluginServices['BlogDoAmonNovels'] = BlogDoAmonNovels();
   }
 
   ThemeMode get themeMode => _themeMode;
