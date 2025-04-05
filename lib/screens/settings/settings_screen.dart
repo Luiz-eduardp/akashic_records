@@ -137,13 +137,15 @@ class _SettingsScreenState extends State<SettingsScreen>
             style: TextStyle(color: theme.colorScheme.onPrimary),
             items:
                 I18n.supportedLocales.map((Locale locale) {
-                  return DropdownMenuItem<Locale>(
-                    value: locale,
-                    child: Text(locale.languageCode),
-                  );
-                }).toList(),
+              return DropdownMenuItem<Locale>(
+                value: locale,
+                child: Text(locale.languageCode),
+              );
+            }).toList(),
             onChanged: (Locale? newLocale) async {
               if (newLocale != null) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('locale', newLocale.languageCode);
                 await I18n.updateLocate(newLocale);
                 widget.onLocaleChanged(newLocale);
               }

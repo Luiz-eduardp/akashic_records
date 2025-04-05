@@ -20,10 +20,16 @@ void main() async {
 
   final appState = AppState();
   await appState.initialize();
+
+  final prefs = await SharedPreferences.getInstance();
+  final savedLocale = prefs.getString('locale');
+  Locale initialLocale = savedLocale != null ? Locale(savedLocale) : Locale('pt');
+
   await I18n.initialize(
-    defaultLocale: Locale('pt'),
+    defaultLocale: initialLocale,
     supportLocales: [Locale('en'), Locale('pt')],
   );
+
   runApp(
     ChangeNotifierProvider(create: (context) => appState, child: const MyApp()),
   );
@@ -106,14 +112,21 @@ class _MyAppState extends State<MyApp> {
   }
 
   bool _isUpdateAvailable(String currentVersion, String latestVersion) {
-    final cleanedLatestVersion =
-        latestVersion.startsWith('v')
-            ? latestVersion.substring(1)
-            : latestVersion;
-    return cleanedLatestVersion.compareTo(currentVersion) > 0;
+    final currentParts = currentVersion.split('.').map(int.parse).toList();
+    final latestParts = latestVersion.split('.').map(int.parse).toList();
+
+    for (int i = 0; i < currentParts.length; i++) {
+      if (i >= latestParts.length) break;
+      if (currentParts[i] < latestParts[i]) return true;
+      if (currentParts[i] > latestParts[i]) return false;
+    }
+
+    return latestParts.length > currentParts.length;
   }
 
-  void _updateLocale(Locale newLocale) {
+  Future<void> _updateLocale(Locale newLocale) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('locale', newLocale.languageCode);
     setState(() {
       I18n.updateLocate(newLocale);
     });
