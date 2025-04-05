@@ -1,5 +1,6 @@
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -21,7 +22,7 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 2,
       centerTitle: true,
       title: Text(
-        title ?? "Carregando...",
+        title ?? "Carregando...".translate,
         style: TextStyle(
           color: readerSettings.textColor,
           fontWeight: FontWeight.w500,
@@ -31,7 +32,7 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           icon: Icon(Icons.settings, color: readerSettings.textColor),
           onPressed: onSettingsPressed,
-          tooltip: 'Configurações de Leitura',
+          tooltip: 'Configurações de Leitura'.translate,
         ),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class ChapterNavigation extends StatelessWidget {
   final VoidCallback onPreviousChapter;
@@ -32,10 +33,10 @@ class ChapterNavigation extends StatelessWidget {
               textStyle: const TextStyle(fontSize: 16),
             ),
             child: Row(
-              children: const [
-                Icon(Icons.arrow_back_ios, size: 16),
-                SizedBox(width: 8),
-                Text('Anterior'),
+              children: [
+                const Icon(Icons.arrow_back_ios, size: 16),
+                const SizedBox(width: 8),
+                Text('Anterior'.translate),
               ],
             ),
           ),
@@ -49,10 +50,10 @@ class ChapterNavigation extends StatelessWidget {
               textStyle: const TextStyle(fontSize: 16),
             ),
             child: Row(
-              children: const [
-                Text('Próximo'),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward_ios, size: 16),
+              children: [
+                Text('Próximo'.translate),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_ios, size: 16),
               ],
             ),
           ),
