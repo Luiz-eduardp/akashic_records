@@ -296,7 +296,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     if (newHtmlContent != _currentHtmlContent) {
       await _webViewController!.loadHtmlString(newHtmlContent);
       _currentHtmlContent = newHtmlContent;
-      print(newHtmlContent);
     }
   }
 
