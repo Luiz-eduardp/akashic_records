@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/screens/home_screen.dart';
 import 'package:akashic_records/screens/plugins/plugins_screen.dart';
 import 'package:akashic_records/screens/settings/settings_screen.dart';
 import 'package:akashic_records/themes/app_themes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +20,10 @@ void main() async {
 
   final appState = AppState();
   await appState.initialize();
-
+  await I18n.initialize(
+    defaultLocale: Locale('pt'),
+    supportLocales: [Locale('en'), Locale('pt')],
+  );
   runApp(
     ChangeNotifierProvider(create: (context) => appState, child: const MyApp()),
   );
@@ -108,13 +113,31 @@ class _MyAppState extends State<MyApp> {
     return cleanedLatestVersion.compareTo(currentVersion) > 0;
   }
 
+  void _updateLocale(Locale newLocale) {
+    setState(() {
+      I18n.updateLocate(newLocale);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
     if (_isLoading) {
-      return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: appState.accentColor),
+          ),
+        ),
+        locale: I18n.currentLocate,
+        supportedLocales: I18n.supportedLocales,
+        localizationsDelegates: const [
+          I18nDelegate(),
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
       );
     }
 
@@ -136,14 +159,23 @@ class _MyAppState extends State<MyApp> {
     }
 
     return MaterialApp(
+      locale: I18n.currentLocate,
+      supportedLocales: I18n.supportedLocales,
+      localizationsDelegates: const [
+        I18nDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
       debugShowCheckedModeBanner: false,
-      title: 'Akashic Records',
+      title: 'Akashic Records'.translate,
       themeMode: appState.themeMode,
       theme: AppThemes.lightTheme(appState.accentColor),
       darkTheme: AppThemes.darkTheme(appState.accentColor),
       home: homeScreen,
       routes: {
-        '/settings': (context) => const SettingsScreen(),
+        '/settings':
+            (context) => SettingsScreen(onLocaleChanged: _updateLocale),
         '/plugins': (context) => const PluginsScreen(),
       },
     );
@@ -165,8 +197,8 @@ class InitialLoadingScreen extends StatefulWidget {
 }
 
 class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
-  String _body = 'Carregando...';
-  String _uploader = 'Carregando...';
+  String _body = 'Carregando...'.translate;
+  String _uploader = 'Carregando...'.translate;
   String _avatarUrl = '';
   bool _isLoading = true;
 
@@ -199,16 +231,16 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
         });
       } else {
         setState(() {
-          _body = 'Erro ao carregar';
-          _uploader = 'Erro ao carregar';
+          _body = 'Erro ao carregar'.translate;
+          _uploader = 'Erro ao carregar'.translate;
           _isLoading = false;
         });
         print('Erro ao buscar releases: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
-        _body = 'Erro ao carregar';
-        _uploader = 'Erro ao carregar';
+        _body = 'Erro ao carregar'.translate;
+        _uploader = 'Erro ao carregar'.translate;
         _isLoading = false;
       });
       print('Erro: $e');
@@ -240,7 +272,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
               const CircularProgressIndicator(),
               const SizedBox(height: 16),
               Text(
-                'Carregando dados do GitHub...',
+                'Carregando dados do GitHub...'.translate,
                 style: TextStyle(color: Theme.of(context).hintColor),
               ),
             ],
@@ -250,7 +282,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
     } else {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Changelog da Versão'),
+          title: Text('Changelog da Versão'.translate),
           centerTitle: true,
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -273,7 +305,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Enviado por:',
+                  'Enviado por:'.translate,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -305,7 +337,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Atualizar Aplicativo'),
+                      child: Text('Atualizar Aplicativo'.translate),
                     ),
                   ),
                 const SizedBox(height: 32),
@@ -319,7 +351,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                         ),
                       );
                     },
-                    child: const Text('Continuar'),
+                    child: Text('Continuar'.translate),
                   ),
                 ),
               ],
