@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/advancedjs_tab.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/appearance_tab.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/customcss_tab.dart';
@@ -42,7 +43,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Configurações de Leitura',
+            'Configurações de Leitura'.translate,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -50,12 +51,12 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
           const SizedBox(height: 20),
           TabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(text: 'Aparência'),
-              Tab(text: 'Texto'),
-              Tab(text: 'JS'),
-              Tab(text: 'CSS'),
-              Tab(text: 'Plugins'),
+            tabs: [
+              Tab(text: 'Aparência'.translate),
+              Tab(text: 'Texto'.translate),
+              Tab(text: 'JS'.translate),
+              Tab(text: 'CSS'.translate),
+              Tab(text: 'Plugins'.translate),
             ],
           ),
           SizedBox(
@@ -76,7 +77,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Salvar'),
+              child: Text('Salvar'.translate),
             ),
           ),
           const SizedBox(height: 20),

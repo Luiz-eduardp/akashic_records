@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -77,7 +78,7 @@ class LoadingDetailsSkeletonWidget extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              Text('Capítulos:', style: theme.textTheme.titleMedium),
+              Text('Capítulos:'.translate, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
 
               ListView.separated(

@@ -3,6 +3,7 @@ import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/screens/history/history_card_widget.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({Key? key});
@@ -163,6 +164,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       onPressed: () {
         _showFilterDialog(context);
       },
+      tooltip: 'Filtrar'.translate,
       child: const Icon(Icons.filter_list),
     );
   }
@@ -172,12 +174,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Filtrar por Novel'),
+          title: Text('Filtrar por Novel'.translate),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 RadioListTile<String?>(
-                  title: const Text('Todas as Novels'),
+                  title: Text('Todas as Novels'.translate),
                   value: null,
                   groupValue: _selectedNovel,
                   onChanged: (String? value) {
@@ -221,7 +223,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Seu histórico está vazio.',
+              'Seu histórico está vazio.'.translate,
               style: TextStyle(
                 fontSize: 18,
                 color: Theme.of(context).colorScheme.outline,
@@ -230,7 +232,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Comece a ler para ver seus livros aqui.',
+              'Comece a ler para ver seus livros aqui.'.translate,
               style: TextStyle(
                 fontSize: 14,
                 color: Theme.of(context).colorScheme.outline,
@@ -285,11 +287,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     String readingTimeDisplay;
     if (totalReadingTimeInMinutes < 60) {
-      readingTimeDisplay = '$totalReadingTimeInMinutes minutos';
+      readingTimeDisplay = '$totalReadingTimeInMinutes minutos'.translate;
     } else {
       double totalReadingTimeInHours = totalReadingTimeInMinutes / 60;
       readingTimeDisplay =
-          '${totalReadingTimeInHours.toStringAsFixed(1)} horas';
+          '${totalReadingTimeInHours.toStringAsFixed(1)} horas'.translate;
     }
 
     int totalChaptersRead = _history.length;
@@ -308,7 +310,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ? novelChapterCounts.entries
                 .reduce((a, b) => a.value > b.value ? a : b)
                 .key
-            : 'Nenhuma';
+            : 'Nenhuma'.translate;
 
     return Card(
       margin: const EdgeInsets.all(8.0),
@@ -318,7 +320,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Estatísticas de Leitura',
+              'Estatísticas de Leitura'.translate,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 10),

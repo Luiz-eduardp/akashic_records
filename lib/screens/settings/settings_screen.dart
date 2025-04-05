@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
@@ -10,7 +11,9 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, required this.onLocaleChanged});
+
+  final Function(Locale) onLocaleChanged;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -18,8 +21,8 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen>
     with TickerProviderStateMixin {
-  String _currentVersion = 'Carregando...';
-  String _latestVersion = 'Carregando...';
+  String _currentVersion = 'Carregando...'.translate;
+  String _latestVersion = 'Carregando...'.translate;
   String? _downloadUrl;
   bool _updateAvailable = false;
   bool _isLoading = true;
@@ -79,14 +82,14 @@ class _SettingsScreenState extends State<SettingsScreen>
         }
       } else {
         setState(() {
-          _latestVersion = 'Erro ao carregar';
+          _latestVersion = 'Erro ao carregar'.translate;
           _isLoading = false;
         });
         print('Erro ao buscar releases: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
-        _latestVersion = 'Erro ao carregar';
+        _latestVersion = 'Erro ao carregar'.translate;
         _isLoading = false;
       });
       print('Erro: $e');
@@ -123,17 +126,51 @@ class _SettingsScreenState extends State<SettingsScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configurações'),
+        title: Text('Configurações'.translate),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<Locale>(
+                value: I18n.currentLocate,
+                icon: const Icon(Icons.language, color: Colors.black),
+                dropdownColor: theme.colorScheme.primary,
+                style: TextStyle(color: theme.colorScheme.onPrimary),
+                items:
+                    I18n.supportedLocales.map((Locale locale) {
+                      return DropdownMenuItem<Locale>(
+                        value: locale,
+                        child: Text(
+                          locale.languageCode,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      );
+                    }).toList(),
+                onChanged: (Locale? newLocale) async {
+                  if (newLocale != null) {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('locale', newLocale.languageCode);
+                    await I18n.updateLocate(newLocale);
+                    widget.onLocaleChanged(newLocale);
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: theme.colorScheme.secondary,
           labelColor: theme.colorScheme.onPrimary,
           unselectedLabelColor: theme.colorScheme.onPrimary.withOpacity(0.7),
-          tabs: const [
-            Tab(text: 'Aparência', icon: Icon(Icons.palette)),
-            Tab(text: 'Atualização', icon: Icon(Icons.system_update)),
+          tabs: [
+            Tab(text: 'Aparência'.translate, icon: const Icon(Icons.palette)),
+            Tab(
+              text: 'Atualização'.translate,
+              icon: const Icon(Icons.system_update),
+            ),
           ],
         ),
       ),
@@ -178,12 +215,13 @@ class _SettingsScreenState extends State<SettingsScreen>
               child: Column(
                 children: [
                   SettingsTile(
-                    title: 'Versão do Aplicativo',
-                    subtitle: 'Atual: $_currentVersion',
+                    title: 'Versão do Aplicativo'.translate,
+                    subtitle: _currentVersion,
                   ),
                   SettingsTile(
-                    title: 'Última Versão',
-                    subtitle: _isLoading ? 'Carregando...' : _latestVersion,
+                    title: 'Última Versão'.translate,
+                    subtitle:
+                        _isLoading ? 'Carregando...'.translate : _latestVersion,
                   ),
                   if (_updateAvailable)
                     Padding(
@@ -213,7 +251,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Atualizar Aplicativo'),
+                        child: Text('Atualizar Aplicativo'.translate),
                       ),
                     ),
                 ],
@@ -258,9 +296,9 @@ class _ThemeSettings extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tema:', style: theme.textTheme.titleMedium),
+        Text('Tema:'.translate, style: theme.textTheme.titleMedium),
         RadioListTile<ThemeMode>(
-          title: const Text('Sistema'),
+          title: Text('Sistema'.translate),
           value: ThemeMode.system,
           groupValue: appState.themeMode,
           onChanged: (ThemeMode? value) {
@@ -270,7 +308,7 @@ class _ThemeSettings extends StatelessWidget {
           controlAffinity: ListTileControlAffinity.platform,
         ),
         RadioListTile<ThemeMode>(
-          title: const Text('Claro'),
+          title: Text('Claro'.translate),
           value: ThemeMode.light,
           groupValue: appState.themeMode,
           onChanged: (ThemeMode? value) {
@@ -280,7 +318,7 @@ class _ThemeSettings extends StatelessWidget {
           controlAffinity: ListTileControlAffinity.platform,
         ),
         RadioListTile<ThemeMode>(
-          title: const Text('Escuro'),
+          title: Text('Escuro'.translate),
           value: ThemeMode.dark,
           groupValue: appState.themeMode,
           onChanged: (ThemeMode? value) {
@@ -290,7 +328,7 @@ class _ThemeSettings extends StatelessWidget {
           controlAffinity: ListTileControlAffinity.platform,
         ),
         const SizedBox(height: 16),
-        Text('Cor de Destaque:', style: theme.textTheme.titleMedium),
+        Text('Cor de Destaque:'.translate, style: theme.textTheme.titleMedium),
         _ColorPalette(appState: appState, theme: theme),
       ],
     );
@@ -393,7 +431,7 @@ class _AboutButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text('Sobre'),
+        child: Text('Sobre'.translate),
       ),
     );
   }

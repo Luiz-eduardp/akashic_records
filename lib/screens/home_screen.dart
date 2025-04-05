@@ -5,6 +5,7 @@ import 'package:akashic_records/screens/history/history_screen.dart';
 import 'package:akashic_records/widgets/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,10 +41,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Akashic Records',
+        title: 'Akashic Records'.translate,
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'Opções',
+            tooltip: 'Opções'.translate,
             onSelected: (value) {
               if (value == 'settings') {
                 Navigator.pushNamed(context, '/settings');
@@ -54,16 +55,16 @@ class _HomeScreenState extends State<HomeScreen> {
             itemBuilder: (BuildContext context) {
               return [
                 _buildPopupMenuItem(
-                  'Configurações',
+                  'Configurações'.translate,
                   Icons.settings,
                   'settings',
-                  tooltip: 'Configurações do aplicativo',
+                  tooltip: 'Configurações do aplicativo'.translate,
                 ),
                 _buildPopupMenuItem(
-                  'Plugins',
+                  'Plugins'.translate,
                   Icons.extension,
                   'plugins',
-                  tooltip: 'Gerenciar plugins',
+                  tooltip: 'Gerenciar plugins'.translate,
                 ),
               ];
             },
@@ -81,18 +82,18 @@ class _HomeScreenState extends State<HomeScreen> {
         children: const [LibraryScreen(), FavoritesScreen(), HistoryScreen()],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.library_books),
-            label: 'Biblioteca',
+            icon: const Icon(Icons.library_books),
+            label: 'Biblioteca'.translate,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favoritos',
+            icon: const Icon(Icons.favorite),
+            label: 'Favoritos'.translate,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Histórico',
+            icon: const Icon(Icons.history),
+            label: 'Histórico'.translate,
           ),
         ],
         currentIndex: _selectedIndex,

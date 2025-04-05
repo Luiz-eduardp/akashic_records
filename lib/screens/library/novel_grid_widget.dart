@@ -1,3 +1,4 @@
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/widgets/novel_card.dart';
@@ -49,7 +50,7 @@ class NovelGridWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      "Nenhuma novel encontrada.",
+                      "Nenhuma novel encontrada.".translate,
                       style: TextStyle(color: Theme.of(context).disabledColor),
                     ),
                   ],

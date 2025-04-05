@@ -14,6 +14,7 @@ import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:akashic_records/widgets/loading_indicator_widget.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String novelId;
@@ -88,7 +89,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       } else {
         setState(() {
           if (!_mounted) return;
-          errorMessage = 'Erro: Nenhum capítulo encontrado.';
+          errorMessage = 'Erro: Nenhum capítulo encontrado.'.translate;
           isLoading = false;
         });
       }
@@ -149,13 +150,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
         }
       } else {
         setState(() {
-          errorMessage = 'Novel não encontrada em nenhum plugin selecionado.';
+          errorMessage =
+              'Novel não encontrada em nenhum plugin selecionado.'.translate;
         });
       }
     } catch (e) {
       setState(() {
         if (!_mounted) return;
-        errorMessage = 'Erro ao carregar novel: $e';
+        errorMessage = 'Erro ao carregar novel: $e'.translate;
         isLoading = false;
       });
     } finally {
@@ -196,14 +198,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
       } else {
         setState(() {
           if (!_mounted) return;
-          errorMessage = 'Erro: Plugin inválido.';
+          errorMessage = 'Erro: Plugin inválido.'.translate;
           isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
         if (!_mounted) return;
-        errorMessage = 'Erro ao carregar capítulo: $e';
+        errorMessage = 'Erro ao carregar capítulo: $e'.translate;
         isLoading = false;
       });
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class ChapterListWidget extends StatefulWidget {
   final List<Chapter> chapters;
@@ -211,9 +212,9 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               Expanded(
                 child: TextField(
                   controller: _searchController,
-                  decoration: const InputDecoration(
-                    labelText: 'Pesquisar Capítulo',
-                    prefixIcon: Icon(Icons.search),
+                  decoration: InputDecoration(
+                    labelText: 'Pesquisar Capítulo'.translate,
+                    prefixIcon: const Icon(Icons.search),
                   ),
                   onChanged: (_) => _searchChapters(),
                 ),
@@ -224,7 +225,9 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                 ),
                 onPressed: _toggleSortOrder,
                 tooltip:
-                    _isAscending ? 'Ordenar Decrescente' : 'Ordenar Crescente',
+                    _isAscending
+                        ? 'Ordenar Decrescente'.translate
+                        : 'Ordenar Crescente'.translate,
               ),
             ],
           ),
@@ -299,9 +302,13 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     ],
                   );
                 } else {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16.0),
-                    child: Center(child: CircularProgressIndicator()),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.secondary,
+                      ),
+                    ),
                   );
                 }
               },
