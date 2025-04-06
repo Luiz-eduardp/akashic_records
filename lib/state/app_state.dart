@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
+import 'package:akashic_records/services/plugins/english/reapersscan_service.dart';
 import 'package:akashic_records/services/plugins/english/royalroad_service.dart';
 import 'package:akashic_records/services/plugins/english/webnovel_servce.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
@@ -307,6 +308,7 @@ class AppState with ChangeNotifier {
     _pluginServices['SkyNovels'] = SkyNovels();
     _pluginServices['SaikaiScans'] = SaikaiScans();
     _pluginServices['Webnovel'] = Webnovel();
+    _pluginServices['ReaperScans'] = ReaperScans();
   }
 
   ThemeMode get themeMode => _themeMode;
