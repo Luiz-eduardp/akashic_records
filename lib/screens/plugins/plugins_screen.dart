@@ -26,6 +26,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'NovelsOnline',
     'RoyalRoad',
     'Webnovel',
+    'ReaperScans',
   ];
   final List<String> availablePluginsEspanish = ['SkyNovels'];
 
