@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:akashic_records/i18n/i18n.dart';
 
 class HistoryCardWidget extends StatelessWidget {
   final String novelTitle;
@@ -50,7 +49,7 @@ class HistoryCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                "Capítulo: $chapterTitle".translate,
+                chapterTitle,
                 style: TextStyle(fontSize: 16, color: secondaryTextColor),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -68,7 +67,7 @@ class HistoryCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "Plugin: $pluginId".translate,
+                pluginId,
                 style: TextStyle(fontSize: 12, color: pluginTextColor),
               ),
             ],
