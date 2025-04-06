@@ -22,7 +22,11 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'SaikaiScans',
   ];
 
-  final List<String> availablePluginsEn = ['NovelsOnline', 'RoyalRoad'];
+  final List<String> availablePluginsEn = [
+    'NovelsOnline',
+    'RoyalRoad',
+    'Webnovel',
+  ];
   final List<String> availablePluginsEspanish = ['SkyNovels'];
 
   @override
