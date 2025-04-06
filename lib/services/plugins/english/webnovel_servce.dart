@@ -1,3 +1,5 @@
+// ignore_for_file: dead_code
+
 import 'dart:async';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
