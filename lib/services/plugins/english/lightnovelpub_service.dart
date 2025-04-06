@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
+import 'package:akashic_records/models/plugin_service.dart';
+import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:dio/dio.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -12,14 +15,30 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-class LightNovelPub {
-  final String id = 'LightNovelPub';
-  final String name = 'Light Novel Pub';
+class LightNovelPub implements PluginService {
+  @override
+  String get name => 'LightNovelPub';
+
+  String get version => '1.0.0';
+
+  String get icon => 'src/pt-br/lightnovelpub/icon.png';
+
+  String get id => 'LightNovelPub';
+
+  String get nameService => 'LightNovelPub';
+
   final String baseURL = 'https://www.lightnovelpub.com';
-  final String version = '1.0.0';
   final Dio dio = Dio();
-  static const String _userAgent =
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
+  final Random _random = Random();
+
+  final List<String> _userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Edg/120.0.2210.144',
+  ];
 
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Sem%20Capa';
@@ -29,7 +48,7 @@ class LightNovelPub {
     dio.options.headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'User-Agent': _userAgent,
+      'User-Agent': _userAgents[0],
     };
   }
 
@@ -41,348 +60,339 @@ class LightNovelPub {
     return baseURL + path;
   }
 
-  Future<Response> _fetchApi(String url) async {
-    final response = await dio.get(
-      url,
-      options: Options(headers: {'User-Agent': _userAgent}),
-    );
-    if (response.statusCode == 200) {
-      return response;
-    } else {
-      throw Exception(
-        'Failed to load data from: $url, status code: ${response.statusCode}',
+  Future<Response> _fetchApi(
+    String url, {
+    BuildContext? context,
+    int retries = 3,
+  }) async {
+    try {
+      await Future.delayed(Duration(milliseconds: 500 + _random.nextInt(1500)));
+
+      final response = await dio.get(
+        url,
+        options: Options(
+          validateStatus: (status) => true,
+          headers: {
+            'User-Agent': _userAgents[_random.nextInt(_userAgents.length)],
+          },
+        ),
       );
+
+      if (response.statusCode == 200) {
+        return response;
+      } else if (response.statusCode == 403 && retries > 0) {
+        print('Received 403, retrying... ($retries retries left)');
+        await Future.delayed(
+          Duration(seconds: (4 - retries) * 2 + _random.nextInt(3)),
+        );
+        return _fetchApi(url, context: context, retries: retries - 1);
+      } else {
+        print(
+          'Request to $url failed with status code: ${response.statusCode}',
+        );
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to load data: Status code ${response.statusCode}',
+              ),
+            ),
+          );
+        }
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+        );
+      }
+    } catch (e) {
+      print('Error in _fetchApi: $e');
+      if (context != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
+      }
+      rethrow;
     }
   }
 
   Future<List<Novel>> _parseNovelList(String url) async {
-    final response = await _fetchApi(url);
-    final body = response.data;
-    final document = parse(body);
+    try {
+      final response = await _fetchApi(url);
+      final body = response.data;
+      final document = parse(body);
 
-    final novelElements = document.querySelectorAll('div.novel-list-item');
+      final novelElements = document.querySelectorAll('div.novel-list-item');
 
-    List<Novel> novels = [];
-    for (final element in novelElements) {
-      final titleElement = element.querySelector('.novel-title a');
-      final title = titleElement?.text.trim() ?? '';
-      final link = _shrinkURL(titleElement?.attributes['href'] ?? '');
-      final coverElement = element.querySelector('.novel-cover img');
-      final cover = coverElement?.attributes['data-src'] ?? defaultCover;
-      final author =
-          element.querySelector('.novel-author')?.text.trim() ?? 'Unknown';
+      List<Novel> novels = [];
+      for (final element in novelElements) {
+        try {
+          final titleElement = element.querySelector('.novel-title a');
+          final title = titleElement?.text.trim() ?? '';
+          final link = _shrinkURL(titleElement?.attributes['href'] ?? '');
+          final coverElement = element.querySelector('.novel-cover img');
+          final cover = coverElement?.attributes['data-src'] ?? defaultCover;
+          final author =
+              element.querySelector('.novel-author')?.text.trim() ?? 'Unknown';
 
-      if (title.isNotEmpty && link.isNotEmpty) {
-        novels.add(
-          Novel(
-            id: link,
-            title: title,
-            coverImageUrl: cover,
-            author: author,
-            description: '',
-            genres: [],
-            chapters: [],
-            artist: '',
-            statusString: '',
-            pluginId: name,
-          ),
-        );
+          if (title.isNotEmpty && link.isNotEmpty) {
+            novels.add(
+              Novel(
+                id: link,
+                title: title,
+                coverImageUrl: cover,
+                author: author,
+                description: '',
+                genres: [],
+                chapters: [],
+                artist: '',
+                statusString: '',
+                pluginId: name,
+              ),
+            );
+          }
+        } catch (e) {
+          print('Erro ao processar item da lista: $e');
+        }
       }
+      return novels;
+    } catch (e) {
+      print('Erro ao obter lista de novels: $e');
+      return [];
     }
-    return novels;
   }
 
+  @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     final url = '$baseURL/browse/most-popular-novel/all/$pageNo?page=$pageNo';
-    return await _parseNovelList(url);
+    try {
+      return await _parseNovelList(url);
+    } catch (e) {
+      print('Erro ao obter novels populares: $e');
+      return [];
+    }
   }
 
   Future<List<Novel>> recentNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     final url =
         '$baseURL/browse/recently-updated-novel/all/$pageNo?page=$pageNo';
-    return await _parseNovelList(url);
+    try {
+      return await _parseNovelList(url);
+    } catch (e) {
+      print('Erro ao obter novels recentes: $e');
+      return [];
+    }
   }
 
+  @override
   Future<List<Novel>> searchNovels(
     String searchTerm,
     int pageNo, {
     Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
-    final url = '$baseURL/lnsearchlive';
+    try {
+      final url = '$baseURL/lnsearchlive';
 
-    final link = '$baseURL/search';
-    final response = await dio.get(
-      link,
-      options: Options(headers: {'User-Agent': _userAgent}),
-    );
-    final document = parse(response.data);
-    final verifytoken =
-        document
-            .querySelector(
-              "#novelSearchForm input[name=__LNRequestVerifyToken]",
-            )
-            ?.attributes['value'];
+      final link = '$baseURL/search';
+      final response = await _fetchApi(link);
+      final document = parse(response.data);
+      final verifytoken =
+          document
+              .querySelector(
+                "#novelSearchForm input[name=__LNRequestVerifyToken]",
+              )
+              ?.attributes['value'];
 
-    if (verifytoken == null) {
-      throw Exception('LNRequestVerifyToken not found');
+      if (verifytoken == null) {
+        throw Exception('LNRequestVerifyToken not found');
+      }
+
+      final formData = FormData.fromMap({'inputContent': searchTerm});
+
+      final searchResponse = await dio.post(
+        url,
+        data: formData,
+        options: Options(
+          headers: {
+            'LNRequestVerifyToken': verifytoken,
+            'User-Agent': _userAgents[_random.nextInt(_userAgents.length)],
+          },
+        ),
+      );
+
+      final resultView = searchResponse.data['resultview'];
+      if (resultView != null) {
+        final searchDocument = parse(resultView);
+        final novelElements = searchDocument.querySelectorAll('.novel-item a');
+
+        List<Novel> novels = [];
+        for (final element in novelElements) {
+          final titleElement = element.querySelector(
+            'div.item-body .novel-title',
+          );
+          final title = titleElement?.text.trim() ?? '';
+          final link = _shrinkURL(element.attributes['href'] ?? '');
+          final coverElement = element.querySelector('div.novel-cover img');
+          final cover = coverElement?.attributes['src'] ?? defaultCover;
+
+          if (title.isNotEmpty && link.isNotEmpty) {
+            novels.add(
+              Novel(
+                id: link,
+                title: title,
+                coverImageUrl: cover,
+                author: '',
+                description: '',
+                genres: [],
+                chapters: [],
+                artist: '',
+                statusString: '',
+                pluginId: name,
+              ),
+            );
+          }
+        }
+        return novels;
+      } else {
+        throw Exception('Search results not found in response');
+      }
+    } catch (e) {
+      print('Erro na busca de novels: $e');
+      return [];
     }
+  }
 
-    final formData = FormData.fromMap({'inputContent': searchTerm});
+  @override
+  Future<Novel> parseNovel(String novelPath, {BuildContext? context}) async {
+    try {
+      final response = await _fetchApi(_expandURL(novelPath));
+      final document = parse(response.data);
 
-    final searchResponse = await dio.post(
-      url,
-      data: formData,
-      options: Options(
-        headers: {
-          'LNRequestVerifyToken': verifytoken,
-          'User-Agent': _userAgent,
-        },
-      ),
-    );
+      final title =
+          document.querySelector('.novel-title')?.text.trim() ?? 'Sem título';
+      final coverElement = document.querySelector('.novel-cover img');
+      final cover = coverElement?.attributes['data-src'] ?? defaultCover;
+      final author =
+          document.querySelector('.novel-author')?.text.trim() ??
+          'Desconhecido';
+      final description =
+          document.querySelector('.novel-summary')?.text.trim() ??
+          'Sem descrição';
+      final genres =
+          document
+              .querySelectorAll('.novel-genres a')
+              .map((e) => e.text.trim())
+              .toList();
 
-    final resultView = searchResponse.data['resultview'];
-    if (resultView != null) {
-      final searchDocument = parse(resultView);
-      final novelElements = searchDocument.querySelectorAll('.novel-item a');
+      final statusSpan = document.querySelector('.novel-stats span.status');
+      String statusString = statusSpan?.text.trim() ?? 'Unknown';
 
-      List<Novel> novels = [];
-      for (final element in novelElements) {
-        final titleElement = element.querySelector(
-          'div.item-body .novel-title',
-        );
-        final title = titleElement?.text.trim() ?? '';
-        final link = _shrinkURL(element.attributes['href'] ?? '');
-        final coverElement = element.querySelector('div.novel-cover img');
-        final cover = coverElement?.attributes['src'] ?? defaultCover;
+      NovelStatus status;
+      if (statusString.contains('Ongoing')) {
+        status = NovelStatus.Ongoing;
+      } else if (statusString.contains('Completed')) {
+        status = NovelStatus.Completed;
+      } else {
+        status = NovelStatus.Unknown;
+      }
 
-        if (title.isNotEmpty && link.isNotEmpty) {
-          novels.add(
-            Novel(
-              id: link,
-              title: title,
-              coverImageUrl: cover,
-              author: '',
-              description: '',
-              genres: [],
-              chapters: [],
-              artist: '',
-              statusString: '',
-              pluginId: name,
+      final List<Chapter> chapters = [];
+      final chapterElements = document.querySelectorAll('.chapter-list li a');
+      int order = 0;
+      for (final chapterElement in chapterElements) {
+        order++;
+        final chapterPath = _shrinkURL(chapterElement.attributes['href'] ?? '');
+        final chapterTitle =
+            chapterElement.querySelector('.chapter-title')?.text.trim() ?? '';
+
+        if (chapterPath.isNotEmpty && chapterTitle.isNotEmpty) {
+          chapters.add(
+            Chapter(
+              id: chapterPath,
+              title: chapterTitle,
+              order: order,
+              content: '',
+              releaseDate: '',
+              chapterNumber: null,
             ),
           );
         }
       }
-      return novels;
-    } else {
-      throw Exception('Search results not found in response');
+      chapters.sort((a, b) => a.order.compareTo(b.order));
+
+      return Novel(
+        id: novelPath,
+        title: title,
+        coverImageUrl: cover,
+        author: author,
+        description: description,
+        genres: genres,
+        status: status,
+        chapters: chapters,
+        artist: '',
+        statusString: '',
+        pluginId: nameService,
+      );
+    } catch (e) {
+      print('Erro ao processar os detalhes da novel: $e');
+      return Novel(
+        pluginId: id,
+        id: novelPath,
+        title: 'Failed to Load',
+        coverImageUrl: '',
+        author: '',
+        description: '',
+        genres: [],
+        chapters: [],
+        artist: '',
+        statusString: '',
+      );
     }
   }
 
-  Future<Novel> parseNovel(String novelPath) async {
-    final response = await _fetchApi(_expandURL(novelPath));
-    final document = parse(response.data);
+  @override
+  Future<String> parseChapter(
+    String chapterPath, {
+    BuildContext? context,
+  }) async {
+    try {
+      final response = await _fetchApi(_expandURL(chapterPath));
+      final document = parse(response.data);
 
-    final title =
-        document.querySelector('.novel-title')?.text.trim() ?? 'Sem título';
-    final coverElement = document.querySelector('.novel-cover img');
-    final cover = coverElement?.attributes['data-src'] ?? defaultCover;
-    final author =
-        document.querySelector('.novel-author')?.text.trim() ?? 'Desconhecido';
-    final description =
-        document.querySelector('.novel-summary')?.text.trim() ??
-        'Sem descrição';
-    final genres =
-        document
-            .querySelectorAll('.novel-genres a')
-            .map((e) => e.text.trim())
-            .toList();
+      final chapterContentElement = document.querySelector(
+        'div.chapter-content',
+      );
 
-    final statusSpan = document.querySelector('.novel-stats span.status');
-    String statusString = statusSpan?.text.trim() ?? 'Unknown';
+      if (chapterContentElement != null) {
+        chapterContentElement
+            .querySelectorAll('div[id^="div-gpt-ad"]')
+            .forEach((el) => el.remove());
+        chapterContentElement
+            .querySelectorAll('div.hidden')
+            .forEach((el) => el.remove());
+        chapterContentElement
+            .querySelectorAll('div.ads-holder')
+            .forEach((el) => el.remove());
 
-    NovelStatus status;
-    if (statusString.contains('Ongoing')) {
-      status = NovelStatus.Ongoing;
-    } else if (statusString.contains('Completed')) {
-      status = NovelStatus.Completed;
-    } else {
-      status = NovelStatus.Unknown;
-    }
-
-    final List<Chapter> chapters = [];
-    final chapterElements = document.querySelectorAll('.chapter-list li a');
-    int order = 0;
-    for (final chapterElement in chapterElements) {
-      order++;
-      final chapterPath = _shrinkURL(chapterElement.attributes['href'] ?? '');
-      final chapterTitle =
-          chapterElement.querySelector('.chapter-title')?.text.trim() ?? '';
-
-      if (chapterPath.isNotEmpty && chapterTitle.isNotEmpty) {
-        chapters.add(
-          Chapter(
-            id: chapterPath,
-            title: chapterTitle,
-            order: order,
-            content: '',
-            releaseDate: '',
-            chapterNumber: null,
-          ),
-        );
+        return chapterContentElement.innerHtml;
+      } else {
+        throw Exception('Chapter content not found at $chapterPath');
       }
-    }
-    chapters.sort((a, b) => a.order.compareTo(b.order));
-
-    return Novel(
-      id: novelPath,
-      title: title,
-      coverImageUrl: cover,
-      author: author,
-      description: description,
-      genres: genres,
-      status: status,
-      chapters: chapters,
-      artist: '',
-      statusString: '',
-      pluginId: name,
-    );
-  }
-
-  Future<String> parseChapter(String chapterPath) async {
-    final response = await _fetchApi(_expandURL(chapterPath));
-    final document = parse(response.data);
-
-    final chapterContentElement = document.querySelector('div.chapter-content');
-
-    if (chapterContentElement != null) {
-      chapterContentElement
-          .querySelectorAll('div[id^="div-gpt-ad"]')
-          .forEach((el) => el.remove());
-      chapterContentElement
-          .querySelectorAll('div.hidden')
-          .forEach((el) => el.remove());
-      chapterContentElement
-          .querySelectorAll('div.ads-holder')
-          .forEach((el) => el.remove());
-
-      return chapterContentElement.innerHtml;
-    } else {
-      throw Exception('Chapter content not found at $chapterPath');
+    } catch (e) {
+      print('Erro ao processar o capítulo: $e');
+      return 'Erro ao carregar o conteúdo do capítulo.';
     }
   }
 
-  String createFilterUrl(
-    Map<String, dynamic>? filters,
-    String order,
-    int page,
-  ) {
-    String genre = "genre-all-04061342";
-    String orderBy = "order-new";
-    String status = "status-all";
-
-    if (filters != null) {
-      if (filters.containsKey('genres') && filters['genres'] != null) {
-        final genreValues = filters['genres']['value'];
-        if (genreValues is List && genreValues.isNotEmpty) {
-          genre = getGenreValue(genreValues.first);
-        }
-      }
-
-      if (filters.containsKey('order') && filters['order'] != null) {
-        final orderValue = filters['order']['value'];
-        if (orderValue is String && orderValue.isNotEmpty) {
-          orderBy = getOrderByValue(orderValue);
-        }
-      }
-
-      if (filters.containsKey('status') && filters['status'] != null) {
-        final statusValue = filters['status']['value'];
-        if (statusValue is String && statusValue.isNotEmpty) {
-          status = getStatusValue(statusValue);
-        }
-      }
-    }
-    final url = '$baseURL/browse/$genre/$orderBy/$status/?page=$page';
-    print("URL gerada: $url");
-    return url;
-  }
-
-  String getOrderByValue(String key) {
-    const filterOrderbyValues = {
-      'default': 'order-new',
-      'a-z': 'order-az',
-      'z-a': 'order-za',
-      'latest-update': 'order-updated',
-      'latest-added': 'order-new',
-      'popular': 'order-popular',
-    };
-    return filterOrderbyValues[key] ?? 'order-new';
-  }
-
-  String getStatusValue(String key) {
-    const filterStatusValues = {
-      'all': 'status-all',
-      'ongoing': 'status-ongoing',
-      'on-hiatus': 'status-hiatus',
-      'completed': 'status-completed',
-    };
-    return filterStatusValues[key] ?? 'status-all';
-  }
-
-  String getGenreValue(String key) {
-    const filterGenresValues = {
-      'all': "genre-all-04061342",
-      'action': "genre-action-04061342",
-      'adventure': "genre-adventure-04061342",
-      'drama': "genre-drama-04061342",
-      'fantasy': "genre-fantasy-04061342",
-      'harem': "genre-harem-04061342",
-      'martial-arts': "genre-martial-arts-10032131",
-      'mature': "genre-mature-04061342",
-      'romance': "genre-romance-04061342",
-      'tragedy': "genre-tragedy-10032131",
-      'xuanhuan': "genre-xuanhuan-10032131",
-      'ecchi': "genre-ecchi-04061342",
-      'comedy': "genre-comedy-10032131",
-      'slice-of-life': "genre-slice-of-life-04061342",
-      'mystery': "genre-mystery-10032131",
-      'supernatural': "genre-supernatural-10032131",
-      'psychological': "genre-psychological-10032131",
-      'sci-fi': "genre-sci-fi-04061342",
-      'xianxia': "genre-xianxia-04061342",
-      'school-life': "genre-school-life-10032131",
-      'josei': "genre-josei-04061342",
-      'wuxia': "genre-wuxia-04061342",
-      'shounen': "genre-shounen-10032131",
-      'horror': "genre-horror-04061342",
-      'mecha': "genre-mecha-10032131",
-      'historical': "genre-historical-04061342",
-      'shoujo': "genre-shoujo-10032131",
-      'adult': "genre-adult-04061342",
-      'seinen': "genre-seinen-04061342",
-      'sports': "genre-sports-10032131",
-      'lolicon': "genre-lolicon-10032131",
-      'gender-bender': "genre-gender-bender-04061342",
-      'shounen-ai': "genre-shounen-ai-10032131",
-      'yaoi': "genre-yaoi-04061342",
-      'video-games': "genre-video-games-04061342",
-      'smut': "genre-smut-04061342",
-      'magical-realism': "genre-magical-realism-10032131",
-      'eastern-fantasy': "genre-eastern-fantasy-04061342",
-      'contemporary-romance': "genre-contemporary-romance-10032131",
-      'fantasy-romance': "genre-fantasy-romance-10032131",
-      'shoujo-ai': "genre-shoujo-ai-10032131",
-      'yuri': "genre-yuri-10032131",
-    };
-    return filterGenresValues[key] ?? key;
-  }
-
+  @override
   Map<String, dynamic> get filters => {
     'order': {
       'label': 'Ordenar por',
