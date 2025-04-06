@@ -283,17 +283,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildMetricsWidget() {
-    int totalReadingTimeInMinutes = calculateTotalReadingTime();
-
-    String readingTimeDisplay;
-    if (totalReadingTimeInMinutes < 60) {
-      readingTimeDisplay = '$totalReadingTimeInMinutes minutos'.translate;
-    } else {
-      double totalReadingTimeInHours = totalReadingTimeInMinutes / 60;
-      readingTimeDisplay =
-          '${totalReadingTimeInHours.toStringAsFixed(1)} horas'.translate;
-    }
-
+   
     int totalChaptersRead = _history.length;
 
     Map<String, int> novelChapterCounts = {};
@@ -324,7 +314,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 10),
-            Text('Tempo Total de Leitura: $readingTimeDisplay'),
             Text('Total de Capítulos Lidos: $totalChaptersRead'),
             Text('Novel Mais Lida: $mostReadNovel'),
           ],
