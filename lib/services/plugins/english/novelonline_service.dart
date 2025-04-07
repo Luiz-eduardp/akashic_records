@@ -192,14 +192,18 @@ class NovelsOnline implements PluginService {
         }
       });
 
+      int chapterNumber = 1;
       novel.chapters =
           $.querySelectorAll('ul.chapter-chs > li > a').map((e) {
             final a = e.attributes['href'];
-            return Chapter(
+            final chapter = Chapter(
               id: a?.replaceAll(site, '') ?? '',
               title: e.text,
               content: '',
+              chapterNumber: chapterNumber,
             );
+            chapterNumber++;
+            return chapter;
           }).toList();
 
       return novel;
