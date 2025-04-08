@@ -85,21 +85,27 @@ class _SettingsScreenState extends State<SettingsScreen>
           _latestVersion = 'Erro ao carregar'.translate;
           _isLoading = false;
         });
-        print('Erro ao buscar releases: ${response.statusCode}');
+        if (kDebugMode) {
+          print('Erro ao buscar releases: ${response.statusCode}');
+        }
       }
     } catch (e) {
       setState(() {
         _latestVersion = 'Erro ao carregar'.translate;
         _isLoading = false;
       });
-      print('Erro: $e');
+      if (kDebugMode) {
+        print('Erro: $e');
+      }
     }
   }
 
   Future<void> _resetInitialScreenPreference() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('hasShownInitialScreen');
-    print('hasShownInitialScreen preference reset.');
+    if (kDebugMode) {
+      print('hasShownInitialScreen preference reset.');
+    }
   }
 
   bool _isUpdateAvailable(String currentVersion, String latestVersion) {
@@ -127,17 +133,22 @@ class _SettingsScreenState extends State<SettingsScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text('Configurações'.translate),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
+        backgroundColor: theme.colorScheme.surfaceVariant,
+        foregroundColor: theme.colorScheme.onSurfaceVariant,
+        surfaceTintColor: theme.colorScheme.surfaceVariant,
+        scrolledUnderElevation: 3,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<Locale>(
                 value: I18n.currentLocate,
-                icon: const Icon(Icons.language, color: Colors.black),
-                dropdownColor: theme.colorScheme.primary,
-                style: TextStyle(color: theme.colorScheme.onPrimary),
+                icon: Icon(
+                  Icons.language,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                dropdownColor: theme.colorScheme.surface,
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                 items:
                     I18n.supportedLocales.map((Locale locale) {
                       return DropdownMenuItem<Locale>(
@@ -162,9 +173,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: theme.colorScheme.secondary,
-          labelColor: theme.colorScheme.onPrimary,
-          unselectedLabelColor: theme.colorScheme.onPrimary.withOpacity(0.7),
+          indicatorColor: theme.colorScheme.primary,
+          labelColor: theme.colorScheme.onSurface,
+          unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
           tabs: [
             Tab(text: 'Aparência'.translate, icon: const Icon(Icons.palette)),
             Tab(
@@ -175,92 +186,88 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
       ),
       backgroundColor: theme.colorScheme.background,
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(16),
-              child: _ThemeSettings(appState: appState, theme: theme),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  SettingsTile(
-                    title: 'Versão do Aplicativo'.translate,
-                    subtitle: _currentVersion,
-                  ),
-                  SettingsTile(
-                    title: 'Última Versão'.translate,
-                    subtitle:
-                        _isLoading ? 'Carregando...'.translate : _latestVersion,
-                  ),
-                  if (_updateAvailable)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (kIsWeb) {
-                            launchUrl(
-                              Uri.parse(
-                                'https://github.com/AkashicRecordsApp/akashic_records/releases/latest',
-                              ),
-                              mode: LaunchMode.externalApplication,
-                            );
-                          } else {
-                            _downloadAndInstall();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.secondary,
-                          foregroundColor: theme.colorScheme.onSecondary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          textStyle: const TextStyle(fontSize: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text('Atualizar Aplicativo'.translate),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      body: SafeArea(
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildAppearanceTab(theme, appState),
+            _buildUpdateTab(theme),
+          ],
+        ),
       ),
       bottomNavigationBar: _AboutButton(),
+    );
+  }
+
+  Widget _buildAppearanceTab(ThemeData theme, AppState appState) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Card(
+        elevation: 1,
+        color: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: _ThemeSettings(appState: appState, theme: theme),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUpdateTab(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Card(
+        elevation: 1,
+        color: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SettingsTile(
+                title: 'Versão do Aplicativo'.translate,
+                subtitle: _currentVersion,
+              ),
+              SettingsTile(
+                title: 'Última Versão'.translate,
+                subtitle:
+                    _isLoading ? 'Carregando...'.translate : _latestVersion,
+              ),
+              const SizedBox(height: 16),
+              if (_updateAvailable)
+                ElevatedButton(
+                  onPressed: () {
+                    if (kIsWeb) {
+                      launchUrl(
+                        Uri.parse(
+                          'https://github.com/AkashicRecordsApp/akashic_records/releases/latest',
+                        ),
+                        mode: LaunchMode.externalApplication,
+                      );
+                    } else {
+                      _downloadAndInstall();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    textStyle: const TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text('Atualizar Aplicativo'.translate),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -276,10 +283,17 @@ class SettingsTile extends StatelessWidget {
     final theme = Theme.of(context);
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(title, style: theme.textTheme.titleMedium),
+      title: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
       subtitle: Text(
         subtitle,
-        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -296,39 +310,58 @@ class _ThemeSettings extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tema:'.translate, style: theme.textTheme.titleMedium),
+        Text(
+          'Tema:'.translate,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
         RadioListTile<ThemeMode>(
-          title: Text('Sistema'.translate),
+          title: Text(
+            'Sistema'.translate,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
           value: ThemeMode.system,
           groupValue: appState.themeMode,
           onChanged: (ThemeMode? value) {
             appState.setThemeMode(value!);
           },
-          activeColor: theme.colorScheme.secondary,
+          activeColor: theme.colorScheme.primary,
           controlAffinity: ListTileControlAffinity.platform,
         ),
         RadioListTile<ThemeMode>(
-          title: Text('Claro'.translate),
+          title: Text(
+            'Claro'.translate,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
           value: ThemeMode.light,
           groupValue: appState.themeMode,
           onChanged: (ThemeMode? value) {
             appState.setThemeMode(value!);
           },
-          activeColor: theme.colorScheme.secondary,
+          activeColor: theme.colorScheme.primary,
           controlAffinity: ListTileControlAffinity.platform,
         ),
         RadioListTile<ThemeMode>(
-          title: Text('Escuro'.translate),
+          title: Text(
+            'Escuro'.translate,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
           value: ThemeMode.dark,
           groupValue: appState.themeMode,
           onChanged: (ThemeMode? value) {
             appState.setThemeMode(value!);
           },
-          activeColor: theme.colorScheme.secondary,
+          activeColor: theme.colorScheme.primary,
           controlAffinity: ListTileControlAffinity.platform,
         ),
         const SizedBox(height: 16),
-        Text('Cor de Destaque:'.translate, style: theme.textTheme.titleMedium),
+        Text(
+          'Cor de Destaque:'.translate,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
         _ColorPalette(appState: appState, theme: theme),
       ],
     );
@@ -362,17 +395,28 @@ class _ColorPalette extends StatelessWidget {
       runSpacing: 8.0,
       children:
           availableColors
-              .map((color) => _ColorButton(color: color, appState: appState))
+              .map(
+                (color) => _ColorButton(
+                  color: color,
+                  appState: appState,
+                  theme: theme,
+                ),
+              )
               .toList(),
     );
   }
 }
 
 class _ColorButton extends StatelessWidget {
-  const _ColorButton({required this.color, required this.appState});
+  const _ColorButton({
+    required this.color,
+    required this.appState,
+    required this.theme,
+  });
 
   final Color color;
   final AppState appState;
+  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +433,7 @@ class _ColorButton extends StatelessWidget {
           border: Border.all(
             color:
                 appState.accentColor == color
-                    ? Colors.black
+                    ? theme.colorScheme.onSurface
                     : Colors.transparent,
             width: 3,
           ),
@@ -407,7 +451,7 @@ class _AboutButton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: theme.colorScheme.surfaceVariant,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -424,8 +468,8 @@ class _AboutButton extends StatelessWidget {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: theme.colorScheme.secondary,
-          foregroundColor: theme.colorScheme.onSecondary,
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
           minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

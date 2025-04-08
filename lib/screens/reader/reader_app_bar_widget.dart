@@ -16,14 +16,17 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AppBar(
       backgroundColor: readerSettings.backgroundColor,
       foregroundColor: readerSettings.textColor,
-      elevation: 2,
+      elevation: 1,
+      scrolledUnderElevation: 3,
       centerTitle: true,
       title: Text(
         title ?? "Carregando...".translate,
-        style: TextStyle(
+        style: theme.textTheme.titleLarge?.copyWith(
           color: readerSettings.textColor,
           fontWeight: FontWeight.w500,
         ),
