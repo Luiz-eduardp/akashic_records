@@ -23,49 +23,69 @@ class ChapterNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          TextButton(
+          TextButton.icon(
             onPressed:
                 isLoading || currentChapterIndex <= 0
                     ? null
                     : onPreviousChapter,
-            style: TextButton.styleFrom(
-              foregroundColor: readerSettings.textColor.withOpacity(
-                isLoading ? 0.5 : 1.0,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              textStyle: const TextStyle(fontSize: 16),
+            icon: Icon(
+              Icons.arrow_back_ios,
+              size: 16,
+              color:
+                  (isLoading || currentChapterIndex <= 0)
+                      ? theme.colorScheme.onSurface.withOpacity(0.3)
+                      : theme.colorScheme.primary,
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.arrow_back_ios, size: 16),
-                const SizedBox(width: 8),
-                Text('Anterior'.translate),
-              ],
+            label: Text(
+              'Anterior'.translate,
+              style: TextStyle(
+                color:
+                    (isLoading || currentChapterIndex <= 0)
+                        ? theme.colorScheme.onSurface.withOpacity(0.3)
+                        : theme.colorScheme.primary,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
-          TextButton(
+          TextButton.icon(
             onPressed:
                 isLoading || currentChapterIndex >= chapters.length - 1
                     ? null
                     : onNextChapter,
-            style: TextButton.styleFrom(
-              foregroundColor: readerSettings.textColor.withOpacity(
-                isLoading ? 0.5 : 1.0,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              textStyle: const TextStyle(fontSize: 16),
+            icon: Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color:
+                  (isLoading || currentChapterIndex >= chapters.length - 1)
+                      ? theme.colorScheme.onSurface.withOpacity(0.3)
+                      : theme.colorScheme.primary,
             ),
-            child: Row(
-              children: [
-                Text('Próximo'.translate),
-                const SizedBox(width: 8),
-                const Icon(Icons.arrow_forward_ios, size: 16),
-              ],
+            label: Text(
+              'Próximo'.translate,
+              style: TextStyle(
+                color:
+                    (isLoading || currentChapterIndex >= chapters.length - 1)
+                        ? theme.colorScheme.onSurface.withOpacity(0.3)
+                        : theme.colorScheme.primary,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ],

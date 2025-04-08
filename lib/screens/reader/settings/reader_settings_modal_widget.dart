@@ -31,57 +31,80 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        top: 20,
-        left: 20,
-        right: 20,
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Configurações de Leitura'.translate,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(text: 'Aparência'.translate),
-              Tab(text: 'Texto'.translate),
-              Tab(text: 'JS'.translate),
-              Tab(text: 'CSS'.translate),
-              Tab(text: 'Plugins'.translate),
-            ],
-          ),
-          SizedBox(
-            height: 500,
-            child: TabBarView(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          top: 20,
+          left: 20,
+          right: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Configurações de Leitura'.translate,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 20),
+            TabBar(
               controller: _tabController,
-              children: [
-                AppearanceTab(),
-                TextTab(),
-                AdvancedTab(),
-                CustomCssTab(),
-                CustomPluginTab(),
+              indicatorColor: theme.colorScheme.primary,
+              labelColor: theme.colorScheme.onSurface,
+              unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+              tabs: [
+                Tab(text: 'Aparência'.translate),
+                Tab(text: 'Texto'.translate),
+                Tab(text: 'JS'.translate),
+                Tab(text: 'CSS'.translate),
+                Tab(text: 'Plugins'.translate),
               ],
             ),
-          ),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Salvar'.translate),
+            SizedBox(
+              height: 400,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  const AppearanceTab(),
+                  TextTab(),
+                  const AdvancedTab(),
+                  const CustomCssTab(),
+                  const CustomPluginTab(),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-        ],
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: Text('Salvar'.translate),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

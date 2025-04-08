@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as htmlParser;
 import 'package:provider/provider.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class ChapterDisplay extends StatefulWidget {
@@ -23,26 +22,12 @@ class ChapterDisplay extends StatefulWidget {
 class _ChapterDisplayState extends State<ChapterDisplay>
     with AutomaticKeepAliveClientMixin {
   List<String> _paragraphs = [];
-  final ItemScrollController _scrollController = ItemScrollController();
-  final ItemPositionsListener _itemPositionsListener =
-      ItemPositionsListener.create();
-  int _currentFocusedIndex = 0;
   WebViewController? _webViewController;
   String _currentHtmlContent = "";
+  bool _isLoading = true;
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
-
-  final RefreshController _refreshController = RefreshController(
-    initialRefresh: false,
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    setState(() {});
-  }
 
   @override
   bool get wantKeepAlive => true;
@@ -51,8 +36,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   void initState() {
     super.initState();
     _processContent();
-    _itemPositionsListener.itemPositions.addListener(_onItemPositionsChanged);
-
     _webViewController = WebViewController();
     _initializeWebViewController();
   }
@@ -64,6 +47,11 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
     _webViewController!.setNavigationDelegate(
       NavigationDelegate(
+        onPageStarted: (String url) {
+          setState(() {
+            _isLoading = true;
+          });
+        },
         onPageFinished: (String url) async {
           await _webViewController!.runJavaScript('''
             document.addEventListener('touchstart', function(event) {
@@ -107,6 +95,15 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           for (final plugin in enabledPlugins) {
             _injectCustomJavaScript(plugin.code);
           }
+          setState(() {
+            _isLoading = false;
+          });
+        },
+        onWebResourceError: (WebResourceError error) {
+          print('Web resource error: ${error.description}');
+          setState(() {
+            _isLoading = false;
+          });
         },
       ),
     );
@@ -133,26 +130,8 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     }
   }
 
-  void _onItemPositionsChanged() {
-    final positions = _itemPositionsListener.itemPositions.value;
-    if (positions.isNotEmpty) {
-      final firstVisibleIndex = positions
-          .where((position) => position.itemLeadingEdge >= 0)
-          .map((position) => position.index)
-          .reduce((value, element) => value < element ? value : element);
-
-      setState(() {
-        _currentFocusedIndex = firstVisibleIndex;
-      });
-    }
-  }
-
   @override
   void dispose() {
-    _itemPositionsListener.itemPositions.removeListener(
-      _onItemPositionsChanged,
-    );
-    _refreshController.dispose();
     super.dispose();
   }
 
@@ -195,36 +174,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     final document = htmlParser.parse(cleanedContent);
     _paragraphs =
         document.querySelectorAll('p').map((e) => e.innerHtml).toList();
-  }
-
-  void _updateFocusedIndex(int delta) {
-    final newIndex = (_currentFocusedIndex + delta).clamp(
-      0,
-      _paragraphs.length - 1,
-    );
-    setState(() {
-      _currentFocusedIndex = newIndex;
-    });
-    if (newIndex > _currentFocusedIndex) {
-      _scrollToIndex(newIndex);
-    } else {
-      _scrollToIndex(newIndex);
-    }
-  }
-
-  void _scrollToIndex(int index, {bool animate = true}) async {
-    if (_paragraphs.isEmpty) return;
-
-    final validIndex = index.clamp(0, _paragraphs.length - 1);
-
-    try {
-      await _scrollController.scrollTo(
-        index: validIndex,
-        duration: animate ? const Duration(milliseconds: 300) : Duration.zero,
-        curve: Curves.easeInOut,
-        alignment: 0.0,
-      );
-    } finally {}
   }
 
   String _buildHtmlContent(ReaderSettings readerSettings) {
@@ -294,61 +243,48 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     final newHtmlContent = _buildHtmlContent(readerSettings);
 
     if (newHtmlContent != _currentHtmlContent) {
+      setState(() {
+        _isLoading = true;
+      });
       await _webViewController!.loadHtmlString(newHtmlContent);
       _currentHtmlContent = newHtmlContent;
     }
   }
 
-  Future<void> _onRefresh() async {
-    _processContent();
-    await updateWebViewContent();
-
-    _refreshController.refreshCompleted();
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final theme = Theme.of(context);
 
-    return Listener(
-      onPointerSignal: (pointerSignal) {
-        if (pointerSignal is PointerScrollEvent) {
-          final scrollDelta = pointerSignal.scrollDelta.dy;
-          _updateFocusedIndex(scrollDelta > 0 ? 1 : -1);
-        }
-      },
-      child: RefreshIndicator(
-        onRefresh: _onRefresh,
-        child: LongPressDraggable(
-          hapticFeedbackOnStart: false,
-          axis: Axis.vertical,
-          dragAnchorStrategy: pointerDragAnchorStrategy,
-          feedback: SizedBox.shrink(),
-          child: Column(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: WebViewWidget(controller: _webViewController!),
+    return Stack(
+      children: [
+        Listener(
+          onPointerSignal: (pointerSignal) {
+            if (pointerSignal is PointerScrollEvent) {}
+          },
+          child: RefreshIndicator(
+            onRefresh: updateWebViewContent,
+            backgroundColor: theme.colorScheme.surface,
+            color: theme.colorScheme.primary,
+            child: WebViewWidget(controller: _webViewController!),
+          ),
+        ),
+        if (_isLoading)
+          Container(
+            color: theme.colorScheme.surface.withOpacity(0.8),
+            child: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.primary,
                 ),
               ),
-            ],
+            ),
           ),
-          onDragUpdate: (details) {},
-        ),
-      ),
+      ],
     );
   }
 
   String _colorToHtmlColor(Color color) {
     return '#${color.value.toRadixString(16).substring(2)}';
   }
-}
-
-class RefreshController {
-  RefreshController({required bool initialRefresh});
-
-  void refreshCompleted() {}
-
-  void dispose() {}
 }
