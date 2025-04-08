@@ -1,3 +1,4 @@
+import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/i18n/i18n.dart';
@@ -7,6 +8,8 @@ class ChapterNavigation extends StatelessWidget {
   final VoidCallback onNextChapter;
   final bool isLoading;
   final ReaderSettings readerSettings;
+  final int currentChapterIndex;
+  final List<Chapter> chapters;
 
   const ChapterNavigation({
     super.key,
@@ -14,6 +17,8 @@ class ChapterNavigation extends StatelessWidget {
     required this.onNextChapter,
     required this.isLoading,
     required this.readerSettings,
+    required this.currentChapterIndex,
+    required this.chapters,
   });
 
   @override
@@ -24,7 +29,10 @@ class ChapterNavigation extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           TextButton(
-            onPressed: isLoading ? null : onNextChapter,
+            onPressed:
+                isLoading || currentChapterIndex <= 0
+                    ? null
+                    : onPreviousChapter,
             style: TextButton.styleFrom(
               foregroundColor: readerSettings.textColor.withOpacity(
                 isLoading ? 0.5 : 1.0,
@@ -41,7 +49,10 @@ class ChapterNavigation extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: isLoading ? null : onPreviousChapter,
+            onPressed:
+                isLoading || currentChapterIndex >= chapters.length - 1
+                    ? null
+                    : onNextChapter,
             style: TextButton.styleFrom(
               foregroundColor: readerSettings.textColor.withOpacity(
                 isLoading ? 0.5 : 1.0,
