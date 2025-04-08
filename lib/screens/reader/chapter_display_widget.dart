@@ -1,9 +1,14 @@
+// ignore_for_file: dead_code
+
 import 'package:akashic_records/state/app_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as htmlParser;
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter/services.dart';
+import 'package:html/dom.dart' as dom;
 
 class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
@@ -100,7 +105,9 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           });
         },
         onWebResourceError: (WebResourceError error) {
-          print('Web resource error: ${error.description}');
+          if (kDebugMode) {
+            print('Web resource error: ${error.description}');
+          }
           setState(() {
             _isLoading = false;
           });
@@ -115,7 +122,9 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       try {
         await _webViewController?.runJavaScript(customJs);
       } catch (e) {
-        debugPrint("Erro ao injetar JavaScript: $e");
+        if (kDebugMode) {
+          debugPrint("Erro ao injetar JavaScript: $e");
+        }
       }
     }
   }
@@ -136,7 +145,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   }
 
   void _processContent() {
-    final cleanedContent = _cleanChapterContent(widget.chapterContent);
+    String cleanedContent = _cleanChapterContent(widget.chapterContent);
     _splitIntoParagraphs(cleanedContent);
   }
 
@@ -147,7 +156,29 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
     final document = htmlParser.parse(content);
 
-    const selectorsToRemove = ['p:empty', '.ad-container', '.ads'];
+    document.querySelectorAll('script').forEach((element) => element.remove());
+
+    document
+        .querySelectorAll('noscript')
+        .forEach((element) => element.remove());
+
+    document
+        .querySelectorAll('p')
+        .where((element) => element.innerHtml.trim().isEmpty)
+        .forEach((element) => element.remove());
+
+    document
+        .querySelectorAll('div')
+        .where((element) => element.innerHtml.trim().isEmpty)
+        .forEach((element) => element.remove());
+
+    List<dom.Node> comments =
+        document.body!.nodes.whereType<dom.Comment>().toList();
+    for (dom.Node node in comments) {
+      node.remove();
+    }
+
+    const selectorsToRemove = ['.ad-container', '.ads'];
     for (final selector in selectorsToRemove) {
       document
           .querySelectorAll(selector)
@@ -159,13 +190,9 @@ class _ChapterDisplayState extends State<ChapterDisplay>
         .where((element) => element.text.toLowerCase().contains('discord.com'))
         .forEach((element) => element.remove());
 
-    document.querySelectorAll('div').forEach((element) {
-      if (element.children.length == 1 &&
-          element.attributes.isEmpty &&
-          element.text.trim().isEmpty) {
-        element.remove();
-      }
-    });
+    document
+        .querySelectorAll('center[class*="ad"]')
+        .forEach((element) => element.remove());
 
     return document.body?.innerHtml ?? "";
   }
@@ -255,6 +282,38 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
+
+    if (false) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('HTML Content (Dev Mode)'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.copy),
+              tooltip: 'Copy HTML to Clipboard',
+              onPressed: () {
+                Clipboard.setData(
+                  ClipboardData(text: widget.chapterContent ?? ''),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('HTML copied to clipboard!')),
+                );
+              },
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: SelectableText(
+            widget.chapterContent ?? 'No content available',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Stack(
       children: [
