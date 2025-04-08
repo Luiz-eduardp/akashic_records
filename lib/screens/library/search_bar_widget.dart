@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class SearchBarWidget extends StatefulWidget {
   final Function(String) onSearch;
   final VoidCallback? onFilterPressed;
+  final List<Widget>? extraActions;
 
   const SearchBarWidget({
     super.key,
     required this.onSearch,
     this.onFilterPressed,
+    this.extraActions,
   });
 
   @override
@@ -47,13 +49,6 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final bool isDarkMode = theme.brightness == Brightness.dark;
-
-    final Color fillColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
-    final Color textColor = isDarkMode ? Colors.white : Colors.black;
-    final Color iconColor = isDarkMode ? Colors.white70 : Colors.grey[600]!;
-    final Color borderColor =
-        isDarkMode ? Colors.grey[700]! : Colors.grey[300]!;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -62,14 +57,17 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
           Expanded(
             child: TextField(
               controller: _controller,
-              style: TextStyle(color: textColor),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Buscar novels...'.translate,
-                hintStyle: TextStyle(color: iconColor),
-                prefixIcon: Icon(Icons.search, color: iconColor),
+                hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
-                  borderSide: BorderSide(color: borderColor),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
@@ -77,14 +75,17 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
-                  borderSide: BorderSide(color: borderColor),
+                  borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: fillColor,
+                fillColor: theme.colorScheme.surfaceVariant,
                 suffixIcon:
                     _hasText
                         ? IconButton(
-                          icon: Icon(Icons.clear, color: iconColor),
+                          icon: Icon(
+                            Icons.clear,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                           onPressed: () {
                             _controller.clear();
                             widget.onSearch("");
@@ -109,6 +110,12 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               },
             ),
           ),
+          if (widget.onFilterPressed != null)
+            IconButton(
+              onPressed: widget.onFilterPressed,
+              icon: Icon(Icons.filter_list, color: theme.colorScheme.primary),
+            ),
+          if (widget.extraActions != null) ...widget.extraActions!,
         ],
       ),
     );
