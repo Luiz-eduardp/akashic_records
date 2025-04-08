@@ -13,9 +13,10 @@ class AboutScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Sobre'.translate),
         centerTitle: true,
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
+        backgroundColor: theme.colorScheme.surfaceVariant,
+        foregroundColor: theme.colorScheme.onSurfaceVariant,
         elevation: 1,
+        surfaceTintColor: theme.colorScheme.surfaceVariant,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -34,7 +35,7 @@ class AboutScreen extends StatelessWidget {
               Text(
                 'Na filosofia, os Akashic Records são considerados um registro universal de tudo o que aconteceu, acontece e acontecerá. É a "biblioteca cósmica" da existência.'
                     .translate,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
@@ -43,7 +44,7 @@ class AboutScreen extends StatelessWidget {
               Text(
                 'Inspirados por essa ideia, o Akashic Records, o aplicativo, busca ser um portal para as histórias, um registro pessoal de suas leituras. Aqui, você pode mergulhar no mundo das novels, salvar suas favoritas e construir sua própria biblioteca de conhecimento e entretenimento.'
                     .translate,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
@@ -89,7 +90,7 @@ class AboutScreen extends StatelessWidget {
               Text(
                 'Luiz Eduardo, desenvolvedor Fullstack com experiência em Magento, PHP, Flutter, Dart, Vue, React, Native, TypeScript, JavaScript e Python.'
                     .translate,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
@@ -99,8 +100,9 @@ class AboutScreen extends StatelessWidget {
                 onTap: () => _launchURL('https://github.com/Luiz-eduardp'),
                 child: Text(
                   'Github: https://github.com/Luiz-eduardp',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.blue,
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),
@@ -108,7 +110,7 @@ class AboutScreen extends StatelessWidget {
               Text(
                 'Agradecemos a você por usar o Akashic Records. Explore, descubra novas histórias e compartilhe suas impressões! Seu feedback é muito importante para continuarmos melhorando.'
                     .translate,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
@@ -129,14 +131,14 @@ class AboutScreen extends StatelessWidget {
         children: [
           Icon(
             Icons.check_circle_outline,
-            color: theme.colorScheme.secondary,
+            color: theme.colorScheme.primary,
             size: 20,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 height: 1.4,
               ),
