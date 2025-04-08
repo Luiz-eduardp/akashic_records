@@ -68,7 +68,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(color: Theme.of(context).colorScheme.onError),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 
@@ -172,136 +178,176 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      body: _buildBody(),
-      floatingActionButton: _buildFilterButton(),
+      body: RefreshIndicator(
+        onRefresh: _refreshHistory,
+        backgroundColor: theme.colorScheme.surface,
+        color: theme.colorScheme.primary,
+        child: _buildBody(theme),
+      ),
+      floatingActionButton: _buildFilterButton(theme),
     );
   }
 
-  Widget _buildFilterButton() {
+  Widget _buildFilterButton(ThemeData theme) {
     return FloatingActionButton(
       onPressed: () {
-        _showFilterDialog(context);
+        _showFilterDialog(context, theme);
       },
+      backgroundColor: theme.colorScheme.primary,
+      foregroundColor: theme.colorScheme.onPrimary,
       tooltip: 'Filtrar'.translate,
       child: const Icon(Icons.filter_list),
     );
   }
 
-  void _showFilterDialog(BuildContext context) {
+  void _showFilterDialog(BuildContext context, ThemeData theme) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Filtrar por Novel'.translate),
+          backgroundColor: theme.colorScheme.surface,
+          title: Text(
+            'Filtrar por Novel'.translate,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 RadioListTile<String?>(
-                  title: Text('Todas as Novels'.translate),
+                  title: Text(
+                    'Todas as Novels'.translate,
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                  ),
                   value: null,
                   groupValue: _selectedNovel,
                   onChanged: (String? value) {
                     _updateSelectedNovel(value);
                     Navigator.of(context).pop();
                   },
+                  activeColor: theme.colorScheme.primary,
                 ),
                 ..._availableNovels.map((novel) {
                   return RadioListTile<String?>(
-                    title: Text(novel),
+                    title: Text(
+                      novel,
+                      style: TextStyle(color: theme.colorScheme.onSurface),
+                    ),
                     value: novel,
                     groupValue: _selectedNovel,
                     onChanged: (String? value) {
                       _updateSelectedNovel(value);
                       Navigator.of(context).pop();
                     },
+                    activeColor: theme.colorScheme.primary,
                   );
                 }),
               ],
             ),
           ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Fechar'.translate,
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(ThemeData theme) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+        ),
+      );
     }
 
     if (_history.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.history,
-              size: 60,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Seu histórico está vazio.'.translate,
-              style: TextStyle(
-                fontSize: 18,
-                color: Theme.of(context).colorScheme.outline,
+      return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.history,
+                      size: 60,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Seu histórico está vazio.'.translate,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Comece a ler para ver seus livros aqui.'.translate,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Comece a ler para ver seus livros aqui.'.translate,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+          );
+        },
       );
     }
 
     return Column(
       children: [
-        _buildMetricsWidget(),
+        _buildMetricsWidget(theme),
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: _refreshHistory,
-            color: Theme.of(context).colorScheme.secondary,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(8),
-              itemCount: _history.length,
-              separatorBuilder:
-                  (context, index) =>
-                      const Divider(height: 1, color: Colors.grey),
-              itemBuilder: (context, index) {
-                final item = _history[index];
-                return HistoryCardWidget(
-                  novelTitle: item['novelTitle'],
-                  chapterTitle: item['chapterTitle'],
-                  pluginId: item['pluginId'] ?? '',
-                  lastRead: DateTime.parse(
-                    item['lastRead'] ?? DateTime.now().toIso8601String(),
-                  ),
-                  onTap:
-                      () => _handleHistoryTap(
-                        item['novelId'],
-                        item['pluginId'],
-                        item['chapterId'],
-                      ),
-                );
-              },
-            ),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(8),
+            itemCount: _history.length,
+            separatorBuilder:
+                (context, index) =>
+                    Divider(height: 1, color: theme.dividerColor),
+            itemBuilder: (context, index) {
+              final item = _history[index];
+              return HistoryCardWidget(
+                novelTitle: item['novelTitle'],
+                chapterTitle: item['chapterTitle'],
+                pluginId: item['pluginId'] ?? '',
+                lastRead: DateTime.parse(
+                  item['lastRead'] ?? DateTime.now().toIso8601String(),
+                ),
+                onTap:
+                    () => _handleHistoryTap(
+                      item['novelId'],
+                      item['pluginId'],
+                      item['chapterId'],
+                    ),
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildMetricsWidget() {
+  Widget _buildMetricsWidget(ThemeData theme) {
     int totalChaptersRead = _history.length;
 
     Map<String, int> novelChapterCounts = {};
@@ -322,6 +368,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return Card(
       margin: const EdgeInsets.all(8.0),
+      color: theme.colorScheme.surface,
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -329,11 +378,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
           children: [
             Text(
               'Estatísticas de Leitura'.translate,
-              style: Theme.of(context).textTheme.titleLarge,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 10),
-            Text('Total de Capítulos Lidos: $totalChaptersRead'),
-            Text('Novel Mais Lida: $mostReadNovel'),
+            Text(
+              'Total de Capítulos Lidos: $totalChaptersRead',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            Text(
+              'Novel Mais Lida: $mostReadNovel',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
           ],
         ),
       ),
