@@ -32,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Akashic Records'.translate,
@@ -53,10 +55,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Icon(
                         Icons.settings,
-                        color: Theme.of(context).iconTheme.color,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
-                      Text('Configurações'.translate),
+                      Text(
+                        'Configurações'.translate,
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
                     ],
                   ),
                 ),
@@ -66,10 +71,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Icon(
                         Icons.extension,
-                        color: Theme.of(context).iconTheme.color,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
-                      Text('Plugins'.translate),
+                      Text(
+                        'Plugins'.translate,
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
                     ],
                   ),
                 ),
@@ -77,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             icon: Icon(
               Icons.more_vert,
-              color: Theme.of(context).iconTheme.color,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -107,10 +115,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Theme.of(context).unselectedWidgetColor,
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: theme.colorScheme.onSurfaceVariant,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
+        backgroundColor: theme.colorScheme.surfaceVariant,
       ),
     );
   }
