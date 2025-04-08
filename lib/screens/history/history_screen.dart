@@ -6,7 +6,7 @@ import 'package:akashic_records/screens/history/history_card_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key});
+  const HistoryScreen({super.key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -24,7 +24,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void initState() {
     super.initState();
     _mounted = true;
-    _loadHistory();
+    _loadHistoryData();
   }
 
   @override
@@ -33,90 +33,109 @@ class _HistoryScreenState extends State<HistoryScreen> {
     super.dispose();
   }
 
-  Future<void> _loadHistory() async {
-    if (!_mounted) return;
-
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _loadHistoryData() async {
+    _setLoading(true);
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      List<Map<String, dynamic>> loadedHistory = [];
-      Set<String> novels = {};
-
-      final historyKeys =
-          prefs.getKeys().where((key) => key.startsWith('history_')).toList();
-
-      for (final historyKey in historyKeys) {
-        final historyString = prefs.getString(historyKey) ?? '[]';
-        try {
-          List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
-          loadedHistory.addAll(
-            history.map((item) => Map<String, dynamic>.from(item)),
-          );
-        } catch (e) {
-          debugPrint(
-            "Erro ao decodificar histórico para a chave $historyKey: $e",
-          );
-        }
-      }
-
-      loadedHistory.sort((a, b) {
-        DateTime? dateA;
-        DateTime? dateB;
-
-        try {
-          dateA = a['lastRead'] != null ? DateTime.parse(a['lastRead']) : null;
-        } catch (e) {
-          debugPrint(
-            "Erro ao fazer o parse da data A: ${a['lastRead']}, erro: $e",
-          );
-        }
-
-        try {
-          dateB = b['lastRead'] != null ? DateTime.parse(b['lastRead']) : null;
-        } catch (e) {
-          debugPrint(
-            "Erro ao fazer o parse da data B: ${b['lastRead']}, erro: $e",
-          );
-        }
-
-        if (dateA == null && dateB == null) return 0;
-        if (dateA == null) return 1;
-        if (dateB == null) return -1;
-
-        return dateB.compareTo(dateA);
-      });
-
-      for (var item in loadedHistory) {
-        novels.add(item['novelTitle']);
-      }
+      final loadedHistory = await _loadHistoryFromPreferences(prefs);
+      final novels = _extractNovelTitles(loadedHistory);
 
       if (_mounted) {
         setState(() {
           _fullHistory = loadedHistory;
           _availableNovels = novels.toList();
           _filterHistory();
-          _isLoading = false;
+          _setLoading(false);
         });
       }
     } catch (e) {
       debugPrint("Erro ao carregar histórico: $e");
+      _showErrorSnackBar(context, "Falha ao carregar o histórico: $e");
       if (_mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        _setLoading(false);
       }
     }
+  }
+
+  void _setLoading(bool isLoading) {
+    if (_mounted) {
+      setState(() {
+        _isLoading = isLoading;
+      });
+    }
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _loadHistoryFromPreferences(
+    SharedPreferences prefs,
+  ) async {
+    List<Map<String, dynamic>> loadedHistory = [];
+
+    final historyKeys =
+        prefs.getKeys().where((key) => key.startsWith('history_')).toList();
+
+    for (final historyKey in historyKeys) {
+      final historyString = prefs.getString(historyKey) ?? '[]';
+      try {
+        List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+        loadedHistory.addAll(
+          history.map((item) => Map<String, dynamic>.from(item)),
+        );
+      } catch (e) {
+        debugPrint(
+          "Erro ao decodificar histórico para a chave $historyKey: $e",
+        );
+      }
+    }
+
+    loadedHistory.sort((a, b) {
+      DateTime? dateA;
+      DateTime? dateB;
+
+      try {
+        dateA = a['lastRead'] != null ? DateTime.parse(a['lastRead']) : null;
+      } catch (e) {
+        debugPrint(
+          "Erro ao fazer o parse da data A: ${a['lastRead']}, erro: $e",
+        );
+      }
+
+      try {
+        dateB = b['lastRead'] != null ? DateTime.parse(b['lastRead']) : null;
+      } catch (e) {
+        debugPrint(
+          "Erro ao fazer o parse da data B: ${b['lastRead']}, erro: $e",
+        );
+      }
+
+      if (dateA == null && dateB == null) return 0;
+      if (dateA == null) return 1;
+      if (dateB == null) return -1;
+
+      return dateB.compareTo(dateA);
+    });
+
+    return loadedHistory;
+  }
+
+  Set<String> _extractNovelTitles(List<Map<String, dynamic>> history) {
+    Set<String> novels = {};
+    for (var item in history) {
+      novels.add(item['novelTitle']);
+    }
+    return novels;
   }
 
   void _filterHistory() {
     List<Map<String, dynamic>> filteredHistory = [];
 
-    if (_selectedNovel == null) {
-      filteredHistory = List.from(_fullHistory);
-    } else if (_selectedNovel == 'Todas as Novels') {
+    if (_selectedNovel == null || _selectedNovel == 'Todas as Novels') {
       filteredHistory = List.from(_fullHistory);
     } else {
       filteredHistory =
@@ -141,7 +160,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _refreshHistory() async {
-    await _loadHistory();
+    await _loadHistoryData();
   }
 
   void _updateSelectedNovel(String? novel) {
@@ -283,7 +302,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildMetricsWidget() {
-   
     int totalChaptersRead = _history.length;
 
     Map<String, int> novelChapterCounts = {};
@@ -320,13 +338,5 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
     );
-  }
-
-  int calculateTotalReadingTime() {
-    int totalTime = 0;
-    for (var item in _history) {
-      totalTime += (5 + (item.hashCode % 11));
-    }
-    return totalTime;
   }
 }
