@@ -61,15 +61,32 @@ Akashic Records is a mobile application designed to organize and present meaning
 
 ## Screenshots
 
+## Screenshots
+
 <div align="center">
-    <img src="lib/src/screenshots/scs1.png" alt="Screenshot 1" width="30%" style="display: inline-block; margin: 5px;">
     <img src="lib/src/screenshots/scs2.png" alt="Screenshot 2" width="30%" style="display: inline-block; margin: 5px;">
     <img src="lib/src/screenshots/scs3.png" alt="Screenshot 3" width="30%" style="display: inline-block; margin: 5px;">
+    <br>
     <img src="lib/src/screenshots/scs4.png" alt="Screenshot 4" width="30%" style="display: inline-block; margin: 5px;">
     <img src="lib/src/screenshots/scs5.png" alt="Screenshot 5" width="30%" style="display: inline-block; margin: 5px;">
     <img src="lib/src/screenshots/scs6.png" alt="Screenshot 6" width="30%" style="display: inline-block; margin: 5px;">
+    <br>
+    <img src="lib/src/screenshots/scs7.png" alt="Screenshot 7" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs8.png" alt="Screenshot 8" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs9.png" alt="Screenshot 9" width="30%" style="display: inline-block; margin: 5px;">
+    <br>
+    <img src="lib/src/screenshots/scs10.png" alt="Screenshot 10" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs11.png" alt="Screenshot 11" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs12.png" alt="Screenshot 12" width="30%" style="display: inline-block; margin: 5px;">
+    <br>
+    <img src="lib/src/screenshots/scs13.png" alt="Screenshot 13" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs14.png" alt="Screenshot 14" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs15.png" alt="Screenshot 15" width="30%" style="display: inline-block; margin: 5px;">
+    <br>
+    <img src="lib/src/screenshots/scs16.png" alt="Screenshot 16" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs17.png" alt="Screenshot 17" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs18.png" alt="Screenshot 18" width="30%" style="display: inline-block; margin: 5px;">
 </div>
-
 
 ## About the Name: Akashic Records
 
