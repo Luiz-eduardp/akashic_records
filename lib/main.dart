@@ -4,7 +4,6 @@ import 'package:akashic_records/screens/home_screen.dart';
 import 'package:akashic_records/screens/plugins/plugins_screen.dart';
 import 'package:akashic_records/screens/settings/settings_screen.dart';
 import 'package:akashic_records/themes/app_themes.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -23,11 +22,12 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final savedLocale = prefs.getString('locale');
-  Locale initialLocale = savedLocale != null ? Locale(savedLocale) : Locale('pt');
+  Locale initialLocale =
+      savedLocale != null ? Locale(savedLocale) : const Locale('pt');
 
   await I18n.initialize(
     defaultLocale: initialLocale,
-    supportLocales: [Locale('en'), Locale('pt'),Locale('es')],
+    supportLocales: const [Locale('en'), Locale('pt'), Locale('es')],
   );
 
   runApp(
@@ -60,9 +60,8 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _isLoading = false;
     });
-    if (!kDebugMode) {
-      _checkVersion(prefs);
-    }
+
+    _checkVersion(prefs);
   }
 
   Future<void> _checkVersion(SharedPreferences prefs) async {
@@ -95,7 +94,7 @@ class _MyAppState extends State<MyApp> {
         if (_updateAvailable) {
           if (_hasShownInitialScreen) {
             await prefs.remove('hasShownInitialScreen');
-            print('Removed hasShownInitialScreen due to new version.');
+
             setState(() {
               _hasShownInitialScreen = false;
             });
@@ -138,6 +137,9 @@ class _MyAppState extends State<MyApp> {
 
     if (_isLoading) {
       return MaterialApp(
+        theme: AppThemes.lightTheme(appState.accentColor),
+        darkTheme: AppThemes.darkTheme(appState.accentColor),
+        themeMode: ThemeMode.system,
         home: Scaffold(
           body: Center(
             child: CircularProgressIndicator(color: appState.accentColor),
@@ -156,19 +158,15 @@ class _MyAppState extends State<MyApp> {
 
     Widget homeScreen;
 
-    if (kDebugMode) {
-      homeScreen = const InitialLoadingScreen();
+    if (_hasShownInitialScreen) {
+      homeScreen = const HomeScreen();
     } else {
-      if (_hasShownInitialScreen) {
-        homeScreen = const HomeScreen();
-      } else {
-        homeScreen = Scaffold(
-          body: InitialLoadingScreen(
-            updateAvailable: _updateAvailable,
-            downloadUrl: _downloadUrl,
-          ),
-        );
-      }
+      homeScreen = Scaffold(
+        body: InitialLoadingScreen(
+          updateAvailable: _updateAvailable,
+          downloadUrl: _downloadUrl,
+        ),
+      );
     }
 
     return MaterialApp(
@@ -276,102 +274,121 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(
-                'Carregando dados do GitHub...'.translate,
-                style: TextStyle(color: Theme.of(context).hintColor),
-              ),
-            ],
-          ),
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Changelog da Versão'.translate,
+          style: TextStyle(color: theme.colorScheme.onSurface),
         ),
-      );
-    } else {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text('Changelog da Versão'.translate),
-          centerTitle: true,
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 50),
-                MarkdownBody(
-                  data: _body,
-                  onTapLink: (text, url, title) {
-                    if (url != null) {
-                      launchUrl(Uri.parse(url));
-                    }
-                  },
-                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Enviado por:'.translate,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Row(
+        centerTitle: true,
+        backgroundColor: theme.colorScheme.surfaceVariant,
+        foregroundColor: theme.colorScheme.onSurfaceVariant,
+        surfaceTintColor: theme.colorScheme.surfaceVariant,
+      ),
+      body:
+          _isLoading
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(backgroundImage: NetworkImage(_avatarUrl)),
-                    const SizedBox(width: 8),
-                    Text(_uploader),
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Carregando dados do GitHub...'.translate,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
-                if (widget.updateAvailable)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _downloadAndInstall();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Theme.of(context).colorScheme.secondary,
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onSecondary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        textStyle: const TextStyle(fontSize: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+              )
+              : Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 50),
+                      MarkdownBody(
+                        data: _body,
+                        onTapLink: (text, url, title) {
+                          if (url != null) {
+                            launchUrl(Uri.parse(url));
+                          }
+                        },
+                        styleSheet: MarkdownStyleSheet.fromTheme(theme),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Enviado por:'.translate,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      child: Text('Atualizar Aplicativo'.translate),
-                    ),
-                  ),
-                const SizedBox(height: 32),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _setInitialScreenShown();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const HomeScreen(),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: NetworkImage(_avatarUrl),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _uploader,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (widget.updateAvailable)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _downloadAndInstall();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              textStyle: const TextStyle(fontSize: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Text('Atualizar Aplicativo'.translate),
+                          ),
                         ),
-                      );
-                    },
-                    child: Text('Continuar'.translate),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _setInitialScreenShown();
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => const HomeScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                          ),
+                          child: Text('Continuar'.translate),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+              ),
+    );
   }
 }

@@ -135,6 +135,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
       if (plugin != null && novel != null) {
         novel!.pluginId = correctPluginName!;
 
+        novel!.chapters.sort((a, b) {
+          return (a.chapterNumber ?? 0).compareTo(b.chapterNumber ?? 0);
+        });
+
         if (initialChapterId != null) {
           currentChapterIndex = novel!.chapters.indexWhere(
             (chapter) => chapter.id == initialChapterId,
@@ -360,6 +364,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       onNextChapter: _goToNextChapter,
                       isLoading: isLoading || _isFetchingNextChapter,
                       readerSettings: appState.readerSettings,
+                      currentChapterIndex: currentChapterIndex,
+                      chapters: novel!.chapters,
                     ),
                 ],
               ),

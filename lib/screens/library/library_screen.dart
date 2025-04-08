@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/library/novel_filter_sort_widget.dart';
 import 'dart:async';
+import 'package:akashic_records/widgets/novel_tile.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -29,6 +30,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Set<String> _previousPlugins = {};
   Timer? _debounce;
   bool _mounted = false;
+  bool _isListView = false;
 
   @override
   void initState() {
@@ -197,7 +199,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       context: context,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: const Radius.circular(20)),
       ),
       builder: (context) {
         return Padding(
@@ -230,44 +232,86 @@ class _LibraryScreenState extends State<LibraryScreen> {
     });
   }
 
+  void _toggleView() {
+    setState(() {
+      _isListView = !_isListView;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SearchBarWidget(
-              onSearch: _onSearchChanged,
-              onFilterPressed: () => _showFilterModal(context),
-            ),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refreshNovels,
-              color: Theme.of(context).colorScheme.secondary,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              child: NovelGridWidget(
-                novels: novels,
-                isLoading: isLoading,
-                errorMessage: errorMessage,
-                scrollController: _scrollController,
-                onNovelTap: _handleNovelTap,
+      backgroundColor: theme.colorScheme.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SearchBarWidget(
+                onSearch: _onSearchChanged,
+                onFilterPressed: () => _showFilterModal(context),
+                extraActions: [
+                  IconButton(
+                    icon: Icon(_isListView ? Icons.grid_view : Icons.list),
+                    tooltip:
+                        _isListView ? 'Mostrar em Grid' : 'Mostrar em Lista',
+                    onPressed: _toggleView,
+                  ),
+                ],
               ),
             ),
-          ),
-          if (isLoading && novels.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(child: CircularProgressIndicator()),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refreshNovels,
+                color: theme.colorScheme.primary,
+                backgroundColor: theme.colorScheme.surface,
+                child: _buildNovelDisplay(),
+              ),
             ),
-          if (errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(errorMessage!, style: TextStyle(color: Colors.red)),
-            ),
-        ],
+            if (isLoading && novels.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            if (errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  errorMessage!,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildNovelDisplay() {
+    if (_isListView) {
+      return ListView.builder(
+        controller: _scrollController,
+        itemCount: novels.length,
+        itemBuilder: (context, index) {
+          return NovelListTile(
+            novel: novels[index],
+            onTap: () => _handleNovelTap(novels[index]),
+          );
+        },
+      );
+    } else {
+      return NovelGridWidget(
+        novels: novels,
+        isLoading: isLoading,
+        errorMessage: errorMessage,
+        scrollController: _scrollController,
+        onNovelTap: _handleNovelTap,
+      );
+    }
   }
 }

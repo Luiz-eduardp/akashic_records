@@ -16,25 +16,34 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: readerSettings.backgroundColor,
-      foregroundColor: readerSettings.textColor,
-      elevation: 2,
-      centerTitle: true,
-      title: Text(
-        title ?? "Carregando...".translate,
-        style: TextStyle(
-          color: readerSettings.textColor,
-          fontWeight: FontWeight.w500,
+    final theme = Theme.of(context);
+
+    return Material(
+      color: readerSettings.backgroundColor,
+      surfaceTintColor: readerSettings.backgroundColor,
+      elevation: 1,
+      shadowColor: Colors.transparent,
+      child: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: readerSettings.textColor,
+        elevation: 0,
+        scrolledUnderElevation: 3,
+        centerTitle: true,
+        title: Text(
+          title ?? "Carregando...".translate,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: readerSettings.textColor,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings, color: readerSettings.textColor),
+            onPressed: onSettingsPressed,
+            tooltip: 'Configurações de Leitura'.translate,
+          ),
+        ],
       ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.settings, color: readerSettings.textColor),
-          onPressed: onSettingsPressed,
-          tooltip: 'Configurações de Leitura'.translate,
-        ),
-      ],
     );
   }
 

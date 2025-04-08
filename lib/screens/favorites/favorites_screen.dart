@@ -125,17 +125,24 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _buildBody(),
+      body: RefreshIndicator(
+        onRefresh: () => _loadFavorites(true),
+        backgroundColor: theme.colorScheme.surface,
+        color: theme.colorScheme.primary,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _buildBody(theme),
+        ),
       ),
       floatingActionButton:
           favoriteNovels.isNotEmpty && !isLoading
               ? FloatingActionButton(
                 onPressed: () => _loadFavorites(true),
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 tooltip: 'Recarregar Favoritos'.translate,
                 child: const Icon(Icons.refresh),
               )
@@ -143,49 +150,54 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(ThemeData theme) {
     if (isLoading) {
       return const Center(child: LoadingIndicatorWidget());
     } else if (errorMessage != null) {
       return Center(child: ErrorMessageWidget(errorMessage: errorMessage!));
     } else if (favoriteNovels.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(
-              Icons.favorite_border,
-              size: 60,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Nenhuma novel adicionada aos favoritos.'.translate,
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).colorScheme.outline,
+      return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.favorite_border,
+                      size: 60,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Nenhuma novel adicionada aos favoritos.'.translate,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
-          ],
-        ),
+          );
+        },
       );
     } else {
-      return RefreshIndicator(
-        onRefresh: () => _loadFavorites(true),
-        color: Theme.of(context).colorScheme.secondary,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            return FavoriteGridWidget(
-              favoriteNovels: favoriteNovels,
-              onNovelTap: _handleNovelTap,
-              onRefresh: () async {
-                return;
-              },
-            );
-          },
-        ),
+      return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return FavoriteGridWidget(
+            favoriteNovels: favoriteNovels,
+            onNovelTap: _handleNovelTap,
+            onRefresh: () async {
+              return;
+            },
+          );
+        },
       );
     }
   }

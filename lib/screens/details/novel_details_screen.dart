@@ -137,6 +137,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     Provider.of<AppState>(context);
 
     return Scaffold(
@@ -147,7 +148,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
           IconButton(
             icon: Icon(
               isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? Colors.red : null,
+              color: isFavorite ? theme.colorScheme.primary : null,
             ),
             onPressed: _toggleFavorite,
             tooltip:
@@ -157,20 +158,34 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
           ),
         ],
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _buildBody(),
+      body: SafeArea(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _buildBody(theme),
+        ),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(ThemeData theme) {
     if (isLoading) {
       return const LoadingDetailsSkeletonWidget();
     } else if (errorMessage != null) {
-      return Center(child: ErrorMessageWidget(errorMessage: errorMessage!));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ErrorMessageWidget(errorMessage: errorMessage!),
+        ),
+      );
     } else if (_detailedNovel == null) {
-      return Center(child: Text("Detalhes não encontrados".translate));
+      return Center(
+        child: Text(
+          "Detalhes não encontrados".translate,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
     } else {
       return NovelDetailsWidget(
         novel: _detailedNovel!,

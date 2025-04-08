@@ -38,37 +38,39 @@ class _PluginsScreenState extends State<PluginsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text('Plugins'.translate), centerTitle: true),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildPluginSection(
-              context,
-              'Português (Brasil)'.translate,
-              availablePluginsPtBr,
-              selectedPlugins,
-              appState,
-            ),
-            const SizedBox(height: 24),
-            _buildPluginSection(
-              context,
-              'Inglês'.translate,
-              availablePluginsEn,
-              selectedPlugins,
-              appState,
-            ),
-            const SizedBox(height: 24),
-            _buildPluginSection(
-              context,
-              'Espanhol'.translate,
-              availablePluginsEspanish,
-              selectedPlugins,
-              appState,
-            ),
-            const SizedBox(height: 24),
-            _buildRequestPluginSection(context),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPluginSection(
+                context,
+                'Português (Brasil)'.translate,
+                availablePluginsPtBr,
+                selectedPlugins,
+                appState,
+              ),
+              const SizedBox(height: 24),
+              _buildPluginSection(
+                context,
+                'Inglês'.translate,
+                availablePluginsEn,
+                selectedPlugins,
+                appState,
+              ),
+              const SizedBox(height: 24),
+              _buildPluginSection(
+                context,
+                'Espanhol'.translate,
+                availablePluginsEspanish,
+                selectedPlugins,
+                appState,
+              ),
+              const SizedBox(height: 24),
+              _buildRequestPluginSection(context),
+            ],
+          ),
         ),
       ),
     );
@@ -87,32 +89,46 @@ class _PluginsScreenState extends State<PluginsScreen> {
       children: [
         Text(
           title,
-          style: theme.textTheme.titleLarge?.copyWith(
+          style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
         ...plugins.map((plugin) {
           return Card(
-            elevation: 2,
+            elevation: 1,
+            surfaceTintColor: theme.colorScheme.surfaceVariant,
             margin: const EdgeInsets.symmetric(vertical: 4.0),
-            child: CheckboxListTile(
-              title: Text(plugin),
-              value: selectedPlugins.contains(plugin),
-              onChanged: (bool? newValue) {
-                if (newValue != null) {
-                  final updatedPlugins = Set<String>.from(selectedPlugins);
-                  if (newValue) {
-                    updatedPlugins.add(plugin);
-                  } else {
-                    updatedPlugins.remove(plugin);
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: CheckboxListTile(
+                title: Text(
+                  plugin,
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+                value: selectedPlugins.contains(plugin),
+                onChanged: (bool? newValue) {
+                  if (newValue != null) {
+                    final updatedPlugins = Set<String>.from(selectedPlugins);
+                    if (newValue) {
+                      updatedPlugins.add(plugin);
+                    } else {
+                      updatedPlugins.remove(plugin);
+                    }
+                    appState.setSelectedPlugins(updatedPlugins);
                   }
-                  appState.setSelectedPlugins(updatedPlugins);
-                }
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              activeColor: theme.colorScheme.secondary,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: theme.colorScheme.primary,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
             ),
           );
         }),
@@ -129,6 +145,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
           'Não encontrou o que procurava?'.translate,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -149,7 +166,9 @@ class _PluginsScreenState extends State<PluginsScreen> {
         Text(
           'Clique no link acima para abrir uma solicitação no GitHub.'
               .translate,
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );

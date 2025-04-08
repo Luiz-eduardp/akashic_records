@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 
 class TextTab extends StatelessWidget {
   final List<String> fontOptions = [
-    'Pinyon Script, cursive'.translate,
-    'Lexend Giga, sans-serif'.translate,
-    'Arial'.translate,
-    'Times New Roman'.translate,
-    'Courier New'.translate,
+    'Pinyon Script, cursive',
+    'Lexend Giga, sans-serif',
+    'Arial',
+    'Times New Roman',
+    'Courier New',
   ];
 
   TextTab({super.key});

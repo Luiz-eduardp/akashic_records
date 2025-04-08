@@ -6,7 +6,7 @@ import 'package:akashic_records/screens/history/history_card_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key});
+  const HistoryScreen({super.key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -24,7 +24,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void initState() {
     super.initState();
     _mounted = true;
-    _loadHistory();
+    _loadHistoryData();
   }
 
   @override
@@ -33,90 +33,115 @@ class _HistoryScreenState extends State<HistoryScreen> {
     super.dispose();
   }
 
-  Future<void> _loadHistory() async {
-    if (!_mounted) return;
-
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _loadHistoryData() async {
+    _setLoading(true);
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      List<Map<String, dynamic>> loadedHistory = [];
-      Set<String> novels = {};
-
-      final historyKeys =
-          prefs.getKeys().where((key) => key.startsWith('history_')).toList();
-
-      for (final historyKey in historyKeys) {
-        final historyString = prefs.getString(historyKey) ?? '[]';
-        try {
-          List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
-          loadedHistory.addAll(
-            history.map((item) => Map<String, dynamic>.from(item)),
-          );
-        } catch (e) {
-          debugPrint(
-            "Erro ao decodificar histórico para a chave $historyKey: $e",
-          );
-        }
-      }
-
-      loadedHistory.sort((a, b) {
-        DateTime? dateA;
-        DateTime? dateB;
-
-        try {
-          dateA = a['lastRead'] != null ? DateTime.parse(a['lastRead']) : null;
-        } catch (e) {
-          debugPrint(
-            "Erro ao fazer o parse da data A: ${a['lastRead']}, erro: $e",
-          );
-        }
-
-        try {
-          dateB = b['lastRead'] != null ? DateTime.parse(b['lastRead']) : null;
-        } catch (e) {
-          debugPrint(
-            "Erro ao fazer o parse da data B: ${b['lastRead']}, erro: $e",
-          );
-        }
-
-        if (dateA == null && dateB == null) return 0;
-        if (dateA == null) return 1;
-        if (dateB == null) return -1;
-
-        return dateB.compareTo(dateA);
-      });
-
-      for (var item in loadedHistory) {
-        novels.add(item['novelTitle']);
-      }
+      final loadedHistory = await _loadHistoryFromPreferences(prefs);
+      final novels = _extractNovelTitles(loadedHistory);
 
       if (_mounted) {
         setState(() {
           _fullHistory = loadedHistory;
           _availableNovels = novels.toList();
           _filterHistory();
-          _isLoading = false;
+          _setLoading(false);
         });
       }
     } catch (e) {
       debugPrint("Erro ao carregar histórico: $e");
+      _showErrorSnackBar(context, "Falha ao carregar o histórico: $e");
       if (_mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        _setLoading(false);
       }
     }
+  }
+
+  void _setLoading(bool isLoading) {
+    if (_mounted) {
+      setState(() {
+        _isLoading = isLoading;
+      });
+    }
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(color: Theme.of(context).colorScheme.onError),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _loadHistoryFromPreferences(
+    SharedPreferences prefs,
+  ) async {
+    List<Map<String, dynamic>> loadedHistory = [];
+
+    final historyKeys =
+        prefs.getKeys().where((key) => key.startsWith('history_')).toList();
+
+    for (final historyKey in historyKeys) {
+      final historyString = prefs.getString(historyKey) ?? '[]';
+      try {
+        List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+        loadedHistory.addAll(
+          history.map((item) => Map<String, dynamic>.from(item)),
+        );
+      } catch (e) {
+        debugPrint(
+          "Erro ao decodificar histórico para a chave $historyKey: $e",
+        );
+      }
+    }
+
+    loadedHistory.sort((a, b) {
+      DateTime? dateA;
+      DateTime? dateB;
+
+      try {
+        dateA = a['lastRead'] != null ? DateTime.parse(a['lastRead']) : null;
+      } catch (e) {
+        debugPrint(
+          "Erro ao fazer o parse da data A: ${a['lastRead']}, erro: $e",
+        );
+      }
+
+      try {
+        dateB = b['lastRead'] != null ? DateTime.parse(b['lastRead']) : null;
+      } catch (e) {
+        debugPrint(
+          "Erro ao fazer o parse da data B: ${b['lastRead']}, erro: $e",
+        );
+      }
+
+      if (dateA == null && dateB == null) return 0;
+      if (dateA == null) return 1;
+      if (dateB == null) return -1;
+
+      return dateB.compareTo(dateA);
+    });
+
+    return loadedHistory;
+  }
+
+  Set<String> _extractNovelTitles(List<Map<String, dynamic>> history) {
+    Set<String> novels = {};
+    for (var item in history) {
+      novels.add(item['novelTitle']);
+    }
+    return novels;
   }
 
   void _filterHistory() {
     List<Map<String, dynamic>> filteredHistory = [];
 
-    if (_selectedNovel == null) {
-      filteredHistory = List.from(_fullHistory);
-    } else if (_selectedNovel == 'Todas as Novels') {
+    if (_selectedNovel == null || _selectedNovel == 'Todas as Novels') {
       filteredHistory = List.from(_fullHistory);
     } else {
       filteredHistory =
@@ -141,7 +166,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _refreshHistory() async {
-    await _loadHistory();
+    await _loadHistoryData();
   }
 
   void _updateSelectedNovel(String? novel) {
@@ -153,137 +178,176 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      body: _buildBody(),
-      floatingActionButton: _buildFilterButton(),
+      body: RefreshIndicator(
+        onRefresh: _refreshHistory,
+        backgroundColor: theme.colorScheme.surface,
+        color: theme.colorScheme.primary,
+        child: _buildBody(theme),
+      ),
+      floatingActionButton: _buildFilterButton(theme),
     );
   }
 
-  Widget _buildFilterButton() {
+  Widget _buildFilterButton(ThemeData theme) {
     return FloatingActionButton(
       onPressed: () {
-        _showFilterDialog(context);
+        _showFilterDialog(context, theme);
       },
+      backgroundColor: theme.colorScheme.primary,
+      foregroundColor: theme.colorScheme.onPrimary,
       tooltip: 'Filtrar'.translate,
       child: const Icon(Icons.filter_list),
     );
   }
 
-  void _showFilterDialog(BuildContext context) {
+  void _showFilterDialog(BuildContext context, ThemeData theme) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Filtrar por Novel'.translate),
+          backgroundColor: theme.colorScheme.surface,
+          title: Text(
+            'Filtrar por Novel'.translate,
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 RadioListTile<String?>(
-                  title: Text('Todas as Novels'.translate),
+                  title: Text(
+                    'Todas as Novels'.translate,
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                  ),
                   value: null,
                   groupValue: _selectedNovel,
                   onChanged: (String? value) {
                     _updateSelectedNovel(value);
                     Navigator.of(context).pop();
                   },
+                  activeColor: theme.colorScheme.primary,
                 ),
                 ..._availableNovels.map((novel) {
                   return RadioListTile<String?>(
-                    title: Text(novel),
+                    title: Text(
+                      novel,
+                      style: TextStyle(color: theme.colorScheme.onSurface),
+                    ),
                     value: novel,
                     groupValue: _selectedNovel,
                     onChanged: (String? value) {
                       _updateSelectedNovel(value);
                       Navigator.of(context).pop();
                     },
+                    activeColor: theme.colorScheme.primary,
                   );
                 }),
               ],
             ),
           ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Fechar'.translate,
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(ThemeData theme) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+        ),
+      );
     }
 
     if (_history.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.history,
-              size: 60,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Seu histórico está vazio.'.translate,
-              style: TextStyle(
-                fontSize: 18,
-                color: Theme.of(context).colorScheme.outline,
+      return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.history,
+                      size: 60,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Seu histórico está vazio.'.translate,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Comece a ler para ver seus livros aqui.'.translate,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Comece a ler para ver seus livros aqui.'.translate,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+          );
+        },
       );
     }
 
     return Column(
       children: [
-        _buildMetricsWidget(),
+        _buildMetricsWidget(theme),
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: _refreshHistory,
-            color: Theme.of(context).colorScheme.secondary,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(8),
-              itemCount: _history.length,
-              separatorBuilder:
-                  (context, index) =>
-                      const Divider(height: 1, color: Colors.grey),
-              itemBuilder: (context, index) {
-                final item = _history[index];
-                return HistoryCardWidget(
-                  novelTitle: item['novelTitle'],
-                  chapterTitle: item['chapterTitle'],
-                  pluginId: item['pluginId'] ?? '',
-                  lastRead: DateTime.parse(
-                    item['lastRead'] ?? DateTime.now().toIso8601String(),
-                  ),
-                  onTap:
-                      () => _handleHistoryTap(
-                        item['novelId'],
-                        item['pluginId'],
-                        item['chapterId'],
-                      ),
-                );
-              },
-            ),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(8),
+            itemCount: _history.length,
+            separatorBuilder:
+                (context, index) =>
+                    Divider(height: 1, color: theme.dividerColor),
+            itemBuilder: (context, index) {
+              final item = _history[index];
+              return HistoryCardWidget(
+                novelTitle: item['novelTitle'],
+                chapterTitle: item['chapterTitle'],
+                pluginId: item['pluginId'] ?? '',
+                lastRead: DateTime.parse(
+                  item['lastRead'] ?? DateTime.now().toIso8601String(),
+                ),
+                onTap:
+                    () => _handleHistoryTap(
+                      item['novelId'],
+                      item['pluginId'],
+                      item['chapterId'],
+                    ),
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildMetricsWidget() {
-   
+  Widget _buildMetricsWidget(ThemeData theme) {
     int totalChaptersRead = _history.length;
 
     Map<String, int> novelChapterCounts = {};
@@ -304,6 +368,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return Card(
       margin: const EdgeInsets.all(8.0),
+      color: theme.colorScheme.surface,
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -311,22 +378,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
           children: [
             Text(
               'Estatísticas de Leitura'.translate,
-              style: Theme.of(context).textTheme.titleLarge,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 10),
-            Text('Total de Capítulos Lidos: $totalChaptersRead'),
-            Text('Novel Mais Lida: $mostReadNovel'),
+            Text(
+              'Total de Capítulos Lidos: $totalChaptersRead',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+            Text(
+              'Novel Mais Lida: $mostReadNovel',
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
           ],
         ),
       ),
     );
-  }
-
-  int calculateTotalReadingTime() {
-    int totalTime = 0;
-    for (var item in _history) {
-      totalTime += (5 + (item.hashCode % 11));
-    }
-    return totalTime;
   }
 }
