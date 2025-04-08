@@ -6,12 +6,16 @@ class ChapterListWidget extends StatefulWidget {
   final List<Chapter> chapters;
   final Function(String) onChapterTap;
   final String? lastReadChapterId;
+  final Set<String> readChapterIds;
+  final Function(String) onMarkAsRead;
 
   const ChapterListWidget({
     super.key,
     required this.chapters,
     required this.onChapterTap,
     this.lastReadChapterId,
+    this.readChapterIds = const {},
+    required this.onMarkAsRead,
   });
 
   @override
@@ -28,10 +32,12 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   int _firstItemIndex = 0;
   final int _pageSize = 20;
   bool _isLoadingMore = false;
+  bool _mounted = false;
 
   @override
   void initState() {
     super.initState();
+    _mounted = true;
     _chapters = List.from(widget.chapters);
     _sortChapters();
     _loadInitialChapters();
@@ -42,7 +48,8 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   @override
   void didUpdateWidget(covariant ChapterListWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.chapters != oldWidget.chapters) {
+    if (widget.chapters != oldWidget.chapters ||
+        widget.readChapterIds != oldWidget.readChapterIds) {
       _chapters = List.from(widget.chapters);
       _sortChapters();
       _searchChapters();
@@ -52,6 +59,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
 
   @override
   void dispose() {
+    _mounted = false;
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
@@ -65,11 +73,15 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   }
 
   void _loadInitialChapters() {
+    if (!_mounted) return;
+
     _displayedChapters = _chapters.sublist(
       0,
       _pageSize.clamp(0, _chapters.length),
     );
-    setState(() {});
+    if (_mounted) {
+      setState(() {});
+    }
   }
 
   void _onScroll() {
@@ -81,7 +93,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   }
 
   void _loadMoreChapters() async {
-    if (_isLoadingMore) return;
+    if (_isLoadingMore || !_mounted) return;
     _isLoadingMore = true;
 
     await Future.delayed(const Duration(milliseconds: 200));
@@ -93,10 +105,14 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     );
 
     if (_firstItemIndex < _chapters.length) {
-      setState(() {
-        _displayedChapters.addAll(_chapters.sublist(_firstItemIndex, endIndex));
-        _isLoadingMore = false;
-      });
+      if (_mounted) {
+        setState(() {
+          _displayedChapters.addAll(
+            _chapters.sublist(_firstItemIndex, endIndex),
+          );
+          _isLoadingMore = false;
+        });
+      }
     } else {
       _isLoadingMore = false;
     }
@@ -140,6 +156,8 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   }
 
   void _sortChapters() {
+    if (!_mounted) return;
+
     _displayedChapters = List.from(_chapters);
 
     List<MapEntry<Chapter, double?>> chapterNumbers =
@@ -170,10 +188,13 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
 
     _displayedChapters = chapterNumbers.map((entry) => entry.key).toList();
 
-    setState(() {});
+    if (_mounted) {
+      setState(() {});
+    }
   }
 
   void _toggleSortOrder() {
+    if (!_mounted) return;
     setState(() {
       _isAscending = !_isAscending;
       _sortChapters();
@@ -181,27 +202,35 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   }
 
   void _searchChapters() {
+    if (!_mounted) return;
+
     String query = _searchController.text.toLowerCase();
     if (query.isEmpty) {
       _sortChapters();
     } else {
-      setState(() {
-        _displayedChapters =
-            _chapters
-                .where((chapter) => chapter.title.toLowerCase().contains(query))
-                .toList();
-        if (_isAscending) {
-          _displayedChapters.sort((a, b) => a.title.compareTo(b.title));
-        } else {
-          _displayedChapters.sort((a, b) => b.title.compareTo(a.title));
-        }
-      });
+      if (_mounted) {
+        setState(() {
+          _displayedChapters =
+              _chapters
+                  .where(
+                    (chapter) => chapter.title.toLowerCase().contains(query),
+                  )
+                  .toList();
+          if (_isAscending) {
+            _displayedChapters.sort((a, b) => a.title.compareTo(b.title));
+          } else {
+            _displayedChapters.sort((a, b) => b.title.compareTo(a.title));
+          }
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final listHeight = screenHeight * 0.6;
 
     return Column(
       children: [
@@ -233,7 +262,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
           ),
         ),
         SizedBox(
-          height: 400,
+          height: listHeight,
           child: ScrollConfiguration(
             behavior: ScrollConfiguration.of(
               context,
@@ -246,6 +275,8 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                 if (index < _displayedChapters.length) {
                   final chapter = _displayedChapters[index];
                   final isLastRead = chapter.id == widget.lastReadChapterId;
+                  final isRead = widget.readChapterIds.contains(chapter.id);
+                  final isUnread = !isRead;
 
                   final chapterNumber = _extractChapterNumber(
                     chapter.id,
@@ -259,12 +290,21 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                               : chapterNumber.toString())
                           : chapter.title;
 
+                  FontWeight fontWeight = FontWeight.normal;
+                  if (isUnread) {
+                    fontWeight = FontWeight.bold;
+                  }
+
                   return Column(
                     children: [
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          onTap: () => widget.onChapterTap(chapter.id),
+                          onTap: () {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              widget.onChapterTap(chapter.id);
+                            });
+                          },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               vertical: 12.0,
@@ -276,13 +316,12 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                                   child: Text(
                                     displayTitle,
                                     style: theme.textTheme.bodyLarge?.copyWith(
-                                      fontWeight:
-                                          isLastRead
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
+                                      fontWeight: fontWeight,
                                       color:
                                           isLastRead
                                               ? theme.colorScheme.secondary
+                                              : isRead
+                                              ? theme.disabledColor
                                               : theme.colorScheme.onSurface,
                                     ),
                                   ),
@@ -292,6 +331,23 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                                     Icons.bookmark,
                                     color: theme.colorScheme.secondary,
                                   ),
+                                IconButton(
+                                  icon: Icon(
+                                    isRead
+                                        ? Icons.check_circle
+                                        : Icons.radio_button_unchecked,
+                                    color:
+                                        isRead
+                                            ? Colors.green
+                                            : theme.disabledColor,
+                                  ),
+                                  onPressed: () {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                          widget.onMarkAsRead(chapter.id);
+                                        });
+                                  },
+                                ),
                               ],
                             ),
                           ),

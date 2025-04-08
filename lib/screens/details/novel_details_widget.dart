@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'chapter_list_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class NovelDetailsWidget extends StatefulWidget {
   final Novel novel;
@@ -28,11 +30,46 @@ class NovelDetailsWidget extends StatefulWidget {
 class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
   bool _showFullSynopsis = false;
   late List<String> _paragraphs;
+  Set<String> _readChapterIds = {};
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _paragraphs = _splitSynopsis(widget.novel.description);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _loadReadChapterIdsFromHistory();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _loadReadChapterIdsFromHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyKey = 'history_${widget.novel.id}';
+    final historyString = prefs.getString(historyKey) ?? '[]';
+    List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+
+    Set<String> readIds = {};
+    for (var item in history) {
+      readIds.add(item['chapterId']);
+    }
+
+    setState(() {
+      _readChapterIds = readIds;
+    });
+  }
+
+  Future<void> _saveReadChapterIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'read_chapters_${widget.novel.id}';
+    await prefs.setStringList(key, _readChapterIds.toList());
   }
 
   List<String> _splitSynopsis(String synopsis) {
@@ -46,6 +83,17 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
     } else {
       return ["", ""];
     }
+  }
+
+  void _markAsRead(String chapterId) {
+    setState(() {
+      if (_readChapterIds.contains(chapterId)) {
+        _readChapterIds.remove(chapterId);
+      } else {
+        _readChapterIds.add(chapterId);
+      }
+      _saveReadChapterIds();
+    });
   }
 
   @override
@@ -78,7 +126,6 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                   ),
                 ),
               ),
-
               Positioned(
                 bottom: 16,
                 child: Padding(
@@ -100,7 +147,6 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                   ),
                 ),
               ),
-
               Positioned(
                 top: 16,
                 child: SizedBox(
@@ -127,7 +173,6 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
               ),
             ],
           ),
-
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -146,7 +191,6 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                       ),
                     ),
                   ),
-
                 Html(
                   data:
                       _showFullSynopsis
@@ -185,7 +229,6 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                     ),
                   ),
                 const SizedBox(height: 24),
-
                 if (widget.onContinueReading != null)
                   SizedBox(
                     width: double.infinity,
@@ -203,9 +246,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                       child: Text('Continuar Leitura'.translate),
                     ),
                   ),
-
                 const SizedBox(height: 16),
-
                 Text(
                   'Capítulos:'.translate,
                   style: theme.textTheme.titleLarge?.copyWith(
@@ -213,11 +254,16 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ChapterListWidget(
-                  chapters: widget.novel.chapters,
-                  onChapterTap: widget.onChapterTap,
-                  lastReadChapterId: widget.lastReadChapterId,
-                ),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  ChapterListWidget(
+                    chapters: widget.novel.chapters,
+                    onChapterTap: widget.onChapterTap,
+                    lastReadChapterId: widget.lastReadChapterId,
+                    readChapterIds: _readChapterIds,
+                    onMarkAsRead: _markAsRead,
+                  ),
               ],
             ),
           ),
