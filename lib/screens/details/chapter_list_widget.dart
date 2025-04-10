@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChapterListWidget extends StatefulWidget {
   final List<Chapter> chapters;
@@ -8,6 +11,7 @@ class ChapterListWidget extends StatefulWidget {
   final String? lastReadChapterId;
   final Set<String> readChapterIds;
   final Function(String) onMarkAsRead;
+  final String novelId;
 
   const ChapterListWidget({
     super.key,
@@ -16,6 +20,7 @@ class ChapterListWidget extends StatefulWidget {
     this.lastReadChapterId,
     this.readChapterIds = const {},
     required this.onMarkAsRead,
+    required this.novelId,
   });
 
   @override
@@ -226,6 +231,43 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     }
   }
 
+  Future<void> _addToHistory(Chapter chapter) async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyKey = 'history_${widget.novelId}';
+    final historyString = prefs.getString(historyKey) ?? '[]';
+    List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+
+    final newItem = {
+      'novelId': widget.novelId,
+      'novelTitle': '',
+      'chapterId': chapter.id,
+      'chapterTitle': chapter.title,
+      'pluginId': '',
+    };
+
+    int existingIndex = history.indexWhere(
+      (item) => item['chapterId'] == newItem['chapterId'],
+    );
+
+    if (existingIndex != -1) {
+      history[existingIndex] = {
+        ...newItem,
+        'lastRead': history[existingIndex]['lastRead'],
+      };
+    } else {
+      history.insert(0, {
+        ...newItem,
+        'lastRead': DateTime.now().toIso8601String(),
+      });
+    }
+
+    if (history.length > 10) {
+      history = history.sublist(0, 10);
+    }
+
+    await prefs.setString(historyKey, jsonEncode(history));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -345,6 +387,9 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
                                           widget.onMarkAsRead(chapter.id);
+                                          if (!isRead) {
+                                            _addToHistory(chapter);
+                                          }
                                         });
                                   },
                                 ),

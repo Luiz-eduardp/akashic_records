@@ -263,6 +263,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                     lastReadChapterId: widget.lastReadChapterId,
                     readChapterIds: _readChapterIds,
                     onMarkAsRead: _markAsRead,
+                    novelId: widget.novel.id,
                   ),
               ],
             ),
