@@ -47,20 +47,24 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
   }
 
   Future<void> _loadDetailedNovel() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+    }
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[widget.novel.pluginId];
 
       if (plugin == null) {
-        setState(() {
-          errorMessage = 'Plugin não encontrado para esta novel.'.translate;
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            errorMessage = 'Plugin não encontrado para esta novel.'.translate;
+            isLoading = false;
+          });
+        }
         return;
       }
 
@@ -70,24 +74,32 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
       if (detailedNovel != null) {
         detailedNovel.pluginId = widget.novel.pluginId;
-        setState(() {
-          _detailedNovel = detailedNovel;
-        });
+        if (mounted) {
+          setState(() {
+            _detailedNovel = detailedNovel;
+          });
+        }
       } else {
-        setState(() {
-          errorMessage =
-              'Falha ao carregar detalhes da novel do plugin.'.translate;
-        });
+        if (mounted) {
+          setState(() {
+            errorMessage =
+                'Falha ao carregar detalhes da novel do plugin.'.translate;
+          });
+        }
       }
     } catch (e) {
-      setState(() {
-        errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
+        });
+      }
       debugPrint("Erro ao carregar detalhes da novel: $e");
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -96,7 +108,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
     final lastReadChapterId = _prefs.getString('lastRead_${widget.novel.id}');
 
-    if (lastReadChapterId != null) {
+    if (lastReadChapterId != null && mounted) {
       final index = _detailedNovel!.chapters.indexWhere(
         (chapter) => chapter.id == lastReadChapterId,
       );
@@ -109,9 +121,11 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
   }
 
   Future<void> _loadFavoriteStatus() async {
-    setState(() {
-      isFavorite = _prefs.getBool(_getFavoriteKey()) ?? false;
-    });
+    if (mounted) {
+      setState(() {
+        isFavorite = _prefs.getBool(_getFavoriteKey()) ?? false;
+      });
+    }
   }
 
   Future<void> _saveFavoriteStatus() async {
@@ -127,12 +141,14 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
   Future<void> _saveLastReadChapter(String chapterId) async {
     await _prefs.setString('lastRead_${widget.novel.id}', chapterId);
-    setState(() {
-      lastReadChapterId = chapterId;
-      lastReadChapterIndex = _detailedNovel?.chapters.indexWhere(
-        (chapter) => chapter.id == chapterId,
-      );
-    });
+    if (mounted) {
+      setState(() {
+        lastReadChapterId = chapterId;
+        lastReadChapterIndex = _detailedNovel?.chapters.indexWhere(
+          (chapter) => chapter.id == chapterId,
+        );
+      });
+    }
   }
 
   @override
@@ -141,14 +157,22 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
     Provider.of<AppState>(context);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(widget.novel.title),
+        elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
+        titleTextStyle: theme.appBarTheme.titleTextStyle?.copyWith(
+          color: theme.colorScheme.onSurface,
+        ),
         actions: [
           IconButton(
             icon: Icon(
               isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? theme.colorScheme.primary : null,
+              color:
+                  isFavorite
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
             ),
             onPressed: _toggleFavorite,
             tooltip:
@@ -159,6 +183,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
         ],
       ),
       body: SafeArea(
+        top: false,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           child: _buildBody(theme),
@@ -173,16 +198,27 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
     } else if (errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ErrorMessageWidget(errorMessage: errorMessage!),
+          padding: const EdgeInsets.all(24.0),
+          child: ErrorMessageWidget(
+            errorMessage: errorMessage!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.error,
+              fontSize: 16,
+            ),
+          ),
         ),
       );
     } else if (_detailedNovel == null) {
       return Center(
-        child: Text(
-          "Detalhes não encontrados".translate,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Text(
+            "Detalhes não encontrados".translate,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 18,
+            ),
           ),
         ),
       );
