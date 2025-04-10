@@ -1,6 +1,7 @@
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
+import 'package:akashic_records/screens/library/novel_grid_skeleton_widget.dart';
 import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,8 @@ import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/library/novel_filter_sort_widget.dart';
 import 'dart:async';
 import 'package:akashic_records/widgets/novel_tile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:akashic_records/screens/library/novel_tile_skeleton_widget.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -38,7 +41,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _mounted = true;
     _initializeFilters();
     _scrollController.addListener(_scrollListener);
+    _loadViewMode();
     _loadNovels();
+  }
+
+  Future<void> _loadViewMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isListView = prefs.getBool('isListView') ?? false;
+    });
+  }
+
+  Future<void> _saveViewMode(bool isListView) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isListView', isListView);
   }
 
   @override
@@ -236,6 +252,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     setState(() {
       _isListView = !_isListView;
     });
+    _saveViewMode(_isListView);
   }
 
   @override
@@ -293,25 +310,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildNovelDisplay() {
-    if (_isListView) {
-      return ListView.builder(
-        controller: _scrollController,
-        itemCount: novels.length,
-        itemBuilder: (context, index) {
-          return NovelListTile(
-            novel: novels[index],
-            onTap: () => _handleNovelTap(novels[index]),
-          );
-        },
-      );
+    if (isLoading) {
+      return _isListView
+          ? ListView.builder(
+            controller: _scrollController,
+            itemCount: 5,
+            itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
+          )
+          : NovelGridSkeletonWidget(itemCount: 4);
     } else {
-      return NovelGridWidget(
-        novels: novels,
-        isLoading: isLoading,
-        errorMessage: errorMessage,
-        scrollController: _scrollController,
-        onNovelTap: _handleNovelTap,
-      );
+      if (_isListView) {
+        return ListView.builder(
+          controller: _scrollController,
+          itemCount: novels.length,
+          itemBuilder: (context, index) {
+            return NovelListTile(
+              novel: novels[index],
+              onTap: () => _handleNovelTap(novels[index]),
+            );
+          },
+        );
+      } else {
+        return NovelGridWidget(
+          novels: novels,
+          isLoading: isLoading,
+          errorMessage: errorMessage,
+          scrollController: _scrollController,
+          onNovelTap: _handleNovelTap,
+        );
+      }
     }
   }
 }

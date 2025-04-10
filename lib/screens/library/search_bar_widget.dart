@@ -1,5 +1,6 @@
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchBarWidget extends StatefulWidget {
   final Function(String) onSearch;
@@ -44,6 +45,11 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
     _controller.removeListener(_updateClearButtonVisibility);
     _controller.dispose();
     super.dispose();
+  }
+
+  _saveSearchTerm(String searchTerm) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('novelSearchTerm', searchTerm);
   }
 
   @override
@@ -102,6 +108,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               ),
               onSubmitted: (value) {
                 widget.onSearch(value);
+                _saveSearchTerm(value);
               },
               onChanged: (value) {
                 setState(() {

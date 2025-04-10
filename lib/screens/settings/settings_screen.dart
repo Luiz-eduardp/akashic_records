@@ -202,72 +202,84 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget _buildAppearanceTab(ThemeData theme, AppState appState) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Card(
-        elevation: 1,
-        color: theme.colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: _ThemeSettings(appState: appState, theme: theme),
-        ),
-      ),
+      child:
+          _isLoading
+              ? const SkeletonCard()
+              : Card(
+                elevation: 1,
+                color: theme.colorScheme.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _ThemeSettings(appState: appState, theme: theme),
+                ),
+              ),
     );
   }
 
   Widget _buildUpdateTab(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Card(
-        elevation: 1,
-        color: theme.colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SettingsTile(
-                title: 'Versão do Aplicativo'.translate,
-                subtitle: _currentVersion,
-              ),
-              SettingsTile(
-                title: 'Última Versão'.translate,
-                subtitle:
-                    _isLoading ? 'Carregando...'.translate : _latestVersion,
-              ),
-              const SizedBox(height: 16),
-              if (_updateAvailable)
-                ElevatedButton(
-                  onPressed: () {
-                    if (kIsWeb) {
-                      launchUrl(
-                        Uri.parse(
-                          'https://github.com/AkashicRecordsApp/akashic_records/releases/latest',
-                        ),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } else {
-                      _downloadAndInstall();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    textStyle: const TextStyle(fontSize: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text('Atualizar Aplicativo'.translate),
+      child:
+          _isLoading
+              ? const SkeletonCard()
+              : Card(
+                elevation: 1,
+                color: theme.colorScheme.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-            ],
-          ),
-        ),
-      ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SettingsTile(
+                        title: 'Versão do Aplicativo'.translate,
+                        subtitle: _currentVersion,
+                      ),
+                      SettingsTile(
+                        title: 'Última Versão'.translate,
+                        subtitle:
+                            _isLoading
+                                ? 'Carregando...'.translate
+                                : _latestVersion,
+                      ),
+                      const SizedBox(height: 16),
+                      if (_updateAvailable)
+                        ElevatedButton(
+                          onPressed: () {
+                            if (kIsWeb) {
+                              launchUrl(
+                                Uri.parse(
+                                  'https://github.com/AkashicRecordsApp/akashic_records/releases/latest',
+                                ),
+                                mode: LaunchMode.externalApplication,
+                              );
+                            } else {
+                              _downloadAndInstall();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            textStyle: const TextStyle(fontSize: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text('Atualizar Aplicativo'.translate),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
     );
   }
 }
@@ -476,6 +488,50 @@ class _AboutButton extends StatelessWidget {
           ),
         ),
         child: Text('Sobre'.translate),
+      ),
+    );
+  }
+}
+
+class SkeletonCard extends StatelessWidget {
+  const SkeletonCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 1,
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSkeletonLine(context, theme, widthFactor: 0.8),
+            const SizedBox(height: 10),
+            _buildSkeletonLine(context, theme, widthFactor: 0.6),
+            const SizedBox(height: 20),
+            _buildSkeletonLine(context, theme),
+            const SizedBox(height: 10),
+            _buildSkeletonLine(context, theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLine(
+    BuildContext context,
+    ThemeData theme, {
+    double widthFactor = 1.0,
+  }) {
+    return Container(
+      width: MediaQuery.of(context).size.width * widthFactor,
+      height: 10,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(5),
       ),
     );
   }

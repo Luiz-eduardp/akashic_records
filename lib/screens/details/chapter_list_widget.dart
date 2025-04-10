@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChapterListWidget extends StatefulWidget {
   final List<Chapter> chapters;
@@ -8,6 +11,7 @@ class ChapterListWidget extends StatefulWidget {
   final String? lastReadChapterId;
   final Set<String> readChapterIds;
   final Function(String) onMarkAsRead;
+  final String novelId;
 
   const ChapterListWidget({
     super.key,
@@ -16,6 +20,7 @@ class ChapterListWidget extends StatefulWidget {
     this.lastReadChapterId,
     this.readChapterIds = const {},
     required this.onMarkAsRead,
+    required this.novelId,
   });
 
   @override
@@ -226,80 +231,127 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     }
   }
 
+  Future<void> _addToHistory(Chapter chapter) async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyKey = 'history_${widget.novelId}';
+    final historyString = prefs.getString(historyKey) ?? '[]';
+    List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+
+    final newItem = {
+      'novelId': widget.novelId,
+      'novelTitle': '',
+      'chapterId': chapter.id,
+      'chapterTitle': chapter.title,
+      'pluginId': '',
+    };
+
+    int existingIndex = history.indexWhere(
+      (item) => item['chapterId'] == newItem['chapterId'],
+    );
+
+    if (existingIndex != -1) {
+      history[existingIndex] = {
+        ...newItem,
+        'lastRead': history[existingIndex]['lastRead'],
+      };
+    } else {
+      history.insert(0, {
+        ...newItem,
+        'lastRead': DateTime.now().toIso8601String(),
+      });
+    }
+
+    if (history.length > 10) {
+      history = history.sublist(0, 10);
+    }
+
+    await prefs.setString(historyKey, jsonEncode(history));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenHeight = MediaQuery.of(context).size.height;
     final listHeight = screenHeight * 0.6;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Pesquisar Capítulo'.translate,
-                    prefixIcon: const Icon(Icons.search),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Pesquisar Capítulo'.translate,
+                      prefixIcon: const Icon(Icons.search),
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 12.0,
+                      ),
+                    ),
+                    onChanged: (_) => _searchChapters(),
                   ),
-                  onChanged: (_) => _searchChapters(),
                 ),
-              ),
-              IconButton(
-                icon: Icon(
-                  _isAscending ? Icons.arrow_downward : Icons.arrow_upward,
+                SizedBox(width: 8.0),
+                IconButton(
+                  icon: Icon(
+                    _isAscending ? Icons.arrow_downward : Icons.arrow_upward,
+                  ),
+                  onPressed: _toggleSortOrder,
+                  tooltip:
+                      _isAscending
+                          ? 'Ordenar Decrescente'.translate
+                          : 'Ordenar Crescente'.translate,
                 ),
-                onPressed: _toggleSortOrder,
-                tooltip:
-                    _isAscending
-                        ? 'Ordenar Decrescente'.translate
-                        : 'Ordenar Crescente'.translate,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(
-          height: listHeight,
-          child: ScrollConfiguration(
-            behavior: ScrollConfiguration.of(
-              context,
-            ).copyWith(scrollbars: false),
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: _displayedChapters.length + (_isLoadingMore ? 1 : 0),
-              padding: EdgeInsets.zero,
-              itemBuilder: (context, index) {
-                if (index < _displayedChapters.length) {
-                  final chapter = _displayedChapters[index];
-                  final isLastRead = chapter.id == widget.lastReadChapterId;
-                  final isRead = widget.readChapterIds.contains(chapter.id);
-                  final isUnread = !isRead;
+          SizedBox(
+            height: listHeight,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(
+                context,
+              ).copyWith(scrollbars: false),
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: _displayedChapters.length + (_isLoadingMore ? 1 : 0),
+                padding: EdgeInsets.zero,
+                itemBuilder: (context, index) {
+                  if (index < _displayedChapters.length) {
+                    final chapter = _displayedChapters[index];
+                    final isLastRead = chapter.id == widget.lastReadChapterId;
+                    final isRead = widget.readChapterIds.contains(chapter.id);
+                    final isUnread = !isRead;
 
-                  final chapterNumber = _extractChapterNumber(
-                    chapter.id,
-                    chapter.title,
-                  );
+                    final chapterNumber = _extractChapterNumber(
+                      chapter.id,
+                      chapter.title,
+                    );
 
-                  String displayTitle =
-                      chapterNumber != null
-                          ? (chapterNumber % 1 == 0
-                              ? chapterNumber.toInt().toString()
-                              : chapterNumber.toString())
-                          : chapter.title;
+                    String displayTitle =
+                        chapterNumber != null
+                            ? (chapterNumber % 1 == 0
+                                ? chapterNumber.toInt().toString()
+                                : chapterNumber.toString())
+                            : chapter.title;
 
-                  FontWeight fontWeight = FontWeight.normal;
-                  if (isUnread) {
-                    fontWeight = FontWeight.bold;
-                  }
+                    FontWeight fontWeight = FontWeight.normal;
+                    if (isUnread) {
+                      fontWeight = FontWeight.bold;
+                    }
 
-                  return Column(
-                    children: [
-                      Material(
+                    return Card(
+                      elevation: 1.5,
+                      margin: EdgeInsets.symmetric(vertical: 4.0),
+                      child: Material(
                         color: Colors.transparent,
                         child: InkWell(
+                          borderRadius: BorderRadius.circular(8.0),
                           onTap: () {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               widget.onChapterTap(chapter.id);
@@ -307,7 +359,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
+                              vertical: 14.0,
                               horizontal: 16.0,
                             ),
                             child: Row(
@@ -331,47 +383,52 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                                     Icons.bookmark,
                                     color: theme.colorScheme.secondary,
                                   ),
-                                IconButton(
-                                  icon: Icon(
-                                    isRead
-                                        ? Icons.check_circle
-                                        : Icons.radio_button_unchecked,
-                                    color:
-                                        isRead
-                                            ? Colors.green
-                                            : theme.disabledColor,
-                                  ),
-                                  onPressed: () {
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(24.0),
+                                  onTap: () {
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
                                           widget.onMarkAsRead(chapter.id);
+                                          if (!isRead) {
+                                            _addToHistory(chapter);
+                                          }
                                         });
                                   },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Icon(
+                                      isRead
+                                          ? Icons.check_circle
+                                          : Icons.radio_button_unchecked,
+                                      color:
+                                          isRead
+                                              ? Colors.green
+                                              : theme.disabledColor,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      if (index < _displayedChapters.length - 1)
-                        Divider(height: 1, color: theme.dividerColor),
-                    ],
-                  );
-                } else {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: theme.colorScheme.secondary,
+                    );
+                  } else {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: theme.colorScheme.secondary,
+                        ),
                       ),
-                    ),
-                  );
-                }
-              },
+                    );
+                  }
+                },
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

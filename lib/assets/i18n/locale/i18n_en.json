@@ -63,7 +63,7 @@
   "Estatísticas de Leitura": "Reading Statistics",
   "Tempo Total de Leitura: \\$readingTimeDisplay": "Total Reading Time: \\$readingTimeDisplay",
   "Total de Capítulos Lidos: \\$totalChaptersRead": "Total Chapters Read: \\$totalChaptersRead",
-  "Novel Mais Lida: \\$mostReadNovel": "Most Read Novel: \\$mostReadNovel",
+  "Novel Mais Lida": "Most Read Novel",
   "Todas as Novels": "All Novels",
   "Buscar novels...": "Search novels...",
   "Nenhuma novel encontrada.": "No novel found.",
@@ -118,5 +118,10 @@
   "JavaScript Customizado:": "Custom JavaScript:",
   "Digite seu JavaScript customizado aqui...": "Enter your custom JavaScript here...",
   "Salvar JavaScript Customizado": "Save Custom JavaScript",
-  "JavaScript customizado salvo!": "Custom JavaScript saved!"
+  "JavaScript customizado salvo!": "Custom JavaScript saved!",
+  "Capítulos Lidos": "Chapters Read",
+  "Fechar": "Close",
+  "Resumo": "Sinopse",
+  "Plugin desativado": "Plugin disabled"
+
 }
