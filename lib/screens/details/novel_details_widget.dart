@@ -129,8 +129,8 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                       imageUrl: widget.novel.coverImageUrl,
                       fit: BoxFit.cover,
                       errorWidget:
-                          (context, url, error) => Image.asset(
-                            'assets/images/fallback_cover.png',
+                          (context, url, error) => Image.network(
+                            'https://placehold.co/400x450.png?text=Sem%20Capa',
                             fit: BoxFit.cover,
                           ),
                     ),
