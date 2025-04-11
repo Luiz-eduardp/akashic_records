@@ -34,6 +34,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Timer? _debounce;
   bool _mounted = false;
   bool _isListView = false;
+  Set<String> _hiddenNovelIds = {};
 
   @override
   void initState() {
@@ -42,6 +43,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _initializeFilters();
     _scrollController.addListener(_scrollListener);
     _loadViewMode();
+    _loadHiddenNovels();
     _loadNovels();
   }
 
@@ -55,6 +57,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _saveViewMode(bool isListView) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isListView', isListView);
+  }
+
+  Future<void> _loadHiddenNovels() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hiddenNovelIdsStringList =
+        prefs.getStringList('hiddenNovelIds') ?? [];
+    setState(() {
+      _hiddenNovelIds = hiddenNovelIdsStringList.toSet();
+    });
+  }
+
+  Future<void> _saveHiddenNovels() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('hiddenNovelIds', _hiddenNovelIds.toList());
+  }
+
+  Future<void> _hideNovel(Novel novel) async {
+    final novelId = "${novel.pluginId}-${novel.id}";
+    setState(() {
+      _hiddenNovelIds.add(novelId);
+    });
+    await _saveHiddenNovels();
+    _refreshNovels();
   }
 
   @override
@@ -142,9 +167,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
       }
 
       List<Novel> filteredNovels = allNovels;
+
       if (search && _searchTerm.isNotEmpty) {
         filteredNovels =
-            allNovels
+            filteredNovels
                 .where(
                   (novel) => novel.title.toLowerCase().contains(
                     _searchTerm.toLowerCase(),
@@ -152,6 +178,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 )
                 .toList();
       }
+
+      filteredNovels =
+          filteredNovels.where((novel) {
+            final novelIdentifier = "${novel.pluginId}-${novel.id}";
+            return !_hiddenNovelIds.contains(novelIdentifier);
+          }).toList();
 
       if (_mounted) {
         setState(() {
@@ -324,9 +356,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
           controller: _scrollController,
           itemCount: novels.length,
           itemBuilder: (context, index) {
-            return NovelListTile(
-              novel: novels[index],
-              onTap: () => _handleNovelTap(novels[index]),
+            final novel = novels[index];
+            return GestureDetector(
+              onLongPress: () => _hideNovel(novel),
+              onTap: () => _handleNovelTap(novel),
+              child: NovelListTile(
+                novel: novel,
+                onTap: () => _handleNovelTap(novel),
+                onLongPress: () {},
+              ),
             );
           },
         );
@@ -337,6 +375,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           errorMessage: errorMessage,
           scrollController: _scrollController,
           onNovelTap: _handleNovelTap,
+          onNovelLongPress: _hideNovel,
         );
       }
     }

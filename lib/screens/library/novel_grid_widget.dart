@@ -10,6 +10,7 @@ class NovelGridWidget extends StatelessWidget {
   final String? errorMessage;
   final ScrollController scrollController;
   final Function(Novel) onNovelTap;
+  final Function(Novel) onNovelLongPress;
 
   const NovelGridWidget({
     super.key,
@@ -18,6 +19,7 @@ class NovelGridWidget extends StatelessWidget {
     required this.errorMessage,
     required this.scrollController,
     required this.onNovelTap,
+    required this.onNovelLongPress,
   });
 
   @override
@@ -76,7 +78,11 @@ class NovelGridWidget extends StatelessWidget {
         itemCount: novels.length,
         itemBuilder: (context, index) {
           final novel = novels[index];
-          return NovelCard(novel: novel, onTap: () => onNovelTap(novel));
+          return NovelCard(
+            novel: novel,
+            onTap: () => onNovelTap(novel),
+            onLongPress: () => onNovelLongPress(novel),
+          );
         },
       ),
     );
