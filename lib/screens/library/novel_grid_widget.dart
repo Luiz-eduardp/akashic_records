@@ -24,7 +24,7 @@ class NovelGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading && novels.isEmpty) {
+    if (isLoading) {
       return NovelGridSkeletonWidget(itemCount: 8);
     }
 
@@ -54,6 +54,12 @@ class NovelGridWidget extends StatelessWidget {
                     Text(
                       "Nenhuma novel encontrada.".translate,
                       style: TextStyle(color: Theme.of(context).disabledColor),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/plugins');
+                      },
+                      child: Text('Plugins'.translate),
                     ),
                   ],
                 ),
