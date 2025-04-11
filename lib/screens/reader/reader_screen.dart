@@ -304,10 +304,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
       });
     }
 
-    if (history.length > 10) {
-      history = history.sublist(0, 10);
-    }
-
     await _prefs.setString(historyKey, jsonEncode(history));
   }
 
