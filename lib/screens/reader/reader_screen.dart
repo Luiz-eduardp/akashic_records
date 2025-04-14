@@ -226,7 +226,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _goToPreviousChapter() {
-    if (novel != null && currentChapterIndex > 0) {
+    if (currentChapterIndex > 0) {
       setState(() {
         isLoading = true;
         currentChapterIndex--;
