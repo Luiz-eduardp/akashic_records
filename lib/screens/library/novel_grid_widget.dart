@@ -33,41 +33,7 @@ class NovelGridWidget extends StatelessWidget {
     }
 
     if (novels.isEmpty) {
-      return LayoutBuilder(
-        builder: (context, viewportConstraints) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: viewportConstraints.maxHeight,
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.search_off,
-                      size: 50,
-                      color: Theme.of(context).disabledColor,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Nenhuma novel encontrada.".translate,
-                      style: TextStyle(color: Theme.of(context).disabledColor),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/plugins');
-                      },
-                      child: Text('Plugins'.translate),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
+      return _buildEmptyState(context);
     }
 
     return ScrollConfiguration(
@@ -91,6 +57,46 @@ class NovelGridWidget extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, viewportConstraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: viewportConstraints.maxHeight,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 50,
+                    color: Theme.of(context).disabledColor,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Nenhuma novel encontrada.".translate,
+                    style: TextStyle(color: Theme.of(context).disabledColor),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/plugins');
+                    },
+                    child: Text('Plugins'.translate),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
