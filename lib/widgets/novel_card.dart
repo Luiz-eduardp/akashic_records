@@ -31,7 +31,10 @@ class NovelCard extends StatelessWidget {
             children: [
               Expanded(
                 child: CachedNetworkImage(
-                  imageUrl: novel.coverImageUrl,
+                  imageUrl:
+                      novel.coverImageUrl.isNotEmpty
+                          ? novel.coverImageUrl
+                          : 'https://placehold.co/400x450.png?text=Sem%20Capa',
                   fit: BoxFit.cover,
                   placeholder:
                       (context, url) => Center(
@@ -39,7 +42,11 @@ class NovelCard extends StatelessWidget {
                           color: theme.colorScheme.secondary,
                         ),
                       ),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                  errorWidget:
+                      (context, url, error) => Image.network(
+                        'https://placehold.co/400x450.png?text=Sem%20Capa',
+                        fit: BoxFit.cover,
+                      ),
                 ),
               ),
               Padding(
