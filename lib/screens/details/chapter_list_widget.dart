@@ -328,17 +328,12 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     final isRead = widget.readChapterIds.contains(chapter.id);
                     final isUnread = !isRead;
 
-                    final chapterNumber = _extractChapterNumber(
+                    _extractChapterNumber(
                       chapter.id,
                       chapter.title,
                     );
 
-                    String displayTitle =
-                        chapterNumber != null
-                            ? (chapterNumber % 1 == 0
-                                ? chapterNumber.toInt().toString()
-                                : chapterNumber.toString())
-                            : chapter.title;
+                    String displayTitle = chapter.title;
 
                     FontWeight fontWeight = FontWeight.normal;
                     if (isUnread) {
