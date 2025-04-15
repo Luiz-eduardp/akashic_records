@@ -25,6 +25,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   bool isLoading = false;
   bool hasMore = true;
   int currentPage = 1;
+  int itemsPerPage = 20;
   String? errorMessage;
   final ScrollController _scrollController = ScrollController();
   String _searchTerm = "";
@@ -121,8 +122,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   void _scrollListener() {
+    double triggerPercentage = 0.8;
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 200 &&
+            _scrollController.position.maxScrollExtent * triggerPercentage &&
         hasMore &&
         !isLoading) {
       _loadMoreNovels();
@@ -157,7 +159,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
-      final Set<String> seenNovelIds = {};
+      final Set<String> seenNovelIds =
+          allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
       for (final novel in newNovels) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
@@ -166,15 +169,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
-      List<Novel> filteredNovels = allNovels;
+      List<Novel> filteredNovels = List<Novel>.from(allNovels);
 
       if (search && _searchTerm.isNotEmpty) {
+        final searchTermLower = _searchTerm.toLowerCase();
         filteredNovels =
             filteredNovels
                 .where(
-                  (novel) => novel.title.toLowerCase().contains(
-                    _searchTerm.toLowerCase(),
-                  ),
+                  (novel) =>
+                      novel.title.toLowerCase().contains(searchTermLower),
                 )
                 .toList();
       }
@@ -188,7 +191,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (_mounted) {
         setState(() {
           novels = filteredNovels;
-          hasMore = newNovels.isNotEmpty;
+          hasMore = newNovels.length == itemsPerPage;
           isLoading = false;
         });
       }
@@ -342,7 +345,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildNovelDisplay() {
-    if (isLoading) {
+    if (isLoading && novels.isEmpty) {
       return _isListView
           ? ListView.builder(
             controller: _scrollController,
