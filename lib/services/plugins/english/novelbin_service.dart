@@ -103,7 +103,7 @@ class NovelBin implements PluginService {
       chapters: [],
       artist: '',
       statusString: '',
-      pluginId: 'Novelbin',
+      pluginId: 'NovelBin',
     );
 
     final infoElements = document.querySelectorAll('ul.info > li > h3');
@@ -124,7 +124,15 @@ class NovelBin implements PluginService {
       }
     }
 
-    novel.chapters = await _getChapterList(bookUrl);
+    List<Chapter> chapterList = await _getChapterList(bookUrl);
+    int chapterNumber = 1; // Initialize chapter number counter
+
+    for (var chapter in chapterList) {
+      chapter.chapterNumber = chapterNumber;
+      chapterNumber++;
+    }
+
+    novel.chapters = chapterList;
 
     return novel;
   }
@@ -172,12 +180,7 @@ class NovelBin implements PluginService {
 
         if (chapterTitle != null && chapterURL != null) {
           chapterList.add(
-            Chapter(
-              id: chapterURL,
-              title: chapterTitle,
-              order: chapterList.length,
-              content: '',
-            ),
+            Chapter(id: chapterURL, title: chapterTitle, content: ''),
           );
         }
       }

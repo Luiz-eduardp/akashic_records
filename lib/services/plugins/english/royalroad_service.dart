@@ -366,7 +366,7 @@ class RoyalRoad implements PluginService {
         }
       }
     }
-
+    int chapterNumber = 1;
     novel.chapters =
         chapterJson.map((chapter) {
           String chapterPath = chapter.url;
@@ -374,12 +374,15 @@ class RoyalRoad implements PluginService {
             chapterPath = chapterPath.substring(1);
           }
 
-          return Chapter(
+          final chapterItem = Chapter(
             id: chapterPath,
             title: chapter.title,
-            order: chapter.order?.toInt() ?? 0,
             content: '',
+            order: chapter.order?.toInt() ?? 0,
+            chapterNumber: chapterNumber,
           );
+          chapterNumber++;
+          return chapterItem;
         }).toList();
 
     return novel;

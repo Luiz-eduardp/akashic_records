@@ -249,28 +249,46 @@ class LightNovelBrasil implements PluginService {
 
     final chapterElements = document.querySelectorAll('div.eplister li > a');
     List<Chapter> chapters = [];
-    int count = chapterElements.length;
-    for (var el in chapterElements) {
-      final num = el.querySelector('div.epl-num')?.text.trim() ?? '';
-      final title = el.querySelector('div.epl-title')?.text.trim() ?? '';
-      final chapterName = '$num $title';
-
-      final chapterPath = _shrinkURL(el.attributes['href'] ?? '');
-      if (chapterPath.isNotEmpty && chapterName.isNotEmpty) {
-        chapters.add(
-          Chapter(
-            id: chapterPath,
-            title: chapterName,
-            content: '',
-            order: count,
-          ),
-        );
-        count--;
-      }
-    }
-
+    int chapterNumber = 1;
     if (reverseChapters) {
+      for (var el in chapterElements.reversed) {
+        final num = el.querySelector('div.epl-num')?.text.trim() ?? '';
+        final title = el.querySelector('div.epl-title')?.text.trim() ?? '';
+        final chapterName = '$num $title';
+
+        final chapterPath = _shrinkURL(el.attributes['href'] ?? '');
+        if (chapterPath.isNotEmpty && chapterName.isNotEmpty) {
+          chapters.add(
+            Chapter(
+              id: chapterPath,
+              title: chapterName,
+              content: '',
+              chapterNumber: chapterNumber,
+            ),
+          );
+          chapterNumber++;
+        }
+      }
       chapters = chapters.reversed.toList();
+    } else {
+      for (var el in chapterElements) {
+        final num = el.querySelector('div.epl-num')?.text.trim() ?? '';
+        final title = el.querySelector('div.epl-title')?.text.trim() ?? '';
+        final chapterName = '$num $title';
+
+        final chapterPath = _shrinkURL(el.attributes['href'] ?? '');
+        if (chapterPath.isNotEmpty && chapterName.isNotEmpty) {
+          chapters.add(
+            Chapter(
+              id: chapterPath,
+              title: chapterName,
+              content: '',
+              chapterNumber: chapterNumber,
+            ),
+          );
+          chapterNumber++;
+        }
+      }
     }
 
     final novel = Novel(

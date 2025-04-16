@@ -178,6 +178,8 @@ class MtlNovelPt implements PluginService {
       ).then((res) => res.body);
       final dom.Document $ = parser.parse(data);
       final List<Chapter> chapters = [];
+      int chapterNumber = 1;
+
       $.querySelectorAll('a.ch-link').forEach((el) {
         final name = el.text.replaceFirst('~ ', '');
         final path = el.attributes['href'];
@@ -187,8 +189,10 @@ class MtlNovelPt implements PluginService {
               id: path.replaceAll(mainUrl, '').replaceAll(site, ''),
               title: name,
               content: '',
+              chapterNumber: chapterNumber,
             ),
           );
+          chapterNumber++;
         }
       });
       return chapters.reversed.toList();

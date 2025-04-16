@@ -240,6 +240,8 @@ class Tsundoku implements PluginService {
 
     List<Chapter> chapters = [];
     final chapterElements = document.querySelectorAll('#chapterlist ul > li');
+    int chapterNumber = 1;
+
     for (var element in chapterElements) {
       final chapterName =
           element.querySelector('.chapternum')?.text.trim() ?? '';
@@ -257,10 +259,11 @@ class Tsundoku implements PluginService {
             id: chapterPath,
             title: chapterName,
             releaseDate: parseDate(releaseDate),
-            chapterNumber: chapters.length + 1,
+            chapterNumber: chapterNumber,
             content: '',
           ),
         );
+        chapterNumber++;
       }
     }
 

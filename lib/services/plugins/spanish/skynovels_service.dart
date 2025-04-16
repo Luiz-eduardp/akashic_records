@@ -165,6 +165,8 @@ class SkyNovels implements PluginService {
         final chapters = <Chapter>[];
         final volumes = novelData['volumes'] as List<dynamic>?;
         if (volumes != null) {
+          int chapterNumber = 1;
+
           for (final volume in volumes) {
             final chapterList = volume['chapters'] as List<dynamic>?;
             if (chapterList != null) {
@@ -177,8 +179,10 @@ class SkyNovels implements PluginService {
                     title: chapter['chp_index_title'] as String? ?? '',
                     content: '',
                     order: chapter['chp_index'] as int? ?? 0,
+                    chapterNumber: chapterNumber,
                   ),
                 );
+                chapterNumber++;
               }
             }
           }

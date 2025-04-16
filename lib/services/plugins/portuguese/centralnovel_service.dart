@@ -233,8 +233,8 @@ class CentralNovel implements PluginService {
     }
 
     final chapterElements = document.querySelectorAll('div.eplister li > a');
-    int count = chapterElements.length;
-    for (var el in chapterElements) {
+    int chapterNumber = 1;
+    for (var el in chapterElements.reversed) {
       final num = el.querySelector('div.epl-num')?.text.trim() ?? '';
       final title = el.querySelector('div.epl-title')?.text.trim() ?? '';
       final chapterName = '$num $title';
@@ -246,13 +246,13 @@ class CentralNovel implements PluginService {
             id: chapterPath,
             title: chapterName,
             content: '',
-            order: count,
+            chapterNumber: chapterNumber,
           ),
         );
-        count--;
+        chapterNumber++;
       }
     }
-
+    novel.chapters = novel.chapters.reversed.toList();
     return novel;
   }
 
