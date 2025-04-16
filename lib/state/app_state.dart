@@ -3,7 +3,7 @@ import 'package:akashic_records/services/plugins/english/novelbin_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
 import 'package:akashic_records/services/plugins/english/reapersscan_service.dart';
 import 'package:akashic_records/services/plugins/english/royalroad_service.dart';
-import 'package:akashic_records/services/plugins/english/webnovel_servce.dart';
+import 'package:akashic_records/services/plugins/english/webnovel_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/mtl_service.dart';
