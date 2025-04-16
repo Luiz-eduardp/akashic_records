@@ -160,7 +160,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
       context,
       MaterialPageRoute(
         builder:
-            (context) => ReaderScreen(novelId: novelId, chapterId: chapterId),
+            (context) => ReaderScreen(
+              novelId: novelId,
+              chapterId: chapterId,
+              pluginId: pluginId,
+            ),
       ),
     );
   }

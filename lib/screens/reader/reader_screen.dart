@@ -10,17 +10,22 @@ import 'package:akashic_records/screens/reader/chapter_navigation_widget.dart';
 import 'package:akashic_records/screens/reader/reader_app_bar_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:akashic_records/widgets/loading_indicator_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
 class ReaderScreen extends StatefulWidget {
+  final String pluginId;
   final String novelId;
   final String? chapterId;
 
-  const ReaderScreen({super.key, required this.novelId, this.chapterId});
+  const ReaderScreen({
+    super.key,
+    required this.pluginId,
+    required this.novelId,
+    this.chapterId,
+  });
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
@@ -44,16 +49,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void initState() {
     super.initState();
     _initSharedPreferences().then((_) {
-      if (widget.chapterId != null) {
-        _loadNovelAndChapter(widget.chapterId!);
-      } else {
-        _loadNovel();
-      }
+      _loadNovel();
     });
-  }
-
-  Future<void> _loadNovelAndChapter(String chapterId) async {
-    await _loadNovel(initialChapterId: chapterId);
   }
 
   @override
@@ -96,7 +93,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  Future<void> _loadNovel({String? initialChapterId}) async {
+  Future<void> _loadNovel() async {
     setState(() {
       _mounted = true;
       isLoading = true;
@@ -107,55 +104,41 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
+      final plugin = appState.pluginServices[widget.pluginId];
 
-      PluginService? plugin;
-      String? correctPluginName;
+      if (plugin != null) {
+        novel = await loadNovelWithTimeout(
+          () => plugin.parseNovel(widget.novelId),
+        );
 
-      for (final pluginName in appState.selectedPlugins) {
-        final p = appState.pluginServices[pluginName];
-        if (p != null) {
-          try {
-            final tempNovel = await loadNovelWithTimeout(
-              () => p.parseNovel(widget.novelId),
+        if (novel != null) {
+          novel!.pluginId = widget.pluginId;
+
+          novel!.chapters.sort((a, b) {
+            return (a.chapterNumber ?? 0).compareTo(b.chapterNumber ?? 0);
+          });
+
+          if (widget.chapterId != null) {
+            currentChapterIndex = novel!.chapters.indexWhere(
+              (chapter) => chapter.id == widget.chapterId,
             );
-            if (tempNovel != null) {
-              plugin = p;
-              novel = tempNovel;
-              correctPluginName = pluginName;
-              break;
+            if (currentChapterIndex != -1) {
+              currentChapter = novel!.chapters[currentChapterIndex];
+              await _loadChapterContent();
+            } else {
+              await _loadLastReadChapter();
             }
-          } catch (e) {
-            print(
-              'Erro ao carregar detalhes da novel com o plugin ${p.name}: $e',
-            );
-          }
-        }
-      }
-
-      if (plugin != null && novel != null) {
-        novel!.pluginId = correctPluginName!;
-
-        novel!.chapters.sort((a, b) {
-          return (a.chapterNumber ?? 0).compareTo(b.chapterNumber ?? 0);
-        });
-
-        if (initialChapterId != null) {
-          currentChapterIndex = novel!.chapters.indexWhere(
-            (chapter) => chapter.id == initialChapterId,
-          );
-          if (currentChapterIndex != -1) {
-            currentChapter = novel!.chapters[currentChapterIndex];
-            await _loadChapterContent();
           } else {
             await _loadLastReadChapter();
           }
         } else {
-          await _loadLastReadChapter();
+          setState(() {
+            errorMessage = 'Novel não encontrada.'.translate;
+          });
         }
       } else {
         setState(() {
-          errorMessage =
-              'Novel não encontrada em nenhum plugin selecionado.'.translate;
+          errorMessage = 'Plugin não encontrado.'.translate;
         });
       }
     } catch (e) {

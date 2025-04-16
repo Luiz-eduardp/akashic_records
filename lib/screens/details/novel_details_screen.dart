@@ -234,7 +234,10 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
                     context,
                     MaterialPageRoute(
                       builder:
-                          (context) => ReaderScreen(novelId: widget.novel.id),
+                          (context) => ReaderScreen(
+                            novelId: widget.novel.id,
+                            pluginId: widget.novel.pluginId,
+                          ),
                     ),
                   );
                 }
@@ -244,7 +247,11 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ReaderScreen(novelId: widget.novel.id),
+              builder:
+                  (context) => ReaderScreen(
+                    novelId: widget.novel.id,
+                    pluginId: widget.novel.pluginId,
+                  ),
             ),
           );
         },
