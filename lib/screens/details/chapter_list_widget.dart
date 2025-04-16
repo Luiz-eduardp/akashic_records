@@ -123,75 +123,23 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     }
   }
 
-  double? _extractChapterNumber(String chapterId, String title) {
-    final chapterIdRegex = RegExp(r'[-/](\d+(\.\d{1,5})?)[-/]?$');
-    final chapterIdMatch = chapterIdRegex.firstMatch(chapterId);
-
-    if (chapterIdMatch != null) {
-      final chapterNumberString = chapterIdMatch.group(1);
-      if (chapterNumberString != null) {
-        return double.tryParse(chapterNumberString);
-      }
-    }
-
-    final titleRegex = RegExp(
-      r'(?:Cap(?:ítulo)?\.?\s*)(\d+(\.\d{1,5})?)',
-      caseSensitive: false,
-    );
-
-    final titleMatch = titleRegex.firstMatch(title);
-
-    if (titleMatch != null) {
-      final chapterNumberString = titleMatch.group(1);
-      if (chapterNumberString != null) {
-        return double.tryParse(chapterNumberString);
-      }
-    }
-
-    final initialNumberRegex = RegExp(r'^(\d+(\.\d{1,5})?)');
-    final initialNumberMatch = initialNumberRegex.firstMatch(title);
-
-    if (initialNumberMatch != null) {
-      final initialNumberString = initialNumberMatch.group(1);
-      if (initialNumberString != null) {
-        return double.tryParse(initialNumberString);
-      }
-    }
-    return null;
-  }
-
   void _sortChapters() {
     if (!_mounted) return;
 
     _displayedChapters = List.from(_chapters);
 
-    List<MapEntry<Chapter, double?>> chapterNumbers =
-        _displayedChapters.map((chapter) {
-          final chapterNumber = _extractChapterNumber(
-            chapter.id,
-            chapter.title,
-          );
-          return MapEntry(chapter, chapterNumber);
-        }).toList();
-
-    chapterNumbers.sort((a, b) {
-      final aNumber = a.value;
-      final bNumber = b.value;
-
-      if (aNumber != null && bNumber != null) {
-        return _isAscending
-            ? aNumber.compareTo(bNumber)
-            : bNumber.compareTo(aNumber);
-      } else if (aNumber != null) {
-        return _isAscending ? -1 : 1;
-      } else if (bNumber != null) {
-        return _isAscending ? 1 : -1;
-      } else {
-        return 0;
+    _displayedChapters.sort((a, b) {
+      final comparison =
+          _isAscending
+              ? a.chapterNumber?.compareTo(b.chapterNumber as num)
+              : b.chapterNumber?.compareTo(a.chapterNumber as num);
+      if (comparison == null) {
+        if (a.chapterNumber == null && b.chapterNumber == null) return 0;
+        if (a.chapterNumber == null) return _isAscending ? -1 : 1;
+        if (b.chapterNumber == null) return _isAscending ? 1 : -1;
       }
+      return comparison ?? 0;
     });
-
-    _displayedChapters = chapterNumbers.map((entry) => entry.key).toList();
 
     if (_mounted) {
       setState(() {});
@@ -243,6 +191,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
       'chapterId': chapter.id,
       'chapterTitle': chapter.title,
       'pluginId': '',
+      'chapterNumber': chapter.chapterNumber,
     };
 
     int existingIndex = history.indexWhere(
@@ -328,18 +277,6 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     final isRead = widget.readChapterIds.contains(chapter.id);
                     final isUnread = !isRead;
 
-                    final chapterNumber = _extractChapterNumber(
-                      chapter.id,
-                      chapter.title,
-                    );
-
-                    String displayTitle =
-                        chapterNumber != null
-                            ? (chapterNumber % 1 == 0
-                                ? chapterNumber.toInt().toString()
-                                : chapterNumber.toString())
-                            : chapter.title;
-
                     FontWeight fontWeight = FontWeight.normal;
                     if (isUnread) {
                       fontWeight = FontWeight.bold;
@@ -366,7 +303,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    displayTitle,
+                                    chapter.title,
                                     style: theme.textTheme.bodyLarge?.copyWith(
                                       fontWeight: fontWeight,
                                       color:
