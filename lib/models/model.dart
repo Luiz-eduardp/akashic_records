@@ -9,7 +9,7 @@ class Novel {
   late List<Chapter> chapters;
   var genres;
   late String pluginId;
-  
+
   Novel({
     required this.id,
     required this.title,
@@ -73,6 +73,7 @@ class Chapter {
     this.releaseDate,
     this.chapterNumber,
     int? order,
+    String? url,
   });
 
   Map<String, dynamic> toMap() {
@@ -97,4 +98,6 @@ class Chapter {
   }
 
   get order => null;
+
+  get url => null;
 }

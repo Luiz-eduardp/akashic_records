@@ -10,6 +10,7 @@ class NovelGridWidget extends StatelessWidget {
   final String? errorMessage;
   final ScrollController scrollController;
   final Function(Novel) onNovelTap;
+  final Function(Novel) onNovelLongPress;
 
   const NovelGridWidget({
     super.key,
@@ -18,11 +19,12 @@ class NovelGridWidget extends StatelessWidget {
     required this.errorMessage,
     required this.scrollController,
     required this.onNovelTap,
+    required this.onNovelLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading && novels.isEmpty) {
+    if (isLoading) {
       return NovelGridSkeletonWidget(itemCount: 8);
     }
 
@@ -31,35 +33,7 @@ class NovelGridWidget extends StatelessWidget {
     }
 
     if (novels.isEmpty) {
-      return LayoutBuilder(
-        builder: (context, viewportConstraints) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: viewportConstraints.maxHeight,
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.search_off,
-                      size: 50,
-                      color: Theme.of(context).disabledColor,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Nenhuma novel encontrada.".translate,
-                      style: TextStyle(color: Theme.of(context).disabledColor),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
+      return _buildEmptyState(context);
     }
 
     return ScrollConfiguration(
@@ -76,9 +50,53 @@ class NovelGridWidget extends StatelessWidget {
         itemCount: novels.length,
         itemBuilder: (context, index) {
           final novel = novels[index];
-          return NovelCard(novel: novel, onTap: () => onNovelTap(novel));
+          return NovelCard(
+            novel: novel,
+            onTap: () => onNovelTap(novel),
+            onLongPress: () => onNovelLongPress(novel),
+          );
         },
       ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, viewportConstraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: viewportConstraints.maxHeight,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 50,
+                    color: Theme.of(context).disabledColor,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Nenhuma novel encontrada.".translate,
+                    style: TextStyle(color: Theme.of(context).disabledColor),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/plugins');
+                    },
+                    child: Text('Plugins'.translate),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

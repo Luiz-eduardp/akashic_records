@@ -226,7 +226,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _goToPreviousChapter() {
-    if (novel != null && currentChapterIndex > 0) {
+    if (currentChapterIndex > 0) {
       setState(() {
         isLoading = true;
         currentChapterIndex--;
@@ -302,10 +302,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
         ...newItem,
         'lastRead': DateTime.now().toIso8601String(),
       });
-    }
-
-    if (history.length > 10) {
-      history = history.sublist(0, 10);
     }
 
     await _prefs.setString(historyKey, jsonEncode(history));

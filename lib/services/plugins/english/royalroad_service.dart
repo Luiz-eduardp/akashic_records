@@ -8,9 +8,9 @@ class RoyalRoad implements PluginService {
   @override
   String get name => 'RoyalRoad';
 
-  String get version => '2.1.3';
+  String get version => '2.2.3';
 
-  String get id => 'RoyalRoad';
+  String get id => 'royalroad';
 
   final String baseURL = 'https://www.royalroad.com/';
 
@@ -204,57 +204,39 @@ class RoyalRoad implements PluginService {
 
   Future<List<Novel>> _parseNovels(String html) async {
     final novels = <Novel>[];
-    String tempNovelName = '';
-    String tempNovelPath = '';
-    String tempNovelCover = '';
-    bool isParsingNovel = false;
-    bool isNovelName = false;
 
     final document = parse(html);
     final fictionListItems = document.querySelectorAll('div.fiction-list-item');
 
     for (final item in fictionListItems) {
-      isParsingNovel = true;
       final novelLink = item.querySelector('a.bold');
       final coverImage = item.querySelector('img');
 
-      if (novelLink != null) {
-        tempNovelPath = novelLink.attributes['href'] ?? '';
-        if (tempNovelPath.startsWith('/')) {
-          tempNovelPath = tempNovelPath.substring(1);
+      if (novelLink != null && coverImage != null) {
+        String novelPath = novelLink.attributes['href'] ?? '';
+        if (novelPath.startsWith('/')) {
+          novelPath = novelPath.substring(1);
         }
-        tempNovelName = novelLink.text;
-        isNovelName = true;
-      }
 
-      if (coverImage != null) {
-        tempNovelCover = coverImage.attributes['src'] ?? '';
-      }
+        String coverImageUrl = coverImage.attributes['src'] ?? '';
+        if (!coverImageUrl.startsWith('http')) {
+          coverImageUrl = baseURL + coverImageUrl.substring(1);
+        }
 
-      if (isParsingNovel &&
-          isNovelName &&
-          tempNovelPath.isNotEmpty &&
-          tempNovelName.isNotEmpty) {
         novels.add(
           Novel(
-            id: tempNovelPath,
-            title: tempNovelName,
-            coverImageUrl: tempNovelCover,
+            id: novelPath,
+            title: novelLink.text,
+            coverImageUrl: coverImageUrl,
             author: '',
             description: '',
             genres: [],
             chapters: [],
             artist: '',
             statusString: '',
-            pluginId: 'RoyalRoad',
+            pluginId: 'royalroad',
           ),
         );
-
-        tempNovelName = '';
-        tempNovelPath = '';
-        tempNovelCover = '';
-        isParsingNovel = false;
-        isNovelName = false;
       }
     }
 
@@ -265,15 +247,15 @@ class RoyalRoad implements PluginService {
   Future<List<Novel>> popularNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
-    bool showLatestNovels = false,
+    bool showLatestNovels = true,
   }) async {
-    String link = '${baseURL}fictions/search?page=$pageNo';
-
-    filters ??= this.filters;
+    final params = <String, String>{'page': pageNo.toString()};
 
     if (showLatestNovels) {
-      link += '&orderBy=last_update';
+      params['orderBy'] = 'last_update';
     }
+
+    filters ??= this.filters;
 
     for (final key in filters.keys) {
       if (filters[key]?['value'] == null || filters[key]?['value'] == '') {
@@ -286,21 +268,24 @@ class RoyalRoad implements PluginService {
 
         if (includeList != null) {
           for (final include in includeList) {
-            link += '&tagsAdd=$include';
+            params['tagsAdd'] = include;
           }
         }
 
         if (excludeList != null) {
           for (final exclude in excludeList) {
-            link += '&tagsRemove=$exclude';
+            params['tagsRemove'] = exclude;
           }
         }
       } else if (filters[key]['value'] is String) {
-        link += '&$key=${filters[key]['value']}';
+        params[key] = filters[key]['value'];
       }
     }
 
-    final body = await _fetchApi(link);
+    final uri = Uri.parse(
+      '${baseURL}fictions/search',
+    ).replace(queryParameters: params);
+    final body = await _fetchApi(uri.toString());
     return _parseNovels(body);
   }
 
@@ -324,14 +309,16 @@ class RoyalRoad implements PluginService {
       artist: '',
       statusString: '',
       author: '',
-      pluginId: 'RoyalRoad',
+      pluginId: 'royalroad',
     );
 
-    novel.coverImageUrl =
-        document.querySelector('img.thumbnail')?.attributes['src'] ??
-        defaultCover;
-    novel.title = document.querySelector('h1')?.text ?? '';
-    novel.author = document.querySelector('h4 > a')?.text ?? '';
+    final coverElement = document.querySelector('img.thumbnail');
+    novel.coverImageUrl = coverElement?.attributes['src'] ?? defaultCover;
+    if (!novel.coverImageUrl.startsWith('http')) {
+      novel.coverImageUrl = baseURL + novel.coverImageUrl.substring(1);
+    }
+    novel.title = document.querySelector('h1')?.text.trim() ?? '';
+    novel.author = document.querySelector('h4 > a')?.text.trim() ?? '';
     novel.description =
         document.querySelector('div.description')?.text.trim() ?? '';
 
@@ -341,85 +328,77 @@ class RoyalRoad implements PluginService {
       statusText = spans[1].text.trim();
     }
 
-    switch (statusText) {
-      case 'ONGOING':
-        novel.status = NovelStatus.Ongoing;
-        break;
-      case 'HIATUS':
-        novel.status = NovelStatus.OnHiatus;
-        break;
-      case 'COMPLETED':
-        novel.status = NovelStatus.Completed;
-        break;
-      default:
-        novel.status = NovelStatus.Unknown;
-    }
+    novel.status = _parseNovelStatus(statusText);
 
     final genreArray = <String>[];
     final genreElements = document.querySelectorAll('span.tags > a');
     for (final genre in genreElements) {
-      genreArray.add(genre.text);
+      genreArray.add(genre.text.trim());
     }
     novel.genres = genreArray;
 
     List<ChapterEntry> chapterJson = [];
-    List<VolumeEntry> volumeJson = [];
 
     final scripts = document.querySelectorAll('script');
     for (final script in scripts) {
       final data = script.innerHtml;
       if (data.contains('window.chapters =')) {
-        final chapterMatch = RegExp(
-          r'window\.chapters = (.*?)(\;|$)',
-        ).firstMatch(data);
-        final volumeMatch = RegExp(
-          r'window\.volumes = (.*?)(\;|$)',
-        ).firstMatch(data);
-        if (chapterMatch != null) {
-          try {
-            final chapterJsonString = chapterMatch.group(1);
+        try {
+          final chapterMatch = RegExp(
+            r'window\.chapters = (\[.*?\]);',
+          ).firstMatch(data);
+
+          final volumeMatch = RegExp(
+            r'window\.volumes = (\[.*?\]);',
+          ).firstMatch(data);
+
+          if (chapterMatch != null) {
             chapterJson =
-                (jsonDecode(chapterJsonString!) as List)
+                (jsonDecode(chapterMatch.group(1)!) as List)
                     .cast<Map<String, dynamic>>()
                     .map<ChapterEntry>((e) => ChapterEntry.fromJson(e))
                     .toList();
-          } catch (e) {
-            print('Error parsing chapter JSON: $e');
           }
-        }
 
-        if (volumeMatch != null) {
-          try {
-            final volumeJsonString = volumeMatch.group(1);
-            volumeJson =
-                (jsonDecode(volumeJsonString!) as List)
-                    .cast<Map<String, dynamic>>()
-                    .map<VolumeEntry>((e) => VolumeEntry.fromJson(e))
-                    .toList();
-          } catch (e) {
-            print('Error parsing volume JSON: $e');
-          }
+          if (volumeMatch != null) {}
+        } catch (e) {
+          print('Error parsing chapter or volume JSON: $e');
         }
       }
     }
-
+    int chapterNumber = 1;
     novel.chapters =
         chapterJson.map((chapter) {
-          try {
-            volumeJson.firstWhere((volume) => volume.id == chapter.volumeId);
-          // ignore: empty_catches
-          } catch (e) {
+          String chapterPath = chapter.url;
+          if (chapterPath.startsWith('/')) {
+            chapterPath = chapterPath.substring(1);
           }
 
-          return Chapter(
-            id: chapter.url.substring(1),
+          final chapterItem = Chapter(
+            id: chapterPath,
             title: chapter.title,
-            order: chapter.order,
             content: '',
+            order: chapter.order?.toInt() ?? 0,
+            chapterNumber: chapterNumber,
           );
+          chapterNumber++;
+          return chapterItem;
         }).toList();
 
     return novel;
+  }
+
+  NovelStatus _parseNovelStatus(String statusText) {
+    switch (statusText) {
+      case 'ONGOING':
+        return NovelStatus.Ongoing;
+      case 'HIATUS':
+        return NovelStatus.OnHiatus;
+      case 'COMPLETED':
+        return NovelStatus.Completed;
+      default:
+        return NovelStatus.Unknown;
+    }
   }
 
   @override
@@ -427,41 +406,35 @@ class RoyalRoad implements PluginService {
     if (chapterPath.startsWith('/')) {
       chapterPath = chapterPath.substring(1);
     }
+
     final result = await _fetchApi(baseURL + chapterPath);
     final html = result;
-    parse(html);
+    final document = parse(html);
 
-    final parts = <String>[];
-    final regexPatterns = <RegExp>[
-      RegExp(r'<style>\n\s+.(.+?){[^]+?display: none;'),
-      RegExp(
-        r'(<div class="portlet solid author-note-portlet"[^]+?)<div class="margin-bottom-20',
-      ),
-      RegExp(
-        r'(<div class="chapter-inner chapter-content"[^]+?)<div class="portlet light t-center-3',
-      ),
-      RegExp(
-        r'(<\/div>\s+<div class="portlet solid author-note-portlet"[^]+?)<div class="row margin-bottom-10',
-      ),
-    ];
+    String chapterContent = '';
+    final chapterContentDiv = document.querySelector('div.chapter-content');
 
-    for (final regex in regexPatterns) {
-      final match = regex.firstMatch(html);
-      if (match != null && match.groupCount >= 1) {
-        parts.add(match.group(1)!);
-      }
+    if (chapterContentDiv != null) {
+      chapterContentDiv
+          .querySelectorAll('style, script')
+          .forEach((element) => element.remove());
+      chapterContentDiv.querySelectorAll('*').forEach((element) {
+        element.attributes.removeWhere(
+          (key, value) =>
+              !['src', 'href', 'alt', 'title', 'class'].contains(key),
+        );
+      });
+
+      chapterContent = chapterContentDiv.innerHtml;
+
+      chapterContent = chapterContent.replaceAll(RegExp(r'<p>\s*</p>'), '');
+
+      chapterContent = chapterContent.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+      chapterContent = chapterContent.replaceAll(RegExp(r'class="[^"]*"'), '');
     }
 
-    String chapterText = parts.sublist(1).join('<hr>');
-
-    if (parts.isNotEmpty) {
-      final cleanup = RegExp('<p class="${parts[0]}.+?</p>', dotAll: true);
-      chapterText = chapterText.replaceAll(cleanup, '');
-    }
-
-    chapterText = chapterText.replaceAll(RegExp(r'<p class="[^><]+>'), '<p>');
-
-    return chapterText;
+    return chapterContent;
   }
 
   @override
@@ -470,8 +443,16 @@ class RoyalRoad implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
+    final params = {
+      'page': pageNo.toString(),
+      'title': searchTerm,
+      'globalFilters': 'true',
+    };
+
     final searchUrl =
-        '${baseURL}fictions/search?page=$pageNo&title=${Uri.encodeComponent(searchTerm)}';
+        Uri.parse(
+          '${baseURL}fictions/search',
+        ).replace(queryParameters: params).toString();
     final body = await _fetchApi(searchUrl);
     return _parseNovels(body);
   }

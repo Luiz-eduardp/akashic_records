@@ -7,12 +7,14 @@ class FavoriteGridWidget extends StatelessWidget {
   final List<Novel> favoriteNovels;
   final Function(Novel) onNovelTap;
   final Future<void> Function() onRefresh;
+  final Function(Novel) onNovelLongPress;
 
   const FavoriteGridWidget({
     super.key,
     required this.favoriteNovels,
     required this.onNovelTap,
     required this.onRefresh,
+    required this.onNovelLongPress,
   });
 
   @override
@@ -43,7 +45,11 @@ class FavoriteGridWidget extends StatelessWidget {
           itemCount: favoriteNovels.length,
           itemBuilder: (context, index) {
             final novel = favoriteNovels[index];
-            return NovelCard(novel: novel, onTap: () => onNovelTap(novel));
+            return NovelCard(
+              novel: novel,
+              onTap: () => onNovelTap(novel),
+              onLongPress: () => onNovelLongPress(novel),
+            );
           },
         );
       },

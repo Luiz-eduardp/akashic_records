@@ -49,7 +49,7 @@ class BoxNovel implements PluginService {
         {"label": "Wuxia", "value": "wuxia"},
         {"label": "Xianxia", "value": "xianxia"},
         {"label": "Xuanhuan", "value": "xuanhuan"},
-        {"label": "Yaoi", "value": "yaoi"}
+        {"label": "Yaoi", "value": "yaoi"},
       ],
     },
     "op": {
@@ -103,7 +103,7 @@ class BoxNovel implements PluginService {
   final String site = 'https://novgo.co/';
   final String version = '1.0.13';
   final String icon = 'src/en/webnovel/icon.png';
-   final Map<String, String> headers = {
+  final Map<String, String> headers = {
     "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     'Referer': 'https://novgo.co/',
@@ -122,9 +122,13 @@ class BoxNovel implements PluginService {
     cookieJar = PersistCookieJar(storage: FileStorage("$appDocPath/.cookies/"));
   }
 
-  Future<http.Response> safeFetch(String url, {Map<String, String>? headers}) async {
+  Future<http.Response> safeFetch(
+    String url, {
+    Map<String, String>? headers,
+  }) async {
     final mergedHeaders = {...this.headers};
-    mergedHeaders['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    mergedHeaders['User-Agent'] =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     if (headers != null) {
       mergedHeaders.addAll(headers);
     }
@@ -147,14 +151,20 @@ class BoxNovel implements PluginService {
 
     if (response.statusCode == 200) {
       if (cookieJar != null) {
-        await cookieJar!.saveFromResponse(uri, response.headers['set-cookie']?.split(',')
-                .map((s) => Cookie.fromSetCookieValue(s))
-                .toList() ?? []);
+        await cookieJar!.saveFromResponse(
+          uri,
+          response.headers['set-cookie']
+                  ?.split(',')
+                  .map((s) => Cookie.fromSetCookieValue(s))
+                  .toList() ??
+              [],
+        );
       }
       return response;
     } else {
       throw Exception(
-          'Could not reach site (${response.statusCode}) try to open in webview.');
+        'Could not reach site (${response.statusCode}) try to open in webview.',
+      );
     }
   }
 
@@ -237,6 +247,7 @@ class BoxNovel implements PluginService {
       final dom.Document $ = parser.parse(data);
 
       List<Chapter> chapters = [];
+      int chapterNumber = 1;
 
       $.querySelectorAll('.wp-manga-chapter a').forEach((a) {
         final chapterName = a.text.trim();
@@ -247,8 +258,10 @@ class BoxNovel implements PluginService {
               id: chapterPath.replaceAll(RegExp(r'https?:\/\/.*?\//'), "/"),
               title: chapterName,
               content: '',
+              chapterNumber: chapterNumber,
             ),
           );
+          chapterNumber++;
         }
       });
 
@@ -314,8 +327,8 @@ class BoxNovel implements PluginService {
         }
       });
 
-      novel.chapters = await parseChapters(novelPath);
-
+      List<Chapter> chapters = await parseChapters(novelPath);
+      novel.chapters = chapters;
       return novel;
     } catch (e) {
       print('Erro ao carregar detalhes da novel: $e');

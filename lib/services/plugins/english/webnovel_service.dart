@@ -1,5 +1,3 @@
-// ignore_for_file: dead_code
-
 import 'dart:async';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
@@ -306,7 +304,7 @@ class Webnovel implements PluginService {
       final document = parse(data);
 
       List<Chapter> chapters = [];
-
+      int chapterNumber = 1;
       for (var volumeElement in document.querySelectorAll('.volume-item')) {
         String originalVolumeName = volumeElement.text.trim();
         RegExp volumeNameRegex = RegExp(r'Volume\s(\d+)');
@@ -335,10 +333,13 @@ class Webnovel implements PluginService {
             chapters.add(
               Chapter(
                 id: chapterPath,
+                // ignore: dead_code
                 title: locked ? '$chapterName 🔒' : chapterName,
                 content: '',
+                chapterNumber: chapterNumber,
               ),
             );
+            chapterNumber++;
           }
         }
       }

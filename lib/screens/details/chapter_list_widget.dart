@@ -123,75 +123,22 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     }
   }
 
-  double? _extractChapterNumber(String chapterId, String title) {
-    final chapterIdRegex = RegExp(r'[-/](\d+(\.\d{1,5})?)[-/]?$');
-    final chapterIdMatch = chapterIdRegex.firstMatch(chapterId);
-
-    if (chapterIdMatch != null) {
-      final chapterNumberString = chapterIdMatch.group(1);
-      if (chapterNumberString != null) {
-        return double.tryParse(chapterNumberString);
-      }
-    }
-
-    final titleRegex = RegExp(
-      r'(?:Cap(?:ítulo)?\.?\s*)(\d+(\.\d{1,5})?)',
-      caseSensitive: false,
-    );
-
-    final titleMatch = titleRegex.firstMatch(title);
-
-    if (titleMatch != null) {
-      final chapterNumberString = titleMatch.group(1);
-      if (chapterNumberString != null) {
-        return double.tryParse(chapterNumberString);
-      }
-    }
-
-    final initialNumberRegex = RegExp(r'^(\d+(\.\d{1,5})?)');
-    final initialNumberMatch = initialNumberRegex.firstMatch(title);
-
-    if (initialNumberMatch != null) {
-      final initialNumberString = initialNumberMatch.group(1);
-      if (initialNumberString != null) {
-        return double.tryParse(initialNumberString);
-      }
-    }
-    return null;
-  }
-
   void _sortChapters() {
     if (!_mounted) return;
 
     _displayedChapters = List.from(_chapters);
 
-    List<MapEntry<Chapter, double?>> chapterNumbers =
-        _displayedChapters.map((chapter) {
-          final chapterNumber = _extractChapterNumber(
-            chapter.id,
-            chapter.title,
-          );
-          return MapEntry(chapter, chapterNumber);
-        }).toList();
-
-    chapterNumbers.sort((a, b) {
-      final aNumber = a.value;
-      final bNumber = b.value;
-
-      if (aNumber != null && bNumber != null) {
-        return _isAscending
-            ? aNumber.compareTo(bNumber)
-            : bNumber.compareTo(aNumber);
-      } else if (aNumber != null) {
-        return _isAscending ? -1 : 1;
-      } else if (bNumber != null) {
-        return _isAscending ? 1 : -1;
-      } else {
-        return 0;
-      }
+    _displayedChapters.sort((a, b) {
+      final comparison =
+          _isAscending
+              ? (a.chapterNumber ?? double.infinity).compareTo(
+                b.chapterNumber ?? double.infinity,
+              )
+              : (b.chapterNumber ?? double.infinity).compareTo(
+                a.chapterNumber ?? double.infinity,
+              );
+      return comparison;
     });
-
-    _displayedChapters = chapterNumbers.map((entry) => entry.key).toList();
 
     if (_mounted) {
       setState(() {});
@@ -216,16 +163,23 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
       if (_mounted) {
         setState(() {
           _displayedChapters =
-              _chapters
-                  .where(
-                    (chapter) => chapter.title.toLowerCase().contains(query),
-                  )
-                  .toList();
-          if (_isAscending) {
-            _displayedChapters.sort((a, b) => a.title.compareTo(b.title));
-          } else {
-            _displayedChapters.sort((a, b) => b.title.compareTo(a.title));
-          }
+              _chapters.where((chapter) {
+                return chapter.title.toLowerCase().contains(query) ||
+                    (chapter.chapterNumber != null &&
+                        chapter.chapterNumber!.toString().contains(query));
+              }).toList();
+
+          _displayedChapters.sort((a, b) {
+            if (_isAscending) {
+              return (a.chapterNumber ?? double.infinity).compareTo(
+                b.chapterNumber ?? double.infinity,
+              );
+            } else {
+              return (b.chapterNumber ?? double.infinity).compareTo(
+                a.chapterNumber ?? double.infinity,
+              );
+            }
+          });
         });
       }
     }
@@ -243,6 +197,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
       'chapterId': chapter.id,
       'chapterTitle': chapter.title,
       'pluginId': '',
+      'chapterNumber': chapter.chapterNumber,
     };
 
     int existingIndex = history.indexWhere(
@@ -328,23 +283,15 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     final isRead = widget.readChapterIds.contains(chapter.id);
                     final isUnread = !isRead;
 
-                    final chapterNumber = _extractChapterNumber(
-                      chapter.id,
-                      chapter.title,
-                    );
-
-                    String displayTitle =
-                        chapterNumber != null
-                            ? (chapterNumber % 1 == 0
-                                ? chapterNumber.toInt().toString()
-                                : chapterNumber.toString())
-                            : chapter.title;
-
                     FontWeight fontWeight = FontWeight.normal;
                     if (isUnread) {
                       fontWeight = FontWeight.bold;
                     }
-
+                    String chapterDisplay = chapter.title;
+                    if (chapter.chapterNumber != null) {
+                      chapterDisplay =
+                          "${chapter.chapterNumber}: ${chapter.title}";
+                    }
                     return Card(
                       elevation: 1.5,
                       margin: EdgeInsets.symmetric(vertical: 4.0),
@@ -366,7 +313,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    displayTitle,
+                                    chapterDisplay,
                                     style: theme.textTheme.bodyLarge?.copyWith(
                                       fontWeight: fontWeight,
                                       color:

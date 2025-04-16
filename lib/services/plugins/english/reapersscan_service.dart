@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ReaperScans implements PluginService {
   @override
@@ -142,18 +143,23 @@ class ReaperScans implements PluginService {
         statusString: novelData['status'] ?? '',
         description: novelData['description'] ?? '',
         genres: (novelData['tags'] as List<dynamic>?)?.cast<String>() ?? [],
-        chapters:
-            chaptersData.reversed.map((chapter) {
-              return Chapter(
-                id: '$novelPath/${chapter['chapter_slug']}',
-                title: chapter['chapter_name'] ?? 'No Chapter Name',
-                content: '',
-                order: int.tryParse(chapter['index'] ?? '') ?? 0,
-                releaseDate: chapter['created_at']?.substring(0, 10) ?? '',
-              );
-            }).toList(),
+        chapters: [],
       );
-
+      int chapterNumber = 1;
+      List<Chapter> chapterList =
+          chaptersData.reversed.map((chapter) {
+            final chapterItem = Chapter(
+              id: '$novelPath/${chapter['chapter_slug']}',
+              title: chapter['chapter_name'] ?? 'No Chapter Name',
+              content: '',
+              order: int.tryParse(chapter['index'] ?? '') ?? 0,
+              releaseDate: chapter['created_at']?.substring(0, 10) ?? '',
+              chapterNumber: chapterNumber,
+            );
+            chapterNumber++;
+            return chapterItem;
+          }).toList();
+      novel.chapters = chapterList;
       return novel;
     } catch (e) {
       print('Error parsing novel: $e');

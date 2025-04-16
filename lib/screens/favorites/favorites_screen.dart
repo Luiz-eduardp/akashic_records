@@ -123,6 +123,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
+  Future<void> _removeFromFavorites(Novel novel) async {
+    final key = 'favorite_${novel.pluginId}_${novel.id}';
+    await _prefs.setBool(key, false);
+    _loadFavorites(false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Novel "${novel.title}" removed from favorites.'.translate,
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -194,8 +208,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             favoriteNovels: favoriteNovels,
             onNovelTap: _handleNovelTap,
             onRefresh: () async {
-              return;
+              return _loadFavorites(true);
             },
+            onNovelLongPress: _removeFromFavorites,
           );
         },
       );

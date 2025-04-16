@@ -25,6 +25,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   bool isLoading = false;
   bool hasMore = true;
   int currentPage = 1;
+  int itemsPerPage = 20;
   String? errorMessage;
   final ScrollController _scrollController = ScrollController();
   String _searchTerm = "";
@@ -34,6 +35,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Timer? _debounce;
   bool _mounted = false;
   bool _isListView = false;
+  Set<String> _hiddenNovelIds = {};
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _initializeFilters();
     _scrollController.addListener(_scrollListener);
     _loadViewMode();
+    _loadHiddenNovels();
     _loadNovels();
   }
 
@@ -55,6 +58,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _saveViewMode(bool isListView) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isListView', isListView);
+  }
+
+  Future<void> _loadHiddenNovels() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hiddenNovelIdsStringList =
+        prefs.getStringList('hiddenNovelIds') ?? [];
+    setState(() {
+      _hiddenNovelIds = hiddenNovelIdsStringList.toSet();
+    });
+  }
+
+  Future<void> _saveHiddenNovels() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('hiddenNovelIds', _hiddenNovelIds.toList());
+  }
+
+  Future<void> _hideNovel(Novel novel) async {
+    final novelId = "${novel.pluginId}-${novel.id}";
+    setState(() {
+      _hiddenNovelIds.add(novelId);
+    });
+    await _saveHiddenNovels();
+    _refreshNovels();
   }
 
   @override
@@ -96,8 +122,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   void _scrollListener() {
+    double triggerPercentage = 0.8;
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 200 &&
+            _scrollController.position.maxScrollExtent * triggerPercentage &&
         hasMore &&
         !isLoading) {
       _loadMoreNovels();
@@ -132,7 +159,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
-      final Set<String> seenNovelIds = {};
+      final Set<String> seenNovelIds =
+          allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
       for (final novel in newNovels) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
@@ -141,22 +169,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
-      List<Novel> filteredNovels = allNovels;
+      List<Novel> filteredNovels = List<Novel>.from(allNovels);
+
       if (search && _searchTerm.isNotEmpty) {
+        final searchTermLower = _searchTerm.toLowerCase();
         filteredNovels =
-            allNovels
+            filteredNovels
                 .where(
-                  (novel) => novel.title.toLowerCase().contains(
-                    _searchTerm.toLowerCase(),
-                  ),
+                  (novel) =>
+                      novel.title.toLowerCase().contains(searchTermLower),
                 )
                 .toList();
       }
 
+      filteredNovels =
+          filteredNovels.where((novel) {
+            final novelIdentifier = "${novel.pluginId}-${novel.id}";
+            return !_hiddenNovelIds.contains(novelIdentifier);
+          }).toList();
+
       if (_mounted) {
         setState(() {
           novels = filteredNovels;
-          hasMore = newNovels.isNotEmpty;
+          hasMore = newNovels.length == itemsPerPage;
           isLoading = false;
         });
       }
@@ -310,7 +345,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Widget _buildNovelDisplay() {
-    if (isLoading) {
+    if (isLoading && novels.isEmpty) {
       return _isListView
           ? ListView.builder(
             controller: _scrollController,
@@ -324,9 +359,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
           controller: _scrollController,
           itemCount: novels.length,
           itemBuilder: (context, index) {
-            return NovelListTile(
-              novel: novels[index],
-              onTap: () => _handleNovelTap(novels[index]),
+            final novel = novels[index];
+            return GestureDetector(
+              onLongPress: () => _hideNovel(novel),
+              onTap: () => _handleNovelTap(novel),
+              child: NovelListTile(
+                novel: novel,
+                onTap: () => _handleNovelTap(novel),
+                onLongPress: () {},
+              ),
             );
           },
         );
@@ -337,6 +378,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           errorMessage: errorMessage,
           scrollController: _scrollController,
           onNovelTap: _handleNovelTap,
+          onNovelLongPress: _hideNovel,
         );
       }
     }

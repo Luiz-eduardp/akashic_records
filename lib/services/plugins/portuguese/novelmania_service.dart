@@ -229,6 +229,8 @@ class NovelMania implements PluginService {
     final chapterElements = document.querySelectorAll(
       'div.accordion.capitulo > div.card > div.collapse > div.card-body.p-0 > ol > li',
     );
+
+    int chapterNumber = 1;
     for (var el in chapterElements) {
       final chapterNameElement = el.querySelector('a');
       final String chapterName;
@@ -249,9 +251,10 @@ class NovelMania implements PluginService {
             id: chapterPath,
             title: chapterName,
             content: '',
-            order: null,
+            chapterNumber: chapterNumber,
           ),
         );
+        chapterNumber++;
       }
     }
 
