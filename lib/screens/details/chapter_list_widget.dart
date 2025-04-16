@@ -131,14 +131,13 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     _displayedChapters.sort((a, b) {
       final comparison =
           _isAscending
-              ? a.chapterNumber?.compareTo(b.chapterNumber as num)
-              : b.chapterNumber?.compareTo(a.chapterNumber as num);
-      if (comparison == null) {
-        if (a.chapterNumber == null && b.chapterNumber == null) return 0;
-        if (a.chapterNumber == null) return _isAscending ? -1 : 1;
-        if (b.chapterNumber == null) return _isAscending ? 1 : -1;
-      }
-      return comparison ?? 0;
+              ? (a.chapterNumber ?? double.infinity).compareTo(
+                b.chapterNumber ?? double.infinity,
+              )
+              : (b.chapterNumber ?? double.infinity).compareTo(
+                a.chapterNumber ?? double.infinity,
+              );
+      return comparison;
     });
 
     if (_mounted) {
@@ -164,16 +163,23 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
       if (_mounted) {
         setState(() {
           _displayedChapters =
-              _chapters
-                  .where(
-                    (chapter) => chapter.title.toLowerCase().contains(query),
-                  )
-                  .toList();
-          if (_isAscending) {
-            _displayedChapters.sort((a, b) => a.title.compareTo(b.title));
-          } else {
-            _displayedChapters.sort((a, b) => b.title.compareTo(a.title));
-          }
+              _chapters.where((chapter) {
+                return chapter.title.toLowerCase().contains(query) ||
+                    (chapter.chapterNumber != null &&
+                        chapter.chapterNumber!.toString().contains(query));
+              }).toList();
+
+          _displayedChapters.sort((a, b) {
+            if (_isAscending) {
+              return (a.chapterNumber ?? double.infinity).compareTo(
+                b.chapterNumber ?? double.infinity,
+              );
+            } else {
+              return (b.chapterNumber ?? double.infinity).compareTo(
+                a.chapterNumber ?? double.infinity,
+              );
+            }
+          });
         });
       }
     }
@@ -281,7 +287,11 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     if (isUnread) {
                       fontWeight = FontWeight.bold;
                     }
-
+                    String chapterDisplay = chapter.title;
+                    if (chapter.chapterNumber != null) {
+                      chapterDisplay =
+                          "${chapter.chapterNumber}: ${chapter.title}";
+                    }
                     return Card(
                       elevation: 1.5,
                       margin: EdgeInsets.symmetric(vertical: 4.0),
@@ -303,7 +313,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    chapter.title,
+                                    chapterDisplay,
                                     style: theme.textTheme.bodyLarge?.copyWith(
                                       fontWeight: fontWeight,
                                       color:
