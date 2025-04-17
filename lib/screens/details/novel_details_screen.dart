@@ -159,6 +159,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        title: Text(widget.novel.pluginId),
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: theme.colorScheme.onSurface),

@@ -65,17 +65,29 @@ class NovelListTile extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle:
-              novel.author != null && novel.author.isNotEmpty
-                  ? Text(
-                    novel.author,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                  : null,
+
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (novel.author != null && novel.author.isNotEmpty)
+                Text(
+                  novel.author,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              Text(
+                novel.pluginId,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.disabledColor,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+
           trailing: Icon(
             Icons.arrow_forward_ios,
             color: theme.colorScheme.onSurfaceVariant,
