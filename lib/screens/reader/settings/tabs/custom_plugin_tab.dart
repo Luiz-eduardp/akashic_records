@@ -70,8 +70,9 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                     ),
                     subtitle: Text(
                       "Priority: ${plugin.priority}",
-                      style:
-                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -89,7 +90,9 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                                 priority: plugin.priority,
                               );
                               appState.updateCustomPlugin(
-                                  index, plugins[index]);
+                                index,
+                                plugins[index],
+                              );
                             });
                           },
                         ),
@@ -99,7 +102,16 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                           onPressed: () {
-                            _showEditDialog(context, index, plugin);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => PluginEditorScreen(
+                                      plugin: plugin,
+                                      index: index,
+                                    ),
+                              ),
+                            );
                           },
                         ),
                         IconButton(
@@ -127,15 +139,17 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AddPluginScreen(),
+                      builder: (context) => PluginEditorScreen(),
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
@@ -146,134 +160,6 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showEditDialog(BuildContext context, int index, CustomPlugin plugin) {
-    String name = plugin.name;
-    String code = plugin.code;
-    String use = plugin.use;
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: theme.colorScheme.surface,
-          title: Text(
-            'Editar Plugin'.translate,
-            style: TextStyle(color: theme.colorScheme.onSurface),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Nome'.translate,
-                    labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: theme.colorScheme.outline),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.primary),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  initialValue: plugin.name,
-                  onChanged: (value) {
-                    name = value;
-                  },
-                ),
-                TextFormField(
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Forma de uso'.translate,
-                    labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: theme.colorScheme.outline),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.primary),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  initialValue: plugin.use,
-                  onChanged: (value) {
-                    use = value;
-                  },
-                ),
-                TextFormField(
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                  decoration: InputDecoration(
-                    labelText: 'Código JavaScript'.translate,
-                    labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: theme.colorScheme.outline),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.primary),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  maxLines: 5,
-                  initialValue: plugin.code,
-                  onChanged: (value) {
-                    code = value;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Cancelar'.translate,
-                style: TextStyle(color: theme.colorScheme.onSurface),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-              ),
-              child: Text('Salvar'.translate),
-              onPressed: () {
-                if (name.isNotEmpty && code.isNotEmpty) {
-                  final appState = Provider.of<AppState>(
-                    context,
-                    listen: false,
-                  );
-                  appState.updateCustomPlugin(
-                    index,
-                    CustomPlugin(
-                      name: name,
-                      code: code,
-                      use: use,
-                      enabled: plugin.enabled,
-                      priority: plugin.priority,
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -321,19 +207,31 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
   }
 }
 
-class AddPluginScreen extends StatefulWidget {
+class PluginEditorScreen extends StatefulWidget {
+  final CustomPlugin? plugin;
+  final int? index;
+
+  const PluginEditorScreen({super.key, this.plugin, this.index});
+
   @override
-  _AddPluginScreenState createState() => _AddPluginScreenState();
+  _PluginEditorScreenState createState() => _PluginEditorScreenState();
 }
 
-class _AddPluginScreenState extends State<AddPluginScreen> {
+class _PluginEditorScreenState extends State<PluginEditorScreen> {
   String name = '';
-  String code = '';
   String use = '';
-  final codeController = CodeController(
-    language: javascript,
-    text: '',
-  );
+  late CodeController codeController;
+
+  @override
+  void initState() {
+    super.initState();
+    name = widget.plugin?.name ?? '';
+    use = widget.plugin?.use ?? '';
+    codeController = CodeController(
+      language: javascript,
+      text: widget.plugin?.code ?? '',
+    );
+  }
 
   @override
   void dispose() {
@@ -344,21 +242,21 @@ class _AddPluginScreenState extends State<AddPluginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isEditing = widget.plugin != null;
+    final title =
+        isEditing ? 'Editar Plugin'.translate : 'Adicionar Plugin'.translate;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          'Adicionar Plugin'.translate,
+          title,
           style: TextStyle(color: theme.colorScheme.onSurface),
         ),
         backgroundColor: theme.colorScheme.surfaceVariant,
         foregroundColor: theme.colorScheme.onSurfaceVariant,
         leading: IconButton(
-          icon: Icon(
-            Icons.close,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          icon: Icon(Icons.close, color: theme.colorScheme.onSurfaceVariant),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -367,13 +265,17 @@ class _AddPluginScreenState extends State<AddPluginScreen> {
           TextButton(
             onPressed: () {
               if (name.isNotEmpty && codeController.text.isNotEmpty) {
-                final appState = Provider.of<AppState>(
-                  context,
-                  listen: false,
+                final appState = Provider.of<AppState>(context, listen: false);
+                final plugin = CustomPlugin(
+                  name: name,
+                  code: codeController.text,
+                  use: use,
                 );
-                appState.addCustomPlugin(
-                  CustomPlugin(name: name, code: codeController.text, use: use),
-                );
+                if (isEditing) {
+                  appState.updateCustomPlugin(widget.index!, plugin);
+                } else {
+                  appState.addCustomPlugin(plugin);
+                }
                 Navigator.of(context).pop();
               }
             },
@@ -406,6 +308,7 @@ class _AddPluginScreenState extends State<AddPluginScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                initialValue: name,
                 onChanged: (value) {
                   name = value;
                 },
@@ -427,26 +330,29 @@ class _AddPluginScreenState extends State<AddPluginScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                initialValue: use,
                 onChanged: (value) {
                   use = value;
                 },
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: CodeField(
-                  controller: codeController,
-                  textStyle: GoogleFonts.sourceCodePro(
-                    textStyle: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontSize: 14,
+                child: SingleChildScrollView(
+                  child: CodeField(
+                    controller: codeController,
+                    textStyle: GoogleFonts.sourceCodePro(
+                      textStyle: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.outline,
-                      width: 1,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.outline,
+                        width: 1,
+                      ),
                     ),
                   ),
                 ),
