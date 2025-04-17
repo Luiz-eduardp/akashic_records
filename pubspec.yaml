@@ -60,6 +60,9 @@ dependencies:
   flutter_localizations:
           sdk: flutter 
   gen_i18n: ^1.0.3
+  flutter_code_editor: ^0.3.3
+  google_fonts: ^6.2.1
+  highlight: ^0.7.0
 
 
 dev_dependencies:
