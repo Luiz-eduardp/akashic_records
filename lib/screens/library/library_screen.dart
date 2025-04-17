@@ -45,7 +45,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _scrollController.addListener(_scrollListener);
     _loadViewMode();
     _loadHiddenNovels();
-    _loadNovels();
+    _loadPopularNovels();
   }
 
   Future<void> _loadViewMode() async {
@@ -127,11 +127,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
             _scrollController.position.maxScrollExtent * triggerPercentage &&
         hasMore &&
         !isLoading) {
-      _loadMoreNovels();
+      if (_searchTerm.isEmpty) {
+        _loadMorePopularNovels();
+      }
     }
   }
 
-  Future<void> _loadNovels({bool search = false}) async {
+  Future<void> _loadPopularNovels() async {
     if (isLoading) return;
 
     if (_mounted) {
@@ -171,17 +173,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
       List<Novel> filteredNovels = List<Novel>.from(allNovels);
 
-      if (search && _searchTerm.isNotEmpty) {
-        final searchTermLower = _searchTerm.toLowerCase();
-        filteredNovels =
-            filteredNovels
-                .where(
-                  (novel) =>
-                      novel.title.toLowerCase().contains(searchTermLower),
-                )
-                .toList();
-      }
-
       filteredNovels =
           filteredNovels.where((novel) {
             final novelIdentifier = "${novel.pluginId}-${novel.id}";
@@ -206,10 +197,67 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _loadMoreNovels() async {
+  Future<void> _loadMorePopularNovels() async {
     if (isLoading || !hasMore) return;
     currentPage++;
-    await _loadNovels(search: _searchTerm.isNotEmpty);
+    await _loadPopularNovels();
+  }
+
+  Future<void> _searchNovels(String term) async {
+    if (isLoading) return;
+
+    if (_mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+        novels.clear();
+        hasMore = false;
+        allNovels.clear();
+      });
+    }
+
+    try {
+      List<Novel> searchResults = [];
+      final appState = Provider.of<AppState>(context, listen: false);
+
+      for (final pluginName in appState.selectedPlugins) {
+        final plugin = appState.pluginServices[pluginName];
+        if (plugin != null) {
+          final pluginSearchResults = await plugin.searchNovels(
+            term,
+            1,
+            filters: _filters,
+          );
+          for (final novel in pluginSearchResults) {
+            novel.pluginId = pluginName;
+          }
+          searchResults.addAll(pluginSearchResults);
+        }
+      }
+
+      List<Novel> filteredSearchResults = List<Novel>.from(searchResults);
+
+      filteredSearchResults =
+          filteredSearchResults.where((novel) {
+            final novelIdentifier = "${novel.pluginId}-${novel.id}";
+            return !_hiddenNovelIds.contains(novelIdentifier);
+          }).toList();
+
+      if (_mounted) {
+        setState(() {
+          novels = filteredSearchResults;
+          hasMore = false;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (_mounted) {
+        setState(() {
+          errorMessage = 'Erro ao pesquisar novels: $e'.translate;
+          isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _refreshNovels() async {
@@ -222,7 +270,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
         isLoading = false;
       });
     }
-    await _loadNovels(search: _searchTerm.isNotEmpty);
+    if (_searchTerm.isEmpty) {
+      await _loadPopularNovels();
+    } else {
+      await _searchNovels(_searchTerm);
+    }
   }
 
   Future<void> _onFilterChanged(Map<String, dynamic> newFilters) async {
@@ -235,7 +287,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
         hasMore = true;
       });
     }
-    await _loadNovels();
+
+    if (_searchTerm.isEmpty) {
+      await _loadPopularNovels();
+    } else {
+      await _searchNovels(_searchTerm);
+    }
   }
 
   void _handleNovelTap(Novel novel) {
@@ -275,11 +332,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
         setState(() {
           currentPage = 1;
           novels.clear();
-          hasMore = true;
+          hasMore = false;
           allNovels.clear();
         });
       }
-      _loadNovels(search: true);
+      if (term.isNotEmpty) {
+        _searchNovels(term);
+      } else {
+        _refreshNovels();
+      }
     });
   }
 
