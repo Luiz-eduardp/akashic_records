@@ -38,7 +38,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: SingleChildScrollView(
+      child: Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
           top: 20,
@@ -62,16 +62,28 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
               indicatorColor: theme.colorScheme.primary,
               labelColor: theme.colorScheme.onSurface,
               unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+              isScrollable: true,
               tabs: [
-                Tab(text: 'Aparência'.translate),
-                Tab(text: 'Texto'.translate),
-                Tab(text: 'JS'.translate),
-                Tab(text: 'CSS'.translate),
-                Tab(text: 'Plugins'.translate),
+                Tab(
+                  text: 'Aparência'.translate,
+                  icon: const Icon(Icons.palette),
+                ),
+                Tab(
+                  text: 'Texto'.translate,
+                  icon: const Icon(Icons.text_fields),
+                ),
+                Tab(text: 'JS'.translate, icon: const Icon(Icons.code)),
+                Tab(text: 'CSS'.translate, icon: const Icon(Icons.css)),
+                Tab(
+                  text: 'Plugins'.translate,
+                  icon: const Icon(Icons.extension),
+                ),
               ],
             ),
-            SizedBox(
-              height: 400,
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+              ),
               child: TabBarView(
                 controller: _tabController,
                 children: [
@@ -83,7 +95,9 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                 ],
               ),
             ),
-            Center(
+            const SizedBox(height: 20),
+            Align(
+              alignment: Alignment.center,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
