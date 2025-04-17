@@ -1,7 +1,17 @@
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 class NovelMania implements PluginService {
   @override
@@ -107,15 +117,20 @@ class NovelMania implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    String url = '$site/novels?titulo=';
-    url += '&categoria=${filters?['genres']?['value'] ?? ''}';
-    url += '&status=${filters?['status']?['value'] ?? ''}';
-    url += '&nacionalidade=${filters?['type']?['value'] ?? ''}';
-    url += '&ordem=${filters?['ordem']?['value'] ?? ''}';
-    url += '&page=$pageNo';
+    final queryParameters = {
+      'titulo': '',
+      'categoria': filters?['genres']?['value'] ?? '',
+      'nacionalidade': filters?['type']?['value'] ?? '',
+      'status': filters?['status']?['value'] ?? '',
+      'ordem': '2',
+      'commit': 'Pesquisar+novel',
+      'page[page]': pageNo.toString(),
+    };
+
+    final uri = Uri.https('novelmania.com.br', '/novels', queryParameters);
 
     try {
-      final body = await _fetchApi(url);
+      final body = await _fetchApi(uri.toString());
       final document = parse(body);
 
       final novelElements = document.querySelectorAll(
@@ -274,48 +289,70 @@ class NovelMania implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    String url = '$site/novels?titulo=$searchTerm';
-    url += '&categoria=${filters?['genres']?['value'] ?? ''}';
-    url += '&status=${filters?['status']?['value'] ?? ''}';
-    url += '&nacionalidade=${filters?['type']?['value'] ?? ''}';
-    url += '&ordem=${filters?['ordem']?['value'] ?? ''}';
-    url += '&page=$pageNo';
-    final body = await _fetchApi(url);
-    final document = parse(body);
-    final novelElements = document.querySelectorAll(
-      'div.top-novels.dark.col-6 > div.row.mb-2',
+    final queryParameters = {
+      'titulo': searchTerm,
+      'categoria': filters?['genres']?['value'] ?? '',
+      'nacionalidade': filters?['type']?['value'] ?? '',
+      'status': filters?['status']?['value'] ?? '',
+      'ordem': filters?['ordem']?['value'] ?? '',
+      'commit': 'Pesquisar+novel',
+      'page[page]': pageNo.toString(),
+    };
+
+    queryParameters.removeWhere(
+      (key, value) => value == null || value.toString().isEmpty,
     );
 
-    List<Novel> novels = [];
+    final uri = Uri.https('novelmania.com.br', '/novels', queryParameters);
 
-    for (var element in novelElements) {
-      final name = element.querySelector('a.novel-title > h5')?.text ?? '';
-      final cover =
-          element
-              .querySelector('a > div.card.c-size-1.border > img.card-image')
-              ?.attributes['src'];
-      final path =
-          element.querySelector('a.novel-title')?.attributes['href'] ?? '';
+    try {
+      final body = await _fetchApi(uri.toString());
+      final document = parse(body);
 
-      if (name.isNotEmpty && path.isNotEmpty) {
-        if (cover != null) {
-          novels.add(
-            Novel(
-              id: path,
-              title: name,
-              coverImageUrl: cover,
-              author: '',
-              description: '',
-              genres: [],
-              chapters: [],
-              artist: '',
-              statusString: '',
-              pluginId: name,
-            ),
-          );
+      final novelElements = document.querySelectorAll(
+        'div.top-novels.dark.col-6 > div.row.mb-2',
+      );
+
+      List<Novel> novels = [];
+
+      for (var element in novelElements) {
+        try {
+          final name = element.querySelector('a.novel-title > h5')?.text ?? '';
+          final cover =
+              element
+                  .querySelector(
+                    'a > div.card.c-size-1.border > img.card-image',
+                  )
+                  ?.attributes['src'];
+          final path =
+              element.querySelector('a.novel-title')?.attributes['href'] ?? '';
+          if (name.isNotEmpty && path.isNotEmpty) {
+            if (cover != null) {
+              novels.add(
+                Novel(
+                  id: path,
+                  title: name,
+                  coverImageUrl: cover,
+                  author: '',
+                  description: '',
+                  genres: [],
+                  chapters: [],
+                  artist: '',
+                  statusString: '',
+                  pluginId: name,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          print('Error parsing novel element: $e');
         }
       }
+
+      return novels;
+    } catch (e) {
+      print('Error fetching or parsing popular novels: $e');
+      return [];
     }
-    return novels;
   }
 }

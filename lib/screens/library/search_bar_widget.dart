@@ -117,11 +117,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               },
             ),
           ),
-          if (widget.onFilterPressed != null)
-            IconButton(
-              onPressed: widget.onFilterPressed,
-              icon: Icon(Icons.filter_list, color: theme.colorScheme.primary),
-            ),
+
           if (widget.extraActions != null) ...widget.extraActions!,
         ],
       ),
