@@ -77,6 +77,13 @@ class NovelCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                    Text(
+                      novel.pluginId,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.disabledColor,
+                        fontSize: 10,
+                      ),
+                    ),
                   ],
                 ),
               ),

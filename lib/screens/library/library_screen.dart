@@ -7,7 +7,6 @@ import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'package:akashic_records/screens/library/novel_filter_sort_widget.dart';
 import 'dart:async';
 import 'package:akashic_records/widgets/novel_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,7 +28,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   String? errorMessage;
   final ScrollController _scrollController = ScrollController();
   String _searchTerm = "";
-  Map<String, dynamic> _filters = {};
   List<Novel> allNovels = [];
   Set<String> _previousPlugins = {};
   Timer? _debounce;
@@ -41,7 +39,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void initState() {
     super.initState();
     _mounted = true;
-    _initializeFilters();
     _scrollController.addListener(_scrollListener);
     _loadViewMode();
     _loadHiddenNovels();
@@ -94,24 +91,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _initializeFilters() async {
-    Map<String, dynamic> initialFilters = {};
-    final appState = Provider.of<AppState>(context, listen: false);
-
-    for (final pluginName in appState.selectedPlugins) {
-      final plugin = appState.pluginServices[pluginName];
-      if (plugin != null) {
-        initialFilters.addAll(plugin.filters);
-      }
-    }
-
-    if (_mounted) {
-      setState(() {
-        _filters = initialFilters;
-      });
-    }
-  }
-
   @override
   void dispose() {
     _mounted = false;
@@ -150,10 +129,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       for (final pluginName in appState.selectedPlugins) {
         final plugin = appState.pluginServices[pluginName];
         if (plugin != null) {
-          final pluginNovels = await plugin.popularNovels(
-            currentPage,
-            filters: _filters,
-          );
+          final pluginNovels = await plugin.popularNovels(currentPage);
           for (final novel in pluginNovels) {
             novel.pluginId = pluginName;
           }
@@ -223,11 +199,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       for (final pluginName in appState.selectedPlugins) {
         final plugin = appState.pluginServices[pluginName];
         if (plugin != null) {
-          final pluginSearchResults = await plugin.searchNovels(
-            term,
-            1,
-            filters: _filters,
-          );
+          final pluginSearchResults = await plugin.searchNovels(term, 1);
           for (final novel in pluginSearchResults) {
             novel.pluginId = pluginName;
           }
@@ -277,49 +249,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _onFilterChanged(Map<String, dynamic> newFilters) async {
-    if (_mounted) {
-      setState(() {
-        _filters = newFilters;
-        novels.clear();
-        allNovels.clear();
-        currentPage = 1;
-        hasMore = true;
-      });
-    }
-
-    if (_searchTerm.isEmpty) {
-      await _loadPopularNovels();
-    } else {
-      await _searchNovels(_searchTerm);
-    }
-  }
-
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
-    );
-  }
-
-  void _showFilterModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: const Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: NovelFilterSortWidget(
-            filters: _filters,
-            onFilterChanged: _onFilterChanged,
-          ),
-        );
-      },
     );
   }
 
@@ -363,7 +296,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               padding: const EdgeInsets.all(8.0),
               child: SearchBarWidget(
                 onSearch: _onSearchChanged,
-                onFilterPressed: () => _showFilterModal(context),
+                onFilterPressed: null,
                 extraActions: [
                   IconButton(
                     icon: Icon(_isListView ? Icons.grid_view : Icons.list),
