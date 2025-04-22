@@ -355,12 +355,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
           itemBuilder: (context, index) {
             final novel = novels[index];
             return GestureDetector(
-              onLongPress: () => _hideNovel(novel),
               onTap: () => _handleNovelTap(novel),
               child: NovelListTile(
                 novel: novel,
                 onTap: () => _handleNovelTap(novel),
-                onLongPress: () {},
+                onLongPress: () => _hideNovel(novel),
               ),
             );
           },
