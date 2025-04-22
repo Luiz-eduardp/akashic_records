@@ -43,29 +43,29 @@ class _AdvancedTabState extends State<AdvancedTab> {
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 700),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'JavaScript Customizado:'.translate,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 700),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'JavaScript Customizado:'.translate,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'Classes e tags úteis: .reader-content, p, h1, h2, a, b, strong'
-                      .translate,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Classes e tags úteis: .reader-content, p, h1, h2, a, b, strong'
+                    .translate,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 10),
-                CodeField(
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: CodeField(
                   controller: _codeController,
                   textStyle: GoogleFonts.sourceCodePro(
                     textStyle: TextStyle(
@@ -83,53 +83,51 @@ class _AdvancedTabState extends State<AdvancedTab> {
                   ),
                   padding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final newSettings = ReaderSettings(
-                        theme: readerSettings.theme,
-                        fontSize: readerSettings.fontSize,
-                        fontFamily: readerSettings.fontFamily,
-                        lineHeight: readerSettings.lineHeight,
-                        textAlign: readerSettings.textAlign,
-                        backgroundColor: readerSettings.backgroundColor,
-                        textColor: readerSettings.textColor,
-                        fontWeight: readerSettings.fontWeight,
-                        customColors: readerSettings.customColors,
-                        customJs: _codeController.text,
-                        customCss: readerSettings.customCss,
-                      );
-                      appState.setReaderSettings(newSettings);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'JavaScript customizado salvo!'.translate,
-                            style: TextStyle(
-                              color: theme.colorScheme.onPrimary,
-                            ),
-                          ),
-                          backgroundColor: theme.colorScheme.secondary,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final newSettings = ReaderSettings(
+                      theme: readerSettings.theme,
+                      fontSize: readerSettings.fontSize,
+                      fontFamily: readerSettings.fontFamily,
+                      lineHeight: readerSettings.lineHeight,
+                      textAlign: readerSettings.textAlign,
+                      backgroundColor: readerSettings.backgroundColor,
+                      textColor: readerSettings.textColor,
+                      fontWeight: readerSettings.fontWeight,
+                      customColors: readerSettings.customColors,
+                      customJs: _codeController.text,
+                      customCss: readerSettings.customCss,
+                    );
+                    appState.setReaderSettings(newSettings);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'JavaScript customizado salvo!'.translate,
+                          style: TextStyle(color: theme.colorScheme.onPrimary),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                        backgroundColor: theme.colorScheme.secondary,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
                     ),
-                    child: Text('Salvar JavaScript Customizado'.translate),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
                   ),
+                  child: Text('Salvar JavaScript Customizado'.translate),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
