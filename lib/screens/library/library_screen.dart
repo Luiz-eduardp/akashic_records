@@ -139,25 +139,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
       final Set<String> seenNovelIds =
           allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
+
+      List<Novel> actuallyNewNovels = [];
       for (final novel in newNovels) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
+          actuallyNewNovels.add(novel);
           allNovels.add(novel);
           seenNovelIds.add(novelId);
         }
       }
 
-      List<Novel> filteredNovels = List<Novel>.from(allNovels);
-
-      filteredNovels =
-          filteredNovels.where((novel) {
+      List<Novel> filteredNovels =
+          actuallyNewNovels.where((novel) {
             final novelIdentifier = "${novel.pluginId}-${novel.id}";
             return !_hiddenNovelIds.contains(novelIdentifier);
           }).toList();
 
       if (_mounted) {
         setState(() {
-          novels = filteredNovels;
+          novels.addAll(filteredNovels);
           hasMore = newNovels.length == itemsPerPage;
           isLoading = false;
         });
@@ -173,12 +174,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _loadMorePopularNovels() async {
-    if (isLoading || !hasMore) return;
-    currentPage++;
-    await _loadPopularNovels();
-  }
-
   Future<void> _searchNovels(String term) async {
     if (isLoading) return;
 
@@ -186,9 +181,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       setState(() {
         isLoading = true;
         errorMessage = null;
-        novels.clear();
         hasMore = false;
-        allNovels.clear();
       });
     }
 
@@ -206,11 +199,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
           searchResults.addAll(pluginSearchResults);
         }
       }
+      final Set<String> seenNovelIds =
+          allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
+      List<Novel> actuallyNewNovels = [];
+      for (final novel in searchResults) {
+        final novelId = "${novel.id}-${novel.pluginId}";
+        if (!seenNovelIds.contains(novelId)) {
+          actuallyNewNovels.add(novel);
+          allNovels.add(novel);
+          seenNovelIds.add(novelId);
+        }
+      }
 
-      List<Novel> filteredSearchResults = List<Novel>.from(searchResults);
-
-      filteredSearchResults =
-          filteredSearchResults.where((novel) {
+      List<Novel> filteredSearchResults =
+          actuallyNewNovels.where((novel) {
             final novelIdentifier = "${novel.pluginId}-${novel.id}";
             return !_hiddenNovelIds.contains(novelIdentifier);
           }).toList();
@@ -232,17 +234,23 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
+  Future<void> _loadMorePopularNovels() async {
+    if (isLoading || !hasMore) return;
+    currentPage++;
+    await _loadPopularNovels();
+  }
+
   Future<void> _refreshNovels() async {
     if (_mounted) {
       setState(() {
-        allNovels.clear();
-        novels.clear();
         currentPage = 1;
         hasMore = true;
         isLoading = false;
       });
     }
     if (_searchTerm.isEmpty) {
+      allNovels.clear();
+      novels.clear();
       await _loadPopularNovels();
     } else {
       await _searchNovels(_searchTerm);
@@ -264,9 +272,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       if (_mounted) {
         setState(() {
           currentPage = 1;
-          novels.clear();
           hasMore = false;
-          allNovels.clear();
         });
       }
       if (term.isNotEmpty) {
