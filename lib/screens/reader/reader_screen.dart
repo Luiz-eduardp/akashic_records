@@ -14,6 +14,7 @@ import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:akashic_records/widgets/loading_indicator_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/screens/reader/chapter_list_widget.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String pluginId;
@@ -174,7 +175,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
             id: currentChapter!.id,
             title: currentChapter!.title,
             content: content as String?,
-            releaseDate: '',
             chapterNumber: null,
             order: 0,
           );
@@ -228,6 +228,22 @@ class _ReaderScreenState extends State<ReaderScreen> {
       });
       _loadChapterContent();
     }
+  }
+
+  void _onChapterTap(String chapterId) {
+    setState(() {
+      isLoading = true;
+      currentChapterIndex = novel!.chapters.indexWhere(
+        (chapter) => chapter.id == chapterId,
+      );
+      currentChapter = novel!.chapters[currentChapterIndex];
+    });
+    _loadChapterContent();
+    Navigator.pop(context);
+  }
+
+  void _onMarkAsRead(String chapterId) {
+    print('Capítulo marcado como lido: $chapterId');
   }
 
   void _toggleUiVisibility() {
@@ -324,6 +340,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   ),
         ),
       ),
+      endDrawer:
+          novel != null
+              ? Drawer(
+                child: ChapterListWidget(
+                  chapters: novel!.chapters,
+                  onChapterTap: _onChapterTap,
+                ),
+              )
+              : null,
       body:
           isLoading
               ? const Center(child: LoadingIndicatorWidget())
@@ -345,6 +370,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       readerSettings: appState.readerSettings,
                       currentChapterIndex: currentChapterIndex,
                       chapters: novel!.chapters,
+                      novelId: widget.novelId,
+                      onChapterTap: _onChapterTap,
+                      lastReadChapterId: _lastReadChapterId,
+                      readChapterIds: const {},
+                      onMarkAsRead: _onMarkAsRead,
                     ),
                 ],
               ),
