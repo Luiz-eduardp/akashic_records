@@ -174,7 +174,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
             id: currentChapter!.id,
             title: currentChapter!.title,
             content: content as String?,
-            releaseDate: '',
             chapterNumber: null,
             order: 0,
           );
