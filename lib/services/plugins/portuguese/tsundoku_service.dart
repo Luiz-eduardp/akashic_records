@@ -123,7 +123,7 @@ class Tsundoku implements PluginService {
     final month = monthMapping[monthName.toLowerCase()]?.toString() ?? '1';
     final day = parts[1];
     final year = parts[2];
-    return '$year-$month-$day 00:00:00.000';
+    return '$year-$month-$day';
   }
 
   List<Novel> _parseNovels(dom.Document document) {
