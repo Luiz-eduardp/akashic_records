@@ -295,6 +295,8 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                     name: name,
                     code: scriptContent,
                     use: use,
+                    enabled: true,
+                    priority: 10,
                   );
                   appState.addCustomPlugin(plugin);
                   Navigator.of(context).pop();
