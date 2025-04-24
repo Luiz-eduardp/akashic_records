@@ -313,7 +313,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    chapterDisplay,
+                                    '$chapterDisplay${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
                                     style: theme.textTheme.bodyLarge?.copyWith(
                                       fontWeight: fontWeight,
                                       color:
