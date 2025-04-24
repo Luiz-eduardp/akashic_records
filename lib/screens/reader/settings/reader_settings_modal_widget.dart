@@ -1,10 +1,11 @@
 import 'package:akashic_records/i18n/i18n.dart';
-import 'package:akashic_records/screens/reader/settings/tabs/advancedjs_tab.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/appearance_tab.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/customcss_tab.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/text_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/custom_plugin_tab.dart';
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
 
 class ReaderSettingsModal extends StatefulWidget {
   const ReaderSettingsModal({super.key});
@@ -20,7 +21,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -72,12 +73,11 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                   text: 'Texto'.translate,
                   icon: const Icon(Icons.text_fields),
                 ),
-                Tab(text: 'JS'.translate, icon: const Icon(Icons.code)),
-                Tab(text: 'CSS'.translate, icon: const Icon(Icons.css)),
                 Tab(
                   text: 'Plugins'.translate,
                   icon: const Icon(Icons.extension),
                 ),
+                Tab(text: 'CSS'.translate, icon: const Icon(Icons.css)),
               ],
             ),
             ConstrainedBox(
@@ -89,9 +89,8 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                 children: [
                   const AppearanceTab(),
                   TextTab(),
-                  const AdvancedTab(),
-                  const CustomCssTab(),
                   const CustomPluginTab(),
+                  const CustomCssTab(),
                 ],
               ),
             ),
@@ -100,6 +99,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
               alignment: Alignment.center,
               child: ElevatedButton(
                 onPressed: () {
+                  Provider.of<AppState>(context, listen: false).reloadReader();
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
