@@ -1,7 +1,7 @@
+import 'package:akashic_records/utils/launchUrl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
 class PluginsScreen extends StatefulWidget {
@@ -152,7 +152,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
         const SizedBox(height: 8),
         InkWell(
           onTap:
-              () => _launchURL(
+              () => launchURL(
                 'https://github.com/AkashicRecordsApp/akashic_records/issues/new/choose',
               ),
           child: Text(
@@ -173,12 +173,5 @@ class _PluginsScreenState extends State<PluginsScreen> {
         ),
       ],
     );
-  }
-
-  Future<void> _launchURL(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      throw 'Could not launch $url';
-    }
   }
 }
