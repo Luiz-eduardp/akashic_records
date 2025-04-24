@@ -227,10 +227,10 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenHeight = MediaQuery.of(context).size.height;
-    final listHeight = screenHeight * 0.6;
+    final listHeight = screenHeight * 0.8;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 25),
       child: Column(
         children: [
           Padding(
