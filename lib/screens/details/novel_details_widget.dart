@@ -5,6 +5,7 @@ import 'chapter_list_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter_html/flutter_html.dart';
 
 class NovelDetailsWidget extends StatefulWidget {
   final Novel novel;
@@ -31,12 +32,18 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
   late List<String> _paragraphs;
   Set<String> _readChapterIds = {};
   bool _isLoading = true;
+  bool _isSynopsisHTML = false;
 
   @override
   void initState() {
     super.initState();
+    _isSynopsisHTML = _isHTML(widget.novel.description);
     _paragraphs = _splitSynopsis(widget.novel.description);
     _loadData();
+  }
+
+  bool _isHTML(String text) {
+    return text.startsWith('<') && text.endsWith('>');
   }
 
   Future<void> _loadData() async {
@@ -72,15 +79,19 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
   }
 
   List<String> _splitSynopsis(String synopsis) {
-    List<String> paragraphs =
-        synopsis.split('\n').where((p) => p.trim().isNotEmpty).toList();
-    if (paragraphs.length >= 2) {
-      return paragraphs;
-    } else if (paragraphs.length == 1) {
-      int mid = paragraphs[0].length ~/ 2;
-      return [paragraphs[0].substring(0, mid), paragraphs[0].substring(mid)];
+    if (_isSynopsisHTML) {
+      return [synopsis];
     } else {
-      return ["", ""];
+      List<String> paragraphs =
+          synopsis.split('\n').where((p) => p.trim().isNotEmpty).toList();
+      if (paragraphs.length >= 2) {
+        return paragraphs;
+      } else if (paragraphs.length == 1) {
+        int mid = paragraphs[0].length ~/ 2;
+        return [paragraphs[0].substring(0, mid), paragraphs[0].substring(mid)];
+      } else {
+        return ["", ""];
+      }
     }
   }
 
@@ -223,14 +234,33 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  _showFullSynopsis ? widget.novel.description : firstParagraph,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                  textAlign: TextAlign.justify,
-                  overflow: TextOverflow.fade,
-                ),
-
-                if (hasMoreThanOneParagraph)
+                _isSynopsisHTML
+                    ? Html(
+                      data:
+                          _showFullSynopsis
+                              ? widget.novel.description
+                              : firstParagraph,
+                      style: {
+                        "body": Style(
+                          margin: Margins.zero,
+                          textAlign: TextAlign.justify,
+                          lineHeight: LineHeight.number(1.5),
+                          fontSize: FontSize(
+                            theme.textTheme.bodyMedium!.fontSize!,
+                          ),
+                          color: theme.textTheme.bodyMedium!.color,
+                        ),
+                      },
+                    )
+                    : Text(
+                      _showFullSynopsis
+                          ? widget.novel.description
+                          : firstParagraph,
+                      style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                      textAlign: TextAlign.justify,
+                      overflow: TextOverflow.fade,
+                    ),
+                if (hasMoreThanOneParagraph && !_isSynopsisHTML)
                   Align(
                     alignment: Alignment.bottomRight,
                     child: InkWell(
