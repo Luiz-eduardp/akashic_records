@@ -20,8 +20,8 @@ class AppDrawer extends StatelessWidget {
           children: [
             const SizedBox(height: 35),
             ListTile(
-              leading: const Icon(Icons.palette),
-              title: Text('Aparência'.translate),
+              leading: const Icon(Icons.settings),
+              title: Text('Configurações'.translate),
               onTap: () {
                 Navigator.pushNamed(context, '/settings');
                 advancedDrawerController.hideDrawer();
