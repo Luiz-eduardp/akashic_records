@@ -23,7 +23,7 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final savedLocale = prefs.getString('locale');
   Locale initialLocale =
-      savedLocale != null ? Locale(savedLocale) : const Locale('pt');
+      savedLocale != null ? Locale(savedLocale) : const Locale('en');
 
   await I18n.initialize(
     defaultLocale: initialLocale,
