@@ -5,6 +5,7 @@ import 'package:akashic_records/screens/history/history_screen.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
+import 'package:akashic_records/widgets/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,53 +56,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       animateChildDecoration: true,
       rtlOpening: false,
       disabledGestures: false,
-      childDecoration: BoxDecoration(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
+      childDecoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
         boxShadow: <BoxShadow>[
           BoxShadow(color: Colors.black12, blurRadius: 5.0),
         ],
       ),
-      drawer: SafeArea(
-        child: ListTileTheme(
-          textColor: theme.colorScheme.onSurfaceVariant,
-          iconColor: theme.colorScheme.onSurfaceVariant,
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              SizedBox(height: 35),
-
-              ListTile(
-                leading: Icon(Icons.palette),
-                title: Text('Aparência'.translate),
-                onTap: () {
-                  Navigator.pushNamed(context, '/settings');
-                  _advancedDrawerController.hideDrawer();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.extension),
-                title: Text('Plugins'.translate),
-                onTap: () {
-                  Navigator.pushNamed(context, '/plugins');
-                  _advancedDrawerController.hideDrawer();
-                },
-              ),
-
-              Spacer(),
-              DefaultTextStyle(
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                ),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text('Akashic Records App'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      drawer: AppDrawer(advancedDrawerController: _advancedDrawerController),
       child: Scaffold(
         appBar: AppBar(
           title: Text('Akashic Records'.translate),
@@ -121,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               valueListenable: _advancedDrawerController,
               builder: (_, value, __) {
                 return AnimatedSwitcher(
-                  duration: Duration(milliseconds: 250),
+                  duration: const Duration(milliseconds: 250),
                   child: Icon(
                     value.visible ? Icons.clear : Icons.menu,
                     key: ValueKey<bool>(value.visible),
