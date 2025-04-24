@@ -1,4 +1,5 @@
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/screens/reader/scriptSelector/script_selector.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -134,27 +135,54 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
             padding: const EdgeInsets.all(16.0),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PluginEditorScreen(),
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PluginEditorScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    child: Text('Adicionar Plugin Customizado'.translate),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ScriptSelectorScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: theme.colorScheme.onSecondary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    child: Text('Importar Script da URL'.translate),
                   ),
-                ),
-                child: Text('Adicionar Plugin Customizado'.translate),
+                ],
               ),
             ),
           ),
@@ -211,7 +239,7 @@ class PluginEditorScreen extends StatefulWidget {
   final CustomPlugin? plugin;
   final int? index;
 
-  const PluginEditorScreen({super.key, this.plugin, this.index});
+  const PluginEditorScreen({Key? key, this.plugin, this.index});
 
   @override
   _PluginEditorScreenState createState() => _PluginEditorScreenState();

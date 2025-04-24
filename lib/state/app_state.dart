@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:akashic_records/models/plugin_service.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/services/plugins/english/novelbin_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
 import 'package:akashic_records/services/plugins/english/reapersscan_service.dart';
@@ -9,9 +12,6 @@ import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_ser
 import 'package:akashic_records/services/plugins/portuguese/mtl_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/saikaiscans_service.dart';
 import 'package:akashic_records/services/plugins/spanish/skynovels_service.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/novelmania_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/tsundoku_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/centralnovel_service.dart';
@@ -193,6 +193,9 @@ class AppState with ChangeNotifier {
   Set<String> _selectedPlugins = {};
   ReaderSettings _readerSettings = ReaderSettings();
   List<CustomPlugin> _customPlugins = [];
+  List<String> _scriptUrls = [
+    'https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/',
+  ];
 
   final Map<String, PluginService> _pluginServices = {};
 
@@ -306,7 +309,7 @@ class AppState with ChangeNotifier {
 
     const topOffset = Math.min(scrollTop / 100, 1);
     const distanceFromBottom = docHeight - scrollPosition;
-    const bottomOffset = Math.max(distanceFromBottom / 100, 0);
+    const bottomOffset = Math.max(distanceFromBottom / 100);
 
     focusOverlayTop.style.opacity = topOffset.toString();
     focusOverlayBottom.style.opacity = bottomOffset.toString();
@@ -358,6 +361,7 @@ class AppState with ChangeNotifier {
     _pluginServices['Webnovel'] = Webnovel();
     _pluginServices['ReaperScans'] = ReaperScans();
     _pluginServices['NovelBin'] = NovelBin();
+    initialize();
   }
 
   ThemeMode get themeMode => _themeMode;
@@ -366,6 +370,7 @@ class AppState with ChangeNotifier {
   Set<String> get selectedPlugins => _selectedPlugins;
   ReaderSettings get readerSettings => _readerSettings;
   List<CustomPlugin> get customPlugins => _customPlugins;
+  List<String> get scriptUrls => _scriptUrls;
 
   Map<String, PluginService> get pluginServices => _pluginServices;
 
@@ -417,6 +422,46 @@ class AppState with ChangeNotifier {
     notifyListeners();
   }
 
+  void addPluginsFromJson(String jsonString) {
+    try {
+      final List<dynamic> jsonList = jsonDecode(jsonString);
+      final List<CustomPlugin> newPlugins =
+          jsonList.map((json) => CustomPlugin.fromJson(json)).toList();
+
+      _customPlugins.addAll(newPlugins);
+
+      _saveCustomPlugins();
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Erro ao decodificar ou adicionar plugins do JSON: $e");
+    }
+  }
+
+  void addScriptUrl(String url) {
+    _scriptUrls.add(url);
+    _saveScriptUrls();
+    notifyListeners();
+  }
+
+  void removeScriptUrl(int index) {
+    _scriptUrls.removeAt(index);
+    _saveScriptUrls();
+    notifyListeners();
+  }
+
+  void setScriptUrls(List<String> urls) {
+    _scriptUrls = urls;
+    _saveScriptUrls();
+    notifyListeners();
+  }
+
+  void reloadReader() {
+    _loadSettings();
+    notifyListeners();
+    debugPrint("Reader reloaded!");
+  }
+
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -450,6 +495,11 @@ class AppState with ChangeNotifier {
       } else {
         _customPlugins = _defaultPlugins;
         _saveCustomPlugins();
+      }
+
+      final scriptUrlsJson = prefs.getStringList('scriptUrls');
+      if (scriptUrlsJson != null && scriptUrlsJson.isNotEmpty) {
+        _scriptUrls = List<String>.from(scriptUrlsJson);
       }
 
       _settingsLoaded = true;
@@ -515,6 +565,15 @@ class AppState with ChangeNotifier {
       await prefs.setStringList('customPlugins', customPluginsJson);
     } catch (e) {
       debugPrint("Erro ao salvar plugins customizados: $e");
+    }
+  }
+
+  Future<void> _saveScriptUrls() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('scriptUrls', _scriptUrls);
+    } catch (e) {
+      debugPrint("Erro ao salvar URLs de script: $e");
     }
   }
 }

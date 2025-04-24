@@ -122,5 +122,20 @@
   "Capítulos Lidos": "Capítulos leídos",
   "Fechar": "Fechar",
   "Resumo": "Sinopsis",
-  "Plugin desativado": "Plugin desativado"
+  "Plugin desativado": "Plugin desativado",
+  "Importar Script da URL": "Importar Script desde la URL",
+  "Selecionar Script": "Seleccionar Script",
+  "URL do JSON": "URL del JSON",
+  "Carregar Scripts": "Cargar Scripts",
+  "Nenhum script encontrado.": "No se encontraron scripts.",
+  "Adicionar": "Añadir",
+  "Informações do Plugin": "Información del Plugin",
+  "Nome do Plugin": "Nombre del Plugin",
+  "Como usar": "Cómo usar",
+  "Gerenciar URLs": "Gestionar URLs",
+  "Scripts Encontrados": "Scripts Encontrados",
+  "Sem descrição": "Sin descripción",
+  "Sem nome": "Sin nombre",
+  "Adicionar URL": "Añadir URL",
+  "Voltar": "Volver"
 }
