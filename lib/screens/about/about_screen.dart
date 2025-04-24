@@ -31,7 +31,7 @@ class AboutScreen extends StatelessWidget {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Text(
                 'Na filosofia, os Akashic Records são considerados um registro universal de tudo o que aconteceu, acontece e acontecerá. É a "biblioteca cósmica" da existência.'
                     .translate,
@@ -40,7 +40,7 @@ class AboutScreen extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Text(
                 'Inspirados por essa ideia, o Akashic Records, o aplicativo, busca ser um portal para as histórias, um registro pessoal de suas leituras. Aqui, você pode mergulhar no mundo das novels, salvar suas favoritas e construir sua própria biblioteca de conhecimento e entretenimento.'
                     .translate,
@@ -50,42 +50,39 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'O que o Akashic Records oferece:'.translate,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
+
+              _SectionTitle(
+                title: 'O que o Akashic Records oferece:'.translate,
               ),
               const SizedBox(height: 12),
-              _buildFeatureItem(
-                theme,
-                'Leitura Ilimitada: Explore um vasto catálogo de novels, descobrindo novos mundos e personagens.'
-                    .translate,
+              _FeatureItem(
+                text:
+                    'Leitura Ilimitada: Explore um vasto catálogo de novels, descobrindo novos mundos e personagens.'
+                        .translate,
+                theme: theme,
               ),
-              _buildFeatureItem(
-                theme,
-                'Sua Biblioteca Pessoal: Salve suas novels favoritas, crie sua própria biblioteca e acompanhe suas leituras de forma organizada e eficiente.'
-                    .translate,
+              _FeatureItem(
+                text:
+                    'Sua Biblioteca Pessoal: Salve suas novels favoritas, crie sua própria biblioteca e acompanhe suas leituras de forma organizada e eficiente.'
+                        .translate,
+                theme: theme,
               ),
-              _buildFeatureItem(
-                theme,
-                'Fontes Brasileiras: Curadoria cuidadosa com foco em novels em português, garantindo uma experiência de leitura rica e variada, com conteúdo que você adora.'
-                    .translate,
+              _FeatureItem(
+                text:
+                    'Fontes Brasileiras: Curadoria cuidadosa com foco em novels em português, garantindo uma experiência de leitura rica e variada, com conteúdo que você adora.'
+                        .translate,
+                theme: theme,
               ),
-              _buildFeatureItem(
-                theme,
-                'Coleta Inteligente: Utilizamos a técnica de "scrap" para buscar novels em diversos sites, trazendo as melhores histórias diretamente para você.'
-                    .translate,
+              _FeatureItem(
+                text:
+                    'Coleta Inteligente: Utilizamos a técnica de "scrap" para buscar novels em diversos sites, trazendo as melhores histórias diretamente para você.'
+                        .translate,
+                theme: theme,
               ),
+
               const SizedBox(height: 24),
-              Text(
-                'Sobre o Desenvolvedor:'.translate,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
+
+              _SectionTitle(title: 'Sobre o Desenvolvedor:'.translate),
               const SizedBox(height: 12),
               Text(
                 'Luiz Eduardo, desenvolvedor Fullstack com experiência em Magento, PHP, Flutter, Dart, Vue, React, Native, TypeScript, JavaScript e Python.'
@@ -95,18 +92,15 @@ class AboutScreen extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 12),
-              InkWell(
-                onTap: () => _launchURL('https://github.com/Luiz-eduardp'),
-                child: Text(
-                  'Github: https://github.com/Luiz-eduardp',
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
+              const SizedBox(height: 8),
+              _LinkText(
+                url: 'https://github.com/Luiz-eduardp',
+                text: 'Github: https://github.com/Luiz-eduardp',
+                theme: theme,
               ),
+
               const SizedBox(height: 24),
+
               Text(
                 'Agradecemos a você por usar o Akashic Records. Explore, descubra novas histórias e compartilhe suas impressões! Seu feedback é muito importante para continuarmos melhorando.'
                     .translate,
@@ -122,10 +116,36 @@ class AboutScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildFeatureItem(ThemeData theme, String text) {
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      title,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.onSurface,
+      ),
+    );
+  }
+}
+
+class _FeatureItem extends StatelessWidget {
+  final String text;
+  final ThemeData theme;
+
+  const _FeatureItem({required this.text, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -145,6 +165,28 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LinkText extends StatelessWidget {
+  final String url;
+  final String text;
+  final ThemeData theme;
+
+  const _LinkText({required this.url, required this.text, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => _launchURL(url),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: theme.colorScheme.primary,
+          decoration: TextDecoration.underline,
+        ),
       ),
     );
   }
