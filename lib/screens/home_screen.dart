@@ -139,9 +139,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         bottomNavigationBar: Container(
           color: theme.colorScheme.surfaceContainerHighest,
-          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
           child: GNav(
-            backgroundColor: theme.colorScheme.surfaceVariant,
             gap: 8,
             activeColor: theme.colorScheme.primary,
             iconSize: 24,
