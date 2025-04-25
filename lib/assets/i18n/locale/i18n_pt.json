@@ -173,5 +173,9 @@
   "Another list with name '$trimmedNewName' already exists.": "Outra lista com o nome '$trimmedNewName' já existe.",
   "Unknown Title": "Título Desconhecido",
   "novel": "novel",
-  "nenhuma novel": "nenhuma novel"
+  "nenhuma novel": "nenhuma novel",
+  "Andamento": "Andamento",
+  "Completa": "Completa",
+  "Pausada": "Pausada",
+  "Desconhecido": "Desconhecido"
 }
