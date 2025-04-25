@@ -306,7 +306,8 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                   ),
                 const SizedBox(height: 24),
                 Text(
-                  'Capítulos:'.translate,
+                  'Capítulos:'.translate +
+                      ' ${widget.novel.numberOfChapters == 0 ? 0 : widget.novel.numberOfChapters.toString()}',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

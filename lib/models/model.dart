@@ -9,6 +9,7 @@ class Novel {
   late List<Chapter> chapters;
   var genres;
   late String pluginId;
+  late bool shouldShowNumberOfChapters;
 
   Novel({
     required this.id,
@@ -21,9 +22,13 @@ class Novel {
     required String artist,
     required List genres,
     required this.pluginId,
+    this.shouldShowNumberOfChapters = true,
     NovelStatus? status,
     String? summary,
   });
+
+  int get numberOfChapters => shouldShowNumberOfChapters ? chapters.length : 0;
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -33,6 +38,7 @@ class Novel {
       'description': description,
       'chapters': chapters.map((chapter) => chapter.toMap()).toList(),
       'pluginId': pluginId,
+      'shouldShowNumberOfChapters': shouldShowNumberOfChapters,
     };
   }
 
@@ -54,6 +60,8 @@ class Novel {
       artist: '',
       genres: [],
       pluginId: map['pluginId'] as String,
+      shouldShowNumberOfChapters:
+          map['shouldShowNumberOfChapters'] as bool? ?? true,
     );
   }
   set status(NovelStatus status) {}
