@@ -4,8 +4,6 @@ import 'package:akashic_records/screens/reader/settings/tabs/customcss_tab.dart'
 import 'package:akashic_records/screens/reader/settings/tabs/text_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/screens/reader/settings/tabs/custom_plugin_tab.dart';
-import 'package:provider/provider.dart';
-import 'package:akashic_records/state/app_state.dart';
 
 class ReaderSettingsModal extends StatefulWidget {
   const ReaderSettingsModal({super.key});
@@ -99,7 +97,6 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
               alignment: Alignment.center,
               child: ElevatedButton(
                 onPressed: () {
-                  Provider.of<AppState>(context, listen: false).reloadReader();
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
