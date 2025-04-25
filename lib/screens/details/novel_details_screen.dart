@@ -10,6 +10,7 @@ import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/screens/details/loading_details_skeleton_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/widgets/favorite_list_dialog.dart';
 
 class NovelDetailsScreen extends StatefulWidget {
   final Novel novel;
@@ -21,45 +22,49 @@ class NovelDetailsScreen extends StatefulWidget {
 }
 
 class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
-  bool isFavorite = false;
   late SharedPreferences _prefs;
   String? lastReadChapterId;
   int? lastReadChapterIndex;
-  bool isLoading = false;
+  bool isLoading = true;
   String? errorMessage;
   Novel? _detailedNovel;
+  bool _isMounted = false;
 
   @override
   void initState() {
     super.initState();
+    _isMounted = true;
     _init();
+  }
+
+  @override
+  void dispose() {
+    _isMounted = false;
+    super.dispose();
   }
 
   Future<void> _init() async {
     _prefs = await SharedPreferences.getInstance();
-    await _loadFavoriteStatus();
     await _loadDetailedNovel();
-    _loadLastReadChapter();
-  }
-
-  String _getFavoriteKey() {
-    return 'favorite_${widget.novel.pluginId}_${widget.novel.id}';
+    if (_detailedNovel != null && _isMounted) {
+      await _loadLastReadChapter();
+    }
   }
 
   Future<void> _loadDetailedNovel() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-        errorMessage = null;
-      });
-    }
+    if (!_isMounted) return;
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
 
     try {
+      if (!mounted) return;
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[widget.novel.pluginId];
 
       if (plugin == null) {
-        if (mounted) {
+        if (_isMounted) {
           setState(() {
             errorMessage = 'Plugin não encontrado para esta novel.'.translate;
             isLoading = false;
@@ -68,34 +73,32 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
         return;
       }
 
-      final detailedNovel = await loadNovelWithTimeout(
+      final detailedNovelData = await loadNovelWithTimeout(
         () => plugin.parseNovel(widget.novel.id),
+        timeoutDuration: const Duration(seconds: 30),
       );
 
-      if (detailedNovel != null) {
-        detailedNovel.pluginId = widget.novel.pluginId;
-        if (mounted) {
-          setState(() {
-            _detailedNovel = detailedNovel;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            errorMessage =
-                'Falha ao carregar detalhes da novel do plugin.'.translate;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+      if (!_isMounted) return;
+
+      if (detailedNovelData != null) {
+        detailedNovelData.pluginId = widget.novel.pluginId;
         setState(() {
-          errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
+          _detailedNovel = detailedNovelData;
+        });
+      } else {
+        setState(() {
+          errorMessage =
+              'Falha ao carregar detalhes da novel do plugin.'.translate;
         });
       }
-      debugPrint("Erro ao carregar detalhes da novel: $e");
+    } catch (e, stacktrace) {
+      if (!_isMounted) return;
+      setState(() {
+        errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
+      });
+      debugPrint("Erro ao carregar detalhes da novel: $e\n$stacktrace");
     } finally {
-      if (mounted) {
+      if (_isMounted && isLoading) {
         setState(() {
           isLoading = false;
         });
@@ -104,62 +107,96 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
   }
 
   Future<void> _loadLastReadChapter() async {
-    if (_detailedNovel == null) return;
+    if (_detailedNovel == null || !_isMounted) return;
 
-    final lastReadChapterId = _prefs.getString('lastRead_${widget.novel.id}');
+    final lastReadChapterIdPref = _prefs.getString(
+      'lastRead_${widget.novel.id}',
+    );
 
-    if (lastReadChapterId != null && mounted) {
+    if (lastReadChapterIdPref != null && _detailedNovel!.chapters.isNotEmpty) {
       final index = _detailedNovel!.chapters.indexWhere(
-        (chapter) => chapter.id == lastReadChapterId,
+        (chapter) => chapter.id == lastReadChapterIdPref,
       );
-
+      if (_isMounted) {
+        setState(() {
+          lastReadChapterId = lastReadChapterIdPref;
+          lastReadChapterIndex = index == -1 ? null : index;
+        });
+      }
+    } else if (_isMounted) {
       setState(() {
-        this.lastReadChapterId = lastReadChapterId;
-        lastReadChapterIndex = index == -1 ? null : index;
+        lastReadChapterId = null;
+        lastReadChapterIndex = null;
       });
     }
-  }
-
-  Future<void> _loadFavoriteStatus() async {
-    if (mounted) {
-      setState(() {
-        isFavorite = _prefs.getBool(_getFavoriteKey()) ?? false;
-      });
-    }
-  }
-
-  Future<void> _saveFavoriteStatus() async {
-    await _prefs.setBool(_getFavoriteKey(), isFavorite);
-  }
-
-  void _toggleFavorite() {
-    setState(() {
-      isFavorite = !isFavorite;
-    });
-    _saveFavoriteStatus();
   }
 
   Future<void> _saveLastReadChapter(String chapterId) async {
+    if (!_isMounted) return;
     await _prefs.setString('lastRead_${widget.novel.id}', chapterId);
-    if (mounted) {
+
+    int? index;
+    if (_detailedNovel != null) {
+      index = _detailedNovel!.chapters.indexWhere(
+        (chapter) => chapter.id == chapterId,
+      );
+    }
+
+    if (_isMounted) {
       setState(() {
         lastReadChapterId = chapterId;
-        lastReadChapterIndex = _detailedNovel?.chapters.indexWhere(
-          (chapter) => chapter.id == chapterId,
-        );
+        lastReadChapterIndex = (index != null && index != -1) ? index : null;
       });
+    }
+  }
+
+  void _navigateToReader({String? chapterId}) {
+    if (!mounted || _detailedNovel == null) return;
+
+    String? targetChapterId = chapterId ?? lastReadChapterId;
+
+    if (targetChapterId == null && _detailedNovel!.chapters.isNotEmpty) {
+      targetChapterId = _detailedNovel!.chapters.first.id;
+      _saveLastReadChapter(targetChapterId);
+    }
+
+    if (targetChapterId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => ReaderScreen(
+                novelId: _detailedNovel!.id,
+                pluginId: _detailedNovel!.pluginId,
+                initialChapterId: targetChapterId,
+              ),
+        ),
+      ).then((_) {
+        if (_isMounted && mounted) {
+          _loadLastReadChapter();
+        }
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Nenhum capítulo disponível para leitura.".translate),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    Provider.of<AppState>(context);
+    final appState = Provider.of<AppState>(context);
+    final novelToCheck = _detailedNovel ?? widget.novel;
+    final bool isCurrentlyFavorite = appState.isNovelFavorite(novelToCheck);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(widget.novel.pluginId),
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
@@ -169,22 +206,22 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
+              isCurrentlyFavorite ? Icons.edit : Icons.favorite_border,
               color:
-                  isFavorite
+                  isCurrentlyFavorite
                       ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurfaceVariant,
+                      : theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
             ),
-            onPressed: _toggleFavorite,
-            tooltip:
-                isFavorite
-                    ? 'Remover dos Favoritos'.translate
-                    : 'Adicionar aos Favoritos'.translate,
+            onPressed: () {
+              showFavoriteListDialog(context, _detailedNovel ?? widget.novel);
+            },
+            tooltip: 'Gerenciar listas de favoritos'.translate,
           ),
         ],
       ),
       body: SafeArea(
         top: false,
+        bottom: true,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           child: _buildBody(theme),
@@ -194,9 +231,11 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
   }
 
   Widget _buildBody(ThemeData theme) {
+    final novelToDisplay = _detailedNovel ?? widget.novel;
+
     if (isLoading) {
       return const LoadingDetailsSkeletonWidget();
-    } else if (errorMessage != null) {
+    } else if (errorMessage != null && _detailedNovel == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -209,53 +248,49 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
           ),
         ),
       );
-    } else if (_detailedNovel == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Text(
-            "Detalhes não encontrados".translate,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 18,
-            ),
-          ),
-        ),
-      );
     } else {
       return NovelDetailsWidget(
-        novel: _detailedNovel!,
+        key: ValueKey(
+          novelToDisplay.id + novelToDisplay.chapters.length.toString(),
+        ),
+        novel: novelToDisplay,
         lastReadChapterId: lastReadChapterId,
         lastReadChapterIndex: lastReadChapterIndex,
+        loadingErrorMessage:
+            (_detailedNovel == null && errorMessage != null)
+                ? errorMessage
+                : null,
         onContinueReading:
-            lastReadChapterId != null
+            lastReadChapterId != null && lastReadChapterIndex != null
                 ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => ReaderScreen(
-                            novelId: widget.novel.id,
-                            pluginId: widget.novel.pluginId,
+                  if (lastReadChapterIndex! < novelToDisplay.chapters.length) {
+                    _navigateToReader();
+                  } else {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "Capítulo salvo não encontrado.".translate,
                           ),
-                    ),
-                  );
+                        ),
+                      );
+                    }
+                    setState(() {
+                      lastReadChapterId = null;
+                      lastReadChapterIndex = null;
+                    });
+                  }
                 }
                 : null,
         onChapterTap: (chapterId) {
-          _saveLastReadChapter(chapterId);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => ReaderScreen(
-                    novelId: widget.novel.id,
-                    pluginId: widget.novel.pluginId,
-                  ),
-            ),
-          );
+          _saveLastReadChapter(chapterId).then((_) {
+            _navigateToReader(chapterId: chapterId);
+          });
         },
+        onRetryLoad:
+            (errorMessage != null && _detailedNovel == null)
+                ? () => _loadDetailedNovel()
+                : null,
       );
     }
   }

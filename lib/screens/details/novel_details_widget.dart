@@ -21,6 +21,8 @@ class NovelDetailsWidget extends StatefulWidget {
     required this.lastReadChapterIndex,
     this.onContinueReading,
     required this.onChapterTap,
+    String? loadingErrorMessage,
+    Future<void> Function()? onRetryLoad,
   });
 
   @override
