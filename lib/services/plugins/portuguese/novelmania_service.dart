@@ -229,16 +229,16 @@ class NovelMania implements PluginService {
             .trim();
     switch (statusString) {
       case 'Ativo':
-        novel.status = NovelStatus.Ongoing;
+        novel.status = NovelStatus.Andamento;
         break;
       case 'Pausado':
-        novel.status = NovelStatus.OnHiatus;
+        novel.status = NovelStatus.Pausada;
         break;
       case 'Completo':
-        novel.status = NovelStatus.Completed;
+        novel.status = NovelStatus.Completa;
         break;
       default:
-        novel.status = NovelStatus.Unknown;
+        novel.status = NovelStatus.Desconhecido;
     }
 
     final chapterElements = document.querySelectorAll(

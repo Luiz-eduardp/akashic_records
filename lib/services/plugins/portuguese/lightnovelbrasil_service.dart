@@ -73,9 +73,9 @@ class LightNovelBrasil implements PluginService {
       'value': '',
       'options': [
         {'label': 'Tudo', 'value': ''},
-        {'label': 'Ongoing', 'value': 'ongoing'},
+        {'label': 'Andamento', 'value': 'ongoing'},
         {'label': 'Hiatus', 'value': 'hiatus'},
-        {'label': 'Completed', 'value': 'completed'},
+        {'label': 'Completa', 'value': 'completed'},
       ],
     },
     'order': {
@@ -219,7 +219,7 @@ class LightNovelBrasil implements PluginService {
         statusString: '',
         author: '',
         pluginId: name,
-        status: NovelStatus.Unknown,
+        status: NovelStatus.Desconhecido,
       );
     }
     final document = parse(body);
@@ -230,16 +230,16 @@ class LightNovelBrasil implements PluginService {
     final authorElement = document.querySelector('div.spe > span');
 
     final statusElement = document.querySelector('div.sertostat > span');
-    NovelStatus status = NovelStatus.Unknown;
+    NovelStatus status = NovelStatus.Desconhecido;
     if (statusElement != null) {
       final statusText = statusElement.text.toLowerCase();
       if (statusText.contains('completo') || statusText.contains('completed')) {
-        status = NovelStatus.Completed;
+        status = NovelStatus.Completa;
       } else if (statusText.contains('andamento') ||
           statusText.contains('ongoing')) {
-        status = NovelStatus.Ongoing;
+        status = NovelStatus.Andamento;
       } else if (statusText.contains('hiato')) {
-        status = NovelStatus.OnHiatus;
+        status = NovelStatus.Pausada;
       }
     }
     String description = '';

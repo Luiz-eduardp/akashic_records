@@ -37,7 +37,7 @@ class MtlNovelPt implements PluginService {
       'label': 'Status',
       'options': [
         {'label': 'All', 'value': 'all'},
-        {'label': 'Ongoing', 'value': 'ongoing'},
+        {'label': 'Andamento', 'value': 'ongoing'},
         {'label': 'Complete', 'value': 'completed'},
       ],
       'type': 'Picker',
@@ -164,7 +164,7 @@ class MtlNovelPt implements PluginService {
         case 'Estado':
         case 'Положение дел':
           if (value == 'Hiatus') {
-            novel.status = NovelStatus.OnHiatus;
+            novel.status = NovelStatus.Pausada;
           }
           break;
       }
