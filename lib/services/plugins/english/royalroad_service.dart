@@ -145,9 +145,9 @@ class RoyalRoad implements PluginService {
       'value': 'ALL',
       'options': [
         {'label': 'All', 'value': 'ALL'},
-        {'label': 'Completed', 'value': 'COMPLETED'},
+        {'label': 'Completa', 'value': 'COMPLETED'},
         {'label': 'Dropped', 'value': 'DROPPED'},
-        {'label': 'Ongoing', 'value': 'ONGOING'},
+        {'label': 'Andamento', 'value': 'ONGOING'},
         {'label': 'Hiatus', 'value': 'HIATUS'},
         {'label': 'Stub', 'value': 'STUB'},
       ],
@@ -391,13 +391,13 @@ class RoyalRoad implements PluginService {
   NovelStatus _parseNovelStatus(String statusText) {
     switch (statusText) {
       case 'ONGOING':
-        return NovelStatus.Ongoing;
+        return NovelStatus.Andamento;
       case 'HIATUS':
-        return NovelStatus.OnHiatus;
+        return NovelStatus.Pausada;
       case 'COMPLETED':
-        return NovelStatus.Completed;
+        return NovelStatus.Completa;
       default:
-        return NovelStatus.Unknown;
+        return NovelStatus.Desconhecido;
     }
   }
 
