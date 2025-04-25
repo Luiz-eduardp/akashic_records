@@ -8,28 +8,16 @@ assignees: ''
 
 ---
 
-## Website Inclusion Request for Project
+## Plugin Request for PluginStore
 
-Please fill out this form to request the inclusion of a website in the project.
+Please fill out this form to request the inclusion of a plugin in the project.
 
-**Website URL:**
+**Description:**
 
-*   Please enter the complete website address (e.g., `https://www.example.com`):
-    *   [ ]
+*   Please enter the complete description of the functionality:
+    *   [  ]
 
-**Website Name:**
+**Plugin Name:**
 
-*   What is the name of the website you are requesting to include?
-    *   [ ]
-
-**Website Language:**
-
-*   What is the primary language of the website?
-    *   [ ]
-
-**Cloudflare Protection:**
-
-*   Does the website use Cloudflare protection?
-    *   [ ] Yes
-    *   [ ] No
-    *   [ ] I'm not sure
+*   What is the name of the Plugin you are requesting to include?
+    *   [  ]
