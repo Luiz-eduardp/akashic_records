@@ -26,6 +26,7 @@ class ReaderScreen extends StatefulWidget {
     required this.pluginId,
     required this.novelId,
     this.chapterId,
+    String? initialChapterId,
   });
 
   @override

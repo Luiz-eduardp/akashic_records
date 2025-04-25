@@ -21,6 +21,8 @@ class NovelDetailsWidget extends StatefulWidget {
     required this.lastReadChapterIndex,
     this.onContinueReading,
     required this.onChapterTap,
+    String? loadingErrorMessage,
+    Future<void> Function()? onRetryLoad,
   });
 
   @override
@@ -216,6 +218,10 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                             ),
                           ),
                         ),
+                      Text(
+                        widget.novel.status.name.toString().translate,
+                        style: theme.textTheme.titleSmall?.copyWith(),
+                      ),
                     ],
                   ),
                 ),
@@ -287,6 +293,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                     ),
                   ),
                 const SizedBox(height: 24),
+
                 if (widget.onContinueReading != null)
                   SizedBox(
                     width: double.infinity,
@@ -306,7 +313,8 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                   ),
                 const SizedBox(height: 24),
                 Text(
-                  'Capítulos:'.translate,
+                  'Capítulos:'.translate +
+                      ' ${widget.novel.numberOfChapters == 0 ? 0 : widget.novel.numberOfChapters.toString()}',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
