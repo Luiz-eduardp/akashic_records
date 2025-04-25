@@ -12,6 +12,7 @@ class InitialLoadingScreen extends StatefulWidget {
     super.key,
     this.updateAvailable = false,
     this.downloadUrl,
+    required Future<Null> Function() onDone,
   });
 
   final bool updateAvailable;

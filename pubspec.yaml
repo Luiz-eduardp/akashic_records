@@ -65,6 +65,7 @@ dependencies:
   highlight: ^0.7.0
   google_nav_bar: ^5.0.7
   flutter_advanced_drawer: ^1.4.0
+  uuid: ^4.5.1
 
 
 dev_dependencies:
