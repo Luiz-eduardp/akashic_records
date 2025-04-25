@@ -137,5 +137,9 @@
   "Sem descrição": "No description",
   "Sem nome": "No name",
   "Adicionar URL": "Add URL",
-  "Voltar": "Back"
+  "Voltar": "Back",
+  "Andamento": "In Progress",
+  "Completa": "Completed",
+  "Pausada": "Paused",
+  "Desconhecido": "Unknown"
 }

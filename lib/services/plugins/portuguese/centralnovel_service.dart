@@ -138,16 +138,16 @@ class CentralNovel implements PluginService {
 
     switch (statusString) {
       case 'Em andamento':
-        novel.status = NovelStatus.Ongoing;
+        novel.status = NovelStatus.Andamento;
         break;
       case 'Completo':
-        novel.status = NovelStatus.Completed;
+        novel.status = NovelStatus.Completa;
         break;
       case 'Hiato':
-        novel.status = NovelStatus.OnHiatus;
+        novel.status = NovelStatus.Pausada;
         break;
       default:
-        novel.status = NovelStatus.Unknown;
+        novel.status = NovelStatus.Desconhecido;
     }
 
     final chapterElements = document.querySelectorAll('div.eplister li > a');

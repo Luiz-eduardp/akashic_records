@@ -4,8 +4,6 @@ import 'package:html/dom.dart' as dom;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 
-enum NovelStatus { Ongoing, Completed, OnHiatus, Unknown }
-
 class Tsundoku implements PluginService {
   @override
   String get name => 'Tsundoku';

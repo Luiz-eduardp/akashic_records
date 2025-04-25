@@ -28,8 +28,8 @@ class Webnovel implements PluginService {
       'value': '0',
       'options': [
         {'label': 'All', 'value': '0'},
-        {'label': 'Completed', 'value': '2'},
-        {'label': 'Ongoing', 'value': '1'},
+        {'label': 'Completa', 'value': '2'},
+        {'label': 'Andamento', 'value': '1'},
       ],
       'type': 'Picker',
     },
@@ -314,7 +314,7 @@ class Webnovel implements PluginService {
         String volumeName =
             volumeNameMatch != null
                 ? 'Volume ${volumeNameMatch[1]}'
-                : 'Unknown Volume';
+                : 'DesconhecidoVolume';
 
         print('Volume Name: $volumeName');
 
@@ -415,7 +415,7 @@ class Webnovel implements PluginService {
                 ?.nextElementSibling
                 ?.text
                 .trim() ??
-            'Unknown Status',
+            'DesconhecidoStatus',
         chapters: await parseChapters(novelPath, context: context),
         artist: '',
       );
