@@ -125,7 +125,7 @@ class NovelBin implements PluginService {
     }
 
     List<Chapter> chapterList = await _getChapterList(bookUrl);
-    int chapterNumber = 1; // Initialize chapter number counter
+    int chapterNumber = 1;
 
     for (var chapter in chapterList) {
       chapter.chapterNumber = chapterNumber;
@@ -140,11 +140,11 @@ class NovelBin implements PluginService {
   NovelStatus _parseNovelStatus(String statusString) {
     switch (statusString.toLowerCase()) {
       case 'ongoing':
-        return NovelStatus.Ongoing;
+        return NovelStatus.Andamento;
       case 'completed':
-        return NovelStatus.Completed;
+        return NovelStatus.Completa;
       default:
-        return NovelStatus.Unknown;
+        return NovelStatus.Desconhecido;
     }
   }
 

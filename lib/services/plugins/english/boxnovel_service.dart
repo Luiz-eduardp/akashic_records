@@ -76,7 +76,7 @@ class BoxNovel implements PluginService {
       "value": [],
       "options": [
         {"label": "OnGoing", "value": "on-going"},
-        {"label": "Completed", "value": "end"},
+        {"label": "Completa", "value": "end"},
         {"label": "Canceled", "value": "canceled"},
         {"label": "On Hold", "value": "on-hold"},
         {"label": "Upcoming", "value": "upcoming"},

@@ -1,4 +1,4 @@
-enum NovelStatus { Ongoing, Completed, OnHiatus, Unknown }
+enum NovelStatus { Andamento, Completa, Pausada, Desconhecido }
 
 class Novel {
   late String id;
@@ -10,6 +10,7 @@ class Novel {
   var genres;
   late String pluginId;
   late bool shouldShowNumberOfChapters;
+  late NovelStatus status;
 
   Novel({
     required this.id,
@@ -23,7 +24,7 @@ class Novel {
     required List genres,
     required this.pluginId,
     this.shouldShowNumberOfChapters = true,
-    NovelStatus? status,
+    this.status = NovelStatus.Desconhecido,
     String? summary,
   });
 
@@ -39,6 +40,7 @@ class Novel {
       'chapters': chapters.map((chapter) => chapter.toMap()).toList(),
       'pluginId': pluginId,
       'shouldShowNumberOfChapters': shouldShowNumberOfChapters,
+      'status': status.index,
     };
   }
 
@@ -62,9 +64,9 @@ class Novel {
       pluginId: map['pluginId'] as String,
       shouldShowNumberOfChapters:
           map['shouldShowNumberOfChapters'] as bool? ?? true,
+      status: NovelStatus.values[map['status'] as int? ?? 3],
     );
   }
-  set status(NovelStatus status) {}
 }
 
 class Chapter {
