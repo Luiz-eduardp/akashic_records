@@ -20,6 +20,7 @@ analyzer:
     library_private_types_in_public_api: ignore
     prefer_interpolation_to_compose_strings: ignore
     file_names: ignore
+    curly_braces_in_flow_control_structures: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
