@@ -1,7 +1,6 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
-
 import 'dart:convert';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:akashic_records/services/plugins/spanish/novelsligera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -235,6 +234,7 @@ class AppState with ChangeNotifier {
     _pluginServices['Webnovel'] = Webnovel();
     _pluginServices['ReaperScans'] = ReaperScans();
     _pluginServices['NovelBin'] = NovelBin();
+    _pluginServices['NovelasLigera'] = NovelasLigera();
   }
 
   ThemeMode get themeMode => _themeMode;
