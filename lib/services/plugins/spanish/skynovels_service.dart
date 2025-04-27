@@ -162,29 +162,37 @@ class SkyNovels implements PluginService {
           pluginId: id,
         );
 
-        final chapters = <Chapter>[];
-        final volumes = novelData['volumes'] as List<dynamic>?;
-        if (volumes != null) {
-          int chapterNumber = 1;
+        final chapterApiUrl = '${apiURL}novel-chapters/$novelId';
+        final chapterApiResult = await _fetchApi(chapterApiUrl);
 
-          for (final volume in volumes) {
-            final chapterList = volume['chapters'] as List<dynamic>?;
-            if (chapterList != null) {
-              for (final chapter in chapterList) {
-                final chapterPath =
-                    '$novelPath${chapter['id']}/${chapter['chp_name']}';
-                chapters.add(
-                  Chapter(
-                    id: chapterPath,
-                    title: chapter['chp_index_title'] as String? ?? '',
-                    content: '',
-                    order: chapter['chp_index'] as int? ?? 0,
-                    chapterNumber: chapterNumber,
-                  ),
-                );
-                chapterNumber++;
-              }
+        final chapters = <Chapter>[];
+
+        if (chapterApiResult != null &&
+            chapterApiResult is Map &&
+            chapterApiResult['novel'] is List) {
+          final novelDetails =
+              chapterApiResult['novel'][0] as Map<String, dynamic>;
+          final chapterList = novelDetails['chapters'] as List<dynamic>?;
+
+          if (chapterList != null) {
+            int chapterNumber = 1;
+            for (final chapter in chapterList) {
+              final chapterId = chapter['id'];
+              final chapterPath =
+                  '$novelPath/$chapterId/${chapter['chp_name']}';
+              chapters.add(
+                Chapter(
+                  id: chapterPath,
+                  title: chapter['chp_index_title'] as String? ?? '',
+                  content: '',
+                  order: chapter['chp_number'] as int? ?? 0,
+                  chapterNumber: chapterNumber,
+                ),
+              );
+              chapterNumber++;
             }
+          } else {
+            print('Failed to load chapters from API or unexpected format.');
           }
         }
 
@@ -211,28 +219,62 @@ class SkyNovels implements PluginService {
   @override
   Future<String> parseChapter(String chapterPath) async {
     final parts = chapterPath.split('/');
-    final chapterId = parts[3];
+    final chapterId = parts[2];
 
-    final url = '${apiURL}novel-chapter/$chapterId';
-    final apiResult = await _fetchApi(url);
+    try {
+      final response = await http.get(
+        Uri.parse('$apiURL/novel-chapter/$chapterId'),
+        headers: {
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Referer': baseURL,
+        },
+      );
 
-    if (apiResult == null || apiResult is String) {
-      print('apiResult is null for parseChapter');
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        if (jsonData != null &&
+            jsonData['chapter'] is List &&
+            jsonData['chapter'].isNotEmpty) {
+          final chapterContent =
+              jsonData['chapter'][0]['chp_content'] as String?;
+          if (chapterContent != null) {
+            return chapterContent;
+          }
+        }
+      }
+      print('API request failed, falling back to HTML parsing.');
+    } catch (e) {
+      print('API request failed: $e, falling back to HTML parsing.');
+    }
+    try {
+      final response = await http.get(
+        Uri.parse(baseURL + chapterPath.replaceAll('//', '/')),
+        headers: {
+          'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Referer': baseURL,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final document = parse(response.body);
+        final script = document.querySelector('markdown');
+
+        if (script != null) {
+          return script.innerHtml;
+        } else {
+          print('Script tag with id "serverApp-state" not found');
+          return '404';
+        }
+      } else {
+        print('Failed to load page, status code: ${response.statusCode}');
+        return '404';
+      }
+    } catch (e) {
+      print('Error parsing chapter from HTML: $e');
       return '404';
     }
-
-    if (apiResult is Map && apiResult['chapter'] is List) {
-      final chapterData = (apiResult['chapter'] as List)
-          .cast<Map<String, dynamic>?>()
-          .firstWhere((element) => element != null, orElse: () => null);
-
-      if (chapterData != null) {
-        return chapterData['chp_content'] as String? ?? '404';
-      }
-    }
-
-    print('Unexpected format for chapter data, returning 404');
-    return '404';
   }
 
   @override
@@ -243,10 +285,16 @@ class SkyNovels implements PluginService {
   }) async {
     final searchTermLower = searchTerm.toLowerCase();
     final url = '${apiURL}novels?&q';
+
+    print('searchNovels: searchTerm = $searchTerm');
+    print('searchNovels: searchTermLower = $searchTermLower');
+
     final apiResult = await _fetchApi(url);
 
+    print('searchNovels: apiResult = $apiResult');
+
     if (apiResult == null || apiResult is String) {
-      print('apiResult is null for searchNovels');
+      print('searchNovels: apiResult is null');
       return [];
     }
 
@@ -254,38 +302,69 @@ class SkyNovels implements PluginService {
 
     if (apiResult is Map && apiResult['novels'] is List) {
       final novelList = apiResult['novels'] as List<dynamic>;
+
       final filteredNovels =
-          novelList
-              .where(
-                (novel) =>
-                    ((novel as Map<String, dynamic>)['nvl_title'] as String)
-                        .toLowerCase()
-                        .contains(searchTermLower),
-              )
-              .toList();
+          novelList.where((novel) {
+            if (novel is Map<String, dynamic>) {
+              final title =
+                  (novel['nvl_title'] as String?)?.toLowerCase() ?? '';
+              print('searchNovels: title = $title');
 
-      for (final novelData in filteredNovels) {
-        final title = novelData['nvl_title'] as String;
-        final cover = '${apiURL}get-image/${novelData['image']}/novels/false';
-        final path = 'novelas/${novelData['id']}/${novelData['nvl_name']}/';
+              if (searchTermLower.isNotEmpty &&
+                  title.contains(searchTermLower)) {
+                return true;
+              }
+            }
+            return false;
+          }).toList();
 
-        novels.add(
-          Novel(
-            id: path,
-            title: title,
-            coverImageUrl: cover,
-            description: '',
-            genres: [],
-            chapters: [],
-            artist: '',
-            statusString: '',
-            pluginId: id,
-            author: '',
-          ),
-        );
+      print('searchNovels: filteredNovels.length = ${filteredNovels.length}');
+
+      for (final dynamic novelData in filteredNovels) {
+        if (novelData is Map<String, dynamic>) {
+          try {
+            final title = novelData['nvl_title'] as String;
+            final cover =
+                '${apiURL}get-image/${novelData['image']}/novels/false';
+            final novelId = novelData['id'];
+            final novelName = novelData['nvl_name'];
+            final path = 'novelas/$novelId/$novelName/';
+
+            novels.add(
+              Novel(
+                id: path,
+                title: title,
+                coverImageUrl: cover,
+                description: novelData['nvl_content'] as String? ?? '',
+                genres:
+                    (novelData['genres'] as List<dynamic>?)
+                        ?.map<String>(
+                          (genre) =>
+                              (genre as Map<String, dynamic>)['genre_name']
+                                  as String,
+                        )
+                        .toList() ??
+                    [],
+                chapters: [],
+                artist: '',
+                statusString: novelData['nvl_status'] as String? ?? '',
+                pluginId: id,
+                author: novelData['nvl_writer'] as String? ?? '',
+              ),
+            );
+          } catch (e) {
+            print(
+              'searchNovels: Error processing novel data: $e - novelData: $novelData - searchTerm: $searchTerm - url: $url',
+            );
+          }
+        } else {
+          print(
+            'searchNovels: Unexpected data type in novel list: ${novelData.runtimeType}',
+          );
+        }
       }
     } else {
-      print('Formato de resposta da API inesperado para searchNovels');
+      print('searchNovels: Formato de resposta da API inesperado.');
     }
 
     return novels;
