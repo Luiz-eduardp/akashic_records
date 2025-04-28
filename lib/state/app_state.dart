@@ -13,7 +13,6 @@ import 'package:akashic_records/services/plugins/english/webnovel_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/mtl_service.dart';
-import 'package:akashic_records/services/plugins/portuguese/saikaiscans_service.dart';
 import 'package:akashic_records/services/plugins/spanish/skynovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/novelmania_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/tsundoku_service.dart';
@@ -230,7 +229,6 @@ class AppState with ChangeNotifier {
     _pluginServices['LightNovelBrasil'] = LightNovelBrasil();
     _pluginServices['BlogDoAmonNovels'] = BlogDoAmonNovels();
     _pluginServices['SkyNovels'] = SkyNovels();
-    _pluginServices['SaikaiScans'] = SaikaiScans();
     _pluginServices['Webnovel'] = Webnovel();
     _pluginServices['ReaperScans'] = ReaperScans();
     _pluginServices['NovelBin'] = NovelBin();
