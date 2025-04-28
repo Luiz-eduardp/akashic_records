@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:akashic_records/screens/reader/settings/reader_settings_modal_widget.dart';
+import 'package:akashic_records/widgets/skeleton/chapterdisplay_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,7 +13,6 @@ import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
-import 'package:akashic_records/widgets/loading_indicator_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/screens/reader/chapter_list_widget.dart';
 
@@ -303,7 +303,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
               : null,
       body:
           isLoading
-              ? const Center(child: LoadingIndicatorWidget())
+              ? const Center(child: ChapterDisplaySkeleton())
               : errorMessage != null
               ? Center(child: ErrorMessageWidget(errorMessage: errorMessage!))
               : Column(
