@@ -29,7 +29,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   bool isLoading = false;
   bool hasMore = true;
   int currentPage = 1;
-  int itemsPerPage = 20;
+  final int itemsPerPage = 20;
   String? errorMessage;
   final ScrollController _scrollController = ScrollController();
   String _searchTerm = "";
@@ -50,6 +50,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _loadNovelsFromJSON();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final appState = Provider.of<AppState>(context);
+
+    if (_previousPlugins != appState.selectedPlugins) {
+      _previousPlugins = Set<String>.from(appState.selectedPlugins);
+      _refreshNovels();
+    }
+  }
+
+  @override
+  void dispose() {
+    _mounted = false;
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;
@@ -68,9 +88,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     try {
       await compute(_writeToFile, {'file': file, 'data': jsonString});
-      print("Novels saved to JSON successfully!");
+      if (kDebugMode) {
+        print("Novels saved to JSON successfully!");
+      }
     } catch (e) {
-      print("Error writing to JSON file: $e");
+      if (kDebugMode) {
+        print("Error writing to JSON file: $e");
+      }
     }
   }
 
@@ -85,19 +109,44 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     try {
       final jsonString = await file.readAsString();
-      final List<dynamic> novelList = await compute(
-        jsonDecode as ComputeCallback<String, List>,
-        jsonString,
-      );
+      final dynamic decodedJson = await compute(jsonDecode, jsonString);
+
+      final List<dynamic> novelList =
+          decodedJson is List
+              ? decodedJson
+              : (decodedJson is Map ? [decodedJson] : []);
 
       setState(() {
         allNovels = novelList.map((json) => Novel.fromMap(json)).toList();
         novels = List<Novel>.from(allNovels);
       });
 
-      print("Novels loaded from JSON successfully!");
+      if (kDebugMode) {
+        print("Novels loaded from JSON successfully!");
+      }
+    } on FormatException catch (e) {
+      if (kDebugMode) {
+        print("Error parsing JSON: $e");
+      }
+      setState(() {
+        errorMessage = "Erro ao analisar o arquivo JSON.".translate;
+      });
+      _loadPopularNovels();
+    } on FileSystemException catch (e) {
+      if (kDebugMode) {
+        print("Error reading file: $e");
+      }
+      setState(() {
+        errorMessage = "Erro ao ler o arquivo.".translate;
+      });
+      _loadPopularNovels();
     } catch (e) {
-      print("Error reading or parsing JSON file: $e");
+      if (kDebugMode) {
+        print("Unexpected error: $e");
+      }
+      setState(() {
+        errorMessage = "Erro inesperado: ${e.toString()}".translate;
+      });
       _loadPopularNovels();
     }
   }
@@ -146,26 +195,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     });
     await _saveHiddenNovels();
     _refreshNovels();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final appState = Provider.of<AppState>(context);
-
-    if (_previousPlugins != appState.selectedPlugins) {
-      _previousPlugins = Set<String>.from(appState.selectedPlugins);
-      _refreshNovels();
-    }
-  }
-
-  @override
-  void dispose() {
-    _mounted = false;
-    _scrollController.removeListener(_scrollListener);
-    _scrollController.dispose();
-    _debounce?.cancel();
-    super.dispose();
   }
 
   void _scrollListener() {
@@ -240,7 +269,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     } catch (e) {
       if (_mounted) {
         setState(() {
-          errorMessage = 'Erro ao carregar novels: $e'.translate;
+          errorMessage = 'Erro ao carregar novels: ${e.toString()}'.translate;
           hasMore = false;
           isLoading = false;
         });
@@ -306,7 +335,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     } catch (e) {
       if (_mounted) {
         setState(() {
-          errorMessage = 'Erro ao pesquisar novels: $e'.translate;
+          errorMessage = 'Erro ao pesquisar novels: ${e.toString()}'.translate;
           isLoading = false;
         });
       }
