@@ -15,6 +15,7 @@ class AppearanceSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -24,7 +25,7 @@ class AppearanceSettings extends StatelessWidget {
               color: theme.colorScheme.onSurface,
             ),
           ),
-          _ThemeModeSelection(appState: appState, theme: theme),
+          ThemeModeSelection(appState: appState, theme: theme),
           const SizedBox(height: 24),
           Text(
             'Cor de Destaque:'.translate,
@@ -32,15 +33,15 @@ class AppearanceSettings extends StatelessWidget {
               color: theme.colorScheme.onSurface,
             ),
           ),
-          _ColorPalette(appState: appState, theme: theme),
+          ColorPalette(appState: appState, theme: theme),
         ],
       ),
     );
   }
 }
 
-class _ThemeModeSelection extends StatelessWidget {
-  const _ThemeModeSelection({required this.appState, required this.theme});
+class ThemeModeSelection extends StatelessWidget {
+  const ThemeModeSelection({required this.appState, required this.theme});
 
   final AppState appState;
   final ThemeData theme;
@@ -49,21 +50,21 @@ class _ThemeModeSelection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _ThemeModeCard(
+        ThemeModeTile(
           title: 'Sistema'.translate,
           themeMode: ThemeMode.system,
           appState: appState,
           theme: theme,
         ),
         const SizedBox(height: 8),
-        _ThemeModeCard(
+        ThemeModeTile(
           title: 'Claro'.translate,
           themeMode: ThemeMode.light,
           appState: appState,
           theme: theme,
         ),
         const SizedBox(height: 8),
-        _ThemeModeCard(
+        ThemeModeTile(
           title: 'Escuro'.translate,
           themeMode: ThemeMode.dark,
           appState: appState,
@@ -74,8 +75,8 @@ class _ThemeModeSelection extends StatelessWidget {
   }
 }
 
-class _ThemeModeCard extends StatelessWidget {
-  const _ThemeModeCard({
+class ThemeModeTile extends StatelessWidget {
+  const ThemeModeTile({
     required this.title,
     required this.themeMode,
     required this.appState,
@@ -90,62 +91,45 @@ class _ThemeModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = appState.themeMode == themeMode;
-    return InkWell(
-      onTap: () {
-        appState.setThemeMode(themeMode);
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? theme.colorScheme.primaryContainer
-                  : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color:
-                isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.outline,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                title,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ),
-            Radio<ThemeMode>(
-              value: themeMode,
-              groupValue: appState.themeMode,
-              onChanged: (ThemeMode? value) {
-                appState.setThemeMode(value!);
-              },
-              activeColor: theme.colorScheme.primary,
-            ),
-          ],
+    return RadioListTile<ThemeMode>(
+      title: Text(
+        title,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: theme.colorScheme.onSurface,
         ),
       ),
+      value: themeMode,
+      groupValue: appState.themeMode,
+      onChanged: (ThemeMode? value) => appState.setThemeMode(value!),
+      activeColor: theme.colorScheme.primary,
+      tileColor:
+          isSelected
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color:
+              isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outline,
+          width: isSelected ? 2 : 1,
+        ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
   }
 }
 
-class _ColorPalette extends StatelessWidget {
-  const _ColorPalette({required this.appState, required this.theme});
+class ColorPalette extends StatelessWidget {
+  const ColorPalette({required this.appState, required this.theme});
 
   final AppState appState;
   final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    final List<Color> availableColors = [
+    const availableColors = [
       Colors.blue,
       Colors.green,
       Colors.red,
@@ -160,7 +144,7 @@ class _ColorPalette extends StatelessWidget {
     ];
 
     return SizedBox(
-      height: 80,
+      height: 60,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: availableColors.length,
@@ -168,15 +152,15 @@ class _ColorPalette extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemBuilder: (context, index) {
           final color = availableColors[index];
-          return _ColorCard(color: color, appState: appState, theme: theme);
+          return ColorCard(color: color, appState: appState, theme: theme);
         },
       ),
     );
   }
 }
 
-class _ColorCard extends StatelessWidget {
-  const _ColorCard({
+class ColorCard extends StatelessWidget {
+  const ColorCard({
     required this.color,
     required this.appState,
     required this.theme,
@@ -190,31 +174,27 @@ class _ColorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSelected = appState.accentColor == color;
 
-    return GestureDetector(
-      onTap: () {
-        appState.setAccentColor(color);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 60,
-        height: 80,
+    return InkWell(
+      onTap: () => appState.setAccentColor(color),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
                 isSelected ? theme.colorScheme.onSurface : Colors.transparent,
-            width: 3,
+            width: isSelected ? 2 : 0,
           ),
         ),
         child:
             isSelected
-                ? Center(
-                  child: Icon(
-                    Icons.check,
-                    color: theme.colorScheme.onPrimary,
-                    size: 24,
-                  ),
+                ? Icon(
+                  Icons.check,
+                  color: theme.colorScheme.onPrimary,
+                  size: 20,
                 )
                 : null,
       ),
