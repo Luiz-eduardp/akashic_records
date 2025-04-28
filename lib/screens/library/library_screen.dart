@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
+import 'package:akashic_records/widgets/novel_tile.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
@@ -10,8 +13,6 @@ import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'dart:async';
-import 'package:akashic_records/widgets/novel_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/widgets/skeleton/novel_tile_skeleton.dart';
 import 'package:path_provider/path_provider.dart';
@@ -66,11 +67,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final jsonString = jsonEncode(novelList);
 
     try {
-      await file.writeAsString(jsonString);
+      await compute(_writeToFile, {'file': file, 'data': jsonString});
       print("Novels saved to JSON successfully!");
     } catch (e) {
       print("Error writing to JSON file: $e");
     }
+  }
+
+  static Future<void> _writeToFile(Map<String, dynamic> params) async {
+    final File file = params['file'] as File;
+    final String data = params['data'] as String;
+    await file.writeAsString(data);
   }
 
   Future<void> _loadNovelsFromJSON() async {
@@ -78,7 +85,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     try {
       final jsonString = await file.readAsString();
-      final List<dynamic> novelList = jsonDecode(jsonString);
+      final List<dynamic> novelList = await compute(
+        jsonDecode as ComputeCallback<String, List>,
+        jsonString,
+      );
 
       setState(() {
         allNovels = novelList.map((json) => Novel.fromMap(json)).toList();
@@ -181,19 +191,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     try {
-      List<Novel> newNovels = [];
       final appState = Provider.of<AppState>(context, listen: false);
+      final pluginNames = appState.selectedPlugins;
 
-      for (final pluginName in appState.selectedPlugins) {
-        final plugin = appState.pluginServices[pluginName];
-        if (plugin != null) {
-          final pluginNovels = await plugin.popularNovels(currentPage);
-          for (final novel in pluginNovels) {
-            novel.pluginId = pluginName;
-          }
-          newNovels.addAll(pluginNovels);
-        }
-      }
+      final futures =
+          pluginNames.map((pluginName) async {
+            final plugin = appState.pluginServices[pluginName];
+            if (plugin != null) {
+              final pluginNovels = await plugin.popularNovels(currentPage);
+              for (final novel in pluginNovels) {
+                novel.pluginId = pluginName;
+              }
+              return pluginNovels;
+            }
+            return <Novel>[];
+          }).toList();
+
+      final List<List<Novel>> results = await Future.wait(futures);
+
+      List<Novel> newNovels = results.expand((list) => list).toList();
 
       final Set<String> seenNovelIds =
           allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
@@ -244,23 +260,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     try {
-      List<Novel> searchResults = [];
       final appState = Provider.of<AppState>(context, listen: false);
 
-      for (final pluginName in appState.selectedPlugins) {
-        final plugin = appState.pluginServices[pluginName];
-        if (plugin != null) {
-          final pluginSearchResults = await plugin.searchNovels(term, 1);
-          for (final novel in pluginSearchResults) {
-            novel.pluginId = pluginName;
-          }
-          searchResults.addAll(pluginSearchResults);
-        }
-      }
+      final futures =
+          appState.selectedPlugins.map((pluginName) async {
+            final plugin = appState.pluginServices[pluginName];
+            if (plugin != null) {
+              final pluginSearchResults = await plugin.searchNovels(term, 1);
+              for (final novel in pluginSearchResults) {
+                novel.pluginId = pluginName;
+              }
+              return pluginSearchResults;
+            }
+            return <Novel>[];
+          }).toList();
+
+      final List<List<Novel>> results = await Future.wait(futures);
+      List<Novel> searchResultsTotal = results.expand((list) => list).toList();
+
       final Set<String> seenNovelIds =
           allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
       List<Novel> actuallyNewNovels = [];
-      for (final novel in searchResults) {
+      for (final novel in searchResultsTotal) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
           actuallyNewNovels.add(novel);
@@ -306,12 +327,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
         isLoading = false;
       });
     }
+
+    bool shouldLoadData = true;
+
     if (_searchTerm.isEmpty) {
       allNovels.clear();
       novels.clear();
-      await _loadPopularNovels();
     } else {
+      shouldLoadData = false;
       await _searchNovels(_searchTerm);
+    }
+
+    if (shouldLoadData) {
+      await _loadPopularNovels();
     }
     await _saveNovelsToJSON();
   }
@@ -424,13 +452,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
           itemCount: novels.length,
           itemBuilder: (context, index) {
             final novel = novels[index];
-            return GestureDetector(
+            return NovelListTile(
+              novel: novel,
               onTap: () => _handleNovelTap(novel),
-              child: NovelListTile(
-                novel: novel,
-                onTap: () => _handleNovelTap(novel),
-                onLongPress: () => _hideNovel(novel),
-              ),
+              onLongPress: () => _hideNovel(novel),
             );
           },
         );
