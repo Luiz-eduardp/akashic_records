@@ -180,7 +180,7 @@ class _CustomPluginTabState extends State<CustomPluginTab> {
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
-                    child: Text('Importar Script da URL'.translate),
+                    child: Text('Repositório de plugins'.translate),
                   ),
                 ],
               ),
