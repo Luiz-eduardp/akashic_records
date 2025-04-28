@@ -19,13 +19,12 @@ class Novel {
     required this.author,
     required this.description,
     required this.chapters,
-    required String statusString,
-    required String artist,
-    required List genres,
     required this.pluginId,
+    required this.genres,
     this.shouldShowNumberOfChapters = true,
     this.status = NovelStatus.Desconhecido,
-    String? summary,
+    String? artist,
+    String? statusString,
   });
 
   int get numberOfChapters => shouldShowNumberOfChapters ? chapters.length : 0;
@@ -41,6 +40,7 @@ class Novel {
       'pluginId': pluginId,
       'shouldShowNumberOfChapters': shouldShowNumberOfChapters,
       'status': status.index,
+      'genres': genres,
     };
   }
 
@@ -58,10 +58,8 @@ class Novel {
                     Chapter.fromMap(chapterMap as Map<String, dynamic>),
               )
               .toList(),
-      statusString: '',
-      artist: '',
-      genres: [],
       pluginId: map['pluginId'] as String,
+      genres: map['genres'] as List<dynamic>,
       shouldShowNumberOfChapters:
           map['shouldShowNumberOfChapters'] as bool? ?? true,
       status: NovelStatus.values[map['status'] as int? ?? 3],
@@ -83,7 +81,6 @@ class Chapter {
     this.releaseDate,
     this.chapterNumber,
     int? order,
-    String? url,
   });
 
   Map<String, dynamic> toMap() {
@@ -103,11 +100,6 @@ class Chapter {
       content: map['content'] as String?,
       releaseDate: map['releaseDate'] as String?,
       chapterNumber: map['chapterNumber'] as int?,
-      order: 0,
     );
   }
-
-  get order => null;
-
-  get url => null;
 }

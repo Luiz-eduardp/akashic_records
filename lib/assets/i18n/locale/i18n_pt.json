@@ -123,7 +123,7 @@
   "Fechar": "Fechar",
   "Resumo": "Resumo",
   "Plugin desativado": "Plugin desativado",
-  "Importar Script da URL": "Importar Script da URL",
+  "Repositório de plugins": "Repositório de plugins",
   "Selecionar Script": "Selecionar Script",
   "URL do JSON": "URL do JSON",
   "Carregar Scripts": "Carregar Scripts",
@@ -177,5 +177,9 @@
   "Andamento": "Andamento",
   "Completa": "Completa",
   "Pausada": "Pausada",
-  "Desconhecido": "Desconhecido"
+  "Desconhecido": "Desconhecido",
+  "Opções Avançadas": "Opções Avançadas",
+  "Cor do Texto:": "Cor do Texto:",
+  "Cor de Fundo:": "Cor de Fundo:"
+
 }

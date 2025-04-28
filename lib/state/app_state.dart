@@ -1,7 +1,6 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
-
 import 'dart:convert';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:akashic_records/services/plugins/spanish/novelsligera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -14,7 +13,6 @@ import 'package:akashic_records/services/plugins/english/webnovel_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/mtl_service.dart';
-import 'package:akashic_records/services/plugins/portuguese/saikaiscans_service.dart';
 import 'package:akashic_records/services/plugins/spanish/skynovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/novelmania_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/tsundoku_service.dart';
@@ -25,61 +23,71 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
 enum ReaderTheme {
-  amber,
-  amethyst,
-  blueGrey,
-  brown,
-  cadetBlue,
-  calmingBlue,
-  coal,
+  light,
+  dark,
+  sepia,
+  darkGreen,
+  grey,
+  solarizedLight,
+  solarizedDark,
+  translucent,
+  midnightBlue,
+  lavender,
+  mint,
+  sand,
   coral,
   cyberpunk,
-  cyan,
-  dark,
-  darkCyan,
-  darkGreen,
-  darkOpaque,
-  darkSlateGray,
-  deepOrange,
-  deepPurple,
-  dracula,
-  forest,
-  grey,
-  gruvboxDark,
-  gruvboxLight,
   highContrast,
-  indigo,
-  khaki,
-  lavender,
-  light,
-  lightSeaGreen,
-  lime,
-  materialDark,
   materialLight,
-  mediumTurquoise,
-  midnight,
-  midnightBlue,
-  mint,
-  monokai,
-  night,
+  materialDark,
   nord,
-  obsidian,
+  roseQuartz,
+  amethyst,
+  forest,
   ocean,
+  sunset,
+  dracula,
+  gruvboxLight,
+  gruvboxDark,
+  monokai,
+  solarized,
+  calmingBlue,
+  darkOpaque,
+  lime,
+  teal,
+  amber,
+  deepOrange,
+  brown,
+  blueGrey,
+  indigo,
+  cyan,
+  khaki,
+  slateGray,
+  rosyBrown,
   oliveDrab,
   peru,
-  roseQuartz,
-  rosyBrown,
-  royalBlue,
-  sand,
-  sepia,
-  slateGray,
-  solarized,
-  solarizedDark,
-  solarizedLight,
+  darkSlateGray,
+  cadetBlue,
+  mediumTurquoise,
+  lightSeaGreen,
+  darkCyan,
   steelBlue,
-  sunset,
-  teal,
-  translucent,
+  royalBlue,
+  night,
+  coal,
+  obsidian,
+  deepPurple,
+  midnight,
+  kindleClassic,
+  kindleEInk,
+  kindlePaperwhite,
+  kindleOasis,
+  kindleVoyage,
+  kindleBasic,
+  kindleFire,
+  kindleDX,
+  kindleKids,
+  kindleScribe,
 }
 
 class CustomColors {
@@ -231,10 +239,10 @@ class AppState with ChangeNotifier {
     _pluginServices['LightNovelBrasil'] = LightNovelBrasil();
     _pluginServices['BlogDoAmonNovels'] = BlogDoAmonNovels();
     _pluginServices['SkyNovels'] = SkyNovels();
-    _pluginServices['SaikaiScans'] = SaikaiScans();
     _pluginServices['Webnovel'] = Webnovel();
     _pluginServices['ReaperScans'] = ReaperScans();
     _pluginServices['NovelBin'] = NovelBin();
+    _pluginServices['NovelasLigera'] = NovelasLigera();
   }
 
   ThemeMode get themeMode => _themeMode;

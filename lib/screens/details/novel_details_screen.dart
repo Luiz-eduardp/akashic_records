@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
-import 'package:akashic_records/screens/details/loading_details_skeleton_widget.dart';
+import 'package:akashic_records/widgets/skeleton/loading_details_skeleton.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/widgets/favorite_list_dialog.dart';
 

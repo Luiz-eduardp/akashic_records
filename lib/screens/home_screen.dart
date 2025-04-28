@@ -47,6 +47,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return AdvancedDrawer(
       backdropColor: theme.colorScheme.surfaceVariant,
@@ -98,26 +100,85 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           controller: _tabController,
           children: const [LibraryScreen(), FavoritesScreen(), HistoryScreen()],
         ),
-        bottomNavigationBar: Container(
-          color: theme.colorScheme.surfaceContainerHighest,
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
-          child: GNav(
-            gap: 8,
-            activeColor: theme.colorScheme.primary,
-            iconSize: 24,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-            color: theme.colorScheme.onSurfaceVariant,
-            tabs: [
-              GButton(icon: Icons.library_books, text: 'Biblioteca'.translate),
-              GButton(icon: Icons.favorite, text: 'Favoritos'.translate),
-              GButton(icon: Icons.history, text: 'Histórico'.translate),
-            ],
-            selectedIndex: _selectedIndex,
-            onTabChange: _onItemTapped,
-          ),
-        ),
+        bottomNavigationBar:
+            isTablet
+                ? Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Material(
+                    elevation: 8.0,
+                    borderRadius: BorderRadius.circular(24.0),
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: GNav(
+                        gap: 8,
+                        activeColor: theme.colorScheme.primary,
+                        iconSize: 24,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        duration: const Duration(milliseconds: 400),
+                        tabBackgroundColor: theme.colorScheme.primary
+                            .withOpacity(0.1),
+                        color: theme.colorScheme.onSurfaceVariant,
+                        tabs: [
+                          GButton(
+                            icon: Icons.library_books,
+                            text: 'Biblioteca'.translate,
+                          ),
+                          GButton(
+                            icon: Icons.favorite,
+                            text: 'Favoritos'.translate,
+                          ),
+                          GButton(
+                            icon: Icons.history,
+                            text: 'Histórico'.translate,
+                          ),
+                        ],
+                        selectedIndex: _selectedIndex,
+                        onTabChange: _onItemTapped,
+                      ),
+                    ),
+                  ),
+                )
+                : Container(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 0,
+                    vertical: 10,
+                  ),
+                  child: GNav(
+                    gap: 8,
+                    activeColor: theme.colorScheme.primary,
+                    iconSize: 24,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    duration: const Duration(milliseconds: 400),
+                    tabBackgroundColor: theme.colorScheme.primary.withOpacity(
+                      0.1,
+                    ),
+                    color: theme.colorScheme.onSurfaceVariant,
+                    tabs: [
+                      GButton(
+                        icon: Icons.library_books,
+                        text: 'Biblioteca'.translate,
+                      ),
+                      GButton(
+                        icon: Icons.favorite,
+                        text: 'Favoritos'.translate,
+                      ),
+                      GButton(icon: Icons.history, text: 'Histórico'.translate),
+                    ],
+                    selectedIndex: _selectedIndex,
+                    onTabChange: _onItemTapped,
+                  ),
+                ),
       ),
     );
   }

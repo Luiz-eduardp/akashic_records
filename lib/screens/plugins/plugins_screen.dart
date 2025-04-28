@@ -19,7 +19,6 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'MtlNovelPt',
     'LightNovelBrasil',
     'BlogDoAmonNovels',
-    'SaikaiScans',
   ];
 
   final List<String> availablePluginsEn = [
@@ -29,7 +28,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'ReaperScans',
     'NovelBin',
   ];
-  final List<String> availablePluginsEspanish = ['SkyNovels'];
+  final List<String> availablePluginsEspanish = ['SkyNovels', 'NovelasLigera'];
 
   @override
   Widget build(BuildContext context) {

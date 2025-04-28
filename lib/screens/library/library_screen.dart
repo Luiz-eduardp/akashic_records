@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
-import 'package:akashic_records/screens/library/novel_grid_skeleton_widget.dart';
+import 'package:akashic_records/widgets/skeleton/novel_grid_skeleton.dart';
 import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +13,8 @@ import 'package:akashic_records/state/app_state.dart';
 import 'dart:async';
 import 'package:akashic_records/widgets/novel_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/screens/library/novel_tile_skeleton_widget.dart';
+import 'package:akashic_records/widgets/skeleton/novel_tile_skeleton.dart';
+import 'package:path_provider/path_provider.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -42,7 +46,61 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _scrollController.addListener(_scrollListener);
     _loadViewMode();
     _loadHiddenNovels();
-    _loadPopularNovels();
+    _loadNovelsFromJSON();
+  }
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/novels.json');
+  }
+
+  Future<void> _saveNovelsToJSON() async {
+    final file = await _localFile;
+
+    final novelList = allNovels.map((novel) => novel.toMap()).toList();
+    final jsonString = jsonEncode(novelList);
+
+    try {
+      await file.writeAsString(jsonString);
+      print("Novels saved to JSON successfully!");
+    } catch (e) {
+      print("Error writing to JSON file: $e");
+    }
+  }
+
+  Future<void> _loadNovelsFromJSON() async {
+    final file = await _localFile;
+
+    try {
+      final jsonString = await file.readAsString();
+      final List<dynamic> novelList = jsonDecode(jsonString);
+
+      setState(() {
+        allNovels = novelList.map((json) => Novel.fromMap(json)).toList();
+        novels = List<Novel>.from(allNovels);
+      });
+
+      print("Novels loaded from JSON successfully!");
+    } catch (e) {
+      print("Error reading or parsing JSON file: $e");
+      _loadPopularNovels();
+    }
+  }
+
+  Future<void> _updateNovels() async {
+    allNovels.clear();
+    novels.clear();
+
+    await _loadPopularNovels();
+
+    await _saveNovelsToJSON();
+
+    setState(() {});
   }
 
   Future<void> _loadViewMode() async {
@@ -255,6 +313,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     } else {
       await _searchNovels(_searchTerm);
     }
+    await _saveNovelsToJSON();
   }
 
   void _handleNovelTap(Novel novel) {
@@ -309,6 +368,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     tooltip:
                         _isListView ? 'Mostrar em Grid' : 'Mostrar em Lista',
                     onPressed: _toggleView,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'Atualizar Novels',
+                    onPressed: _updateNovels,
                   ),
                 ],
               ),

@@ -2,7 +2,7 @@ import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/widgets/novel_card.dart';
-import 'package:akashic_records/screens/library/novel_grid_skeleton_widget.dart';
+import 'package:akashic_records/widgets/skeleton/novel_grid_skeleton.dart';
 
 class NovelGridWidget extends StatelessWidget {
   final List<Novel> novels;

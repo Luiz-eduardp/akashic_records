@@ -5,7 +5,7 @@ import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/settings/update_settings.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/screens/settings/about_button.dart';
-import 'package:akashic_records/screens/settings/skeleton_card.dart';
+import 'package:akashic_records/widgets/skeleton/skeleton_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
