@@ -1,5 +1,3 @@
-// ignore_for_file: dead_code
-
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -7,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as htmlParser;
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:flutter/services.dart';
 import 'package:html/dom.dart' as dom;
 
 class ChapterDisplay extends StatefulWidget {
@@ -26,9 +23,8 @@ class ChapterDisplay extends StatefulWidget {
 
 class _ChapterDisplayState extends State<ChapterDisplay>
     with AutomaticKeepAliveClientMixin {
-  List<String> _paragraphs = [];
+  late Future<String> _htmlContentFuture;
   WebViewController? _webViewController;
-  String _currentHtmlContent = "";
   bool _isLoading = true;
 
   static const double _headerMargin = 20.0;
@@ -40,81 +36,88 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   @override
   void initState() {
     super.initState();
-    _processContent();
-    _webViewController = WebViewController();
+    _htmlContentFuture = _prepareHtmlContent(
+      widget.chapterContent,
+      widget.readerSettings,
+    );
     _initializeWebViewController();
   }
 
   Future<void> _initializeWebViewController() async {
-    await _webViewController!.setJavaScriptMode(JavaScriptMode.unrestricted);
-    await _webViewController!.enableZoom(false);
-    await _webViewController!.setBackgroundColor(Colors.transparent);
+    _webViewController =
+        WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..enableZoom(false)
+          ..setBackgroundColor(Colors.transparent)
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onPageStarted: (String url) {
+                setState(() {
+                  _isLoading = true;
+                });
+              },
+              onPageFinished: (String url) async {
+                await _injectJavaScript();
+                setState(() {
+                  _isLoading = false;
+                });
+              },
+              onWebResourceError: (WebResourceError error) {
+                if (kDebugMode) {
+                  print('Web resource error: ${error.description}');
+                }
+                setState(() {
+                  _isLoading = false;
+                });
+              },
+            ),
+          )
+          ..loadHtmlString(await _htmlContentFuture);
+  }
 
-    _webViewController!.setNavigationDelegate(
-      NavigationDelegate(
-        onPageStarted: (String url) {
-          setState(() {
-            _isLoading = true;
-          });
-        },
-        onPageFinished: (String url) async {
-          await _webViewController!.runJavaScript('''
-            document.addEventListener('touchstart', function(event) {
-              if (event.touches.length > 1) {
-                event.preventDefault();
-              }
-            }, { passive: false });
+  Future<void> _injectJavaScript() async {
+    await _webViewController!.runJavaScript('''
+      document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
 
-            document.addEventListener('touchmove', function(event) {
-              if (event.touches.length > 1) {
-                event.preventDefault();
-              }
-            }, { passive: false });
+      document.addEventListener('touchmove', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
 
-            document.addEventListener('touchend', function(event) {
-              if (event.touches.length > 1) {
-                event.preventDefault();
-              }
-            }, { passive: false });
+      document.addEventListener('touchend', function(event) {
+        if (event.touches.length > 1) {
+          event.preventDefault();
+        }
+      }, { passive: false });
 
-            document.addEventListener('gesturestart', function(event) {
-              event.preventDefault();
-            });
+      document.addEventListener('gesturestart', function(event) {
+        event.preventDefault();
+      });
 
-            document.addEventListener('gesturechange', function(event) {
-              event.preventDefault();
-            });
+      document.addEventListener('gesturechange', function(event) {
+        event.preventDefault();
+      });
 
-            document.addEventListener('gestureend', function(event) {
-              event.preventDefault();
-            });
-          ''');
-          _injectCustomJavaScript(widget.readerSettings.customJs);
+      document.addEventListener('gestureend', function(event) {
+        event.preventDefault();
+      });
+    ''');
+    _injectCustomJavaScript(widget.readerSettings.customJs);
 
-          final appState = Provider.of<AppState>(context, listen: false);
-          List<CustomPlugin> enabledPlugins =
-              appState.customPlugins.where((plugin) => plugin.enabled).toList();
+    final appState = Provider.of<AppState>(context, listen: false);
+    List<CustomPlugin> enabledPlugins =
+        appState.customPlugins.where((plugin) => plugin.enabled).toList();
 
-          enabledPlugins.sort((a, b) => a.priority.compareTo(b.priority));
+    enabledPlugins.sort((a, b) => a.priority.compareTo(b.priority));
 
-          for (final plugin in enabledPlugins) {
-            _injectCustomJavaScript(plugin.code);
-          }
-          setState(() {
-            _isLoading = false;
-          });
-        },
-        onWebResourceError: (WebResourceError error) {
-          if (kDebugMode) {
-            print('Web resource error: ${error.description}');
-          }
-          setState(() {
-            _isLoading = false;
-          });
-        },
-      ),
-    );
-    await updateWebViewContent();
+    for (final plugin in enabledPlugins) {
+      _injectCustomJavaScript(plugin.code);
+    }
   }
 
   Future<void> _injectCustomJavaScript(String? customJs) async {
@@ -134,19 +137,31 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.chapterContent != widget.chapterContent ||
         oldWidget.readerSettings != widget.readerSettings) {
-      _processContent();
-      updateWebViewContent();
+      _htmlContentFuture = _prepareHtmlContent(
+        widget.chapterContent,
+        widget.readerSettings,
+      );
+      _reloadWebView();
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  Future<void> _reloadWebView() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _webViewController?.loadHtmlString(await _htmlContentFuture);
+    setState(() {
+      _isLoading = false;
+    });
   }
 
-  void _processContent() {
-    String cleanedContent = _cleanChapterContent(widget.chapterContent);
-    _splitIntoParagraphs(cleanedContent);
+  Future<String> _prepareHtmlContent(
+    String? content,
+    ReaderSettings readerSettings,
+  ) async {
+    final cleanedContent = _cleanChapterContent(content);
+    final paragraphs = _splitIntoParagraphs(cleanedContent);
+    return _buildHtmlContent(readerSettings, paragraphs);
   }
 
   String _cleanChapterContent(String? content) {
@@ -197,13 +212,15 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     return document.body?.innerHtml ?? "";
   }
 
-  void _splitIntoParagraphs(String cleanedContent) {
+  List<String> _splitIntoParagraphs(String cleanedContent) {
     final document = htmlParser.parse(cleanedContent);
-    _paragraphs =
-        document.querySelectorAll('p').map((e) => e.innerHtml).toList();
+    return document.querySelectorAll('p').map((e) => e.innerHtml).toList();
   }
 
-  String _buildHtmlContent(ReaderSettings readerSettings) {
+  String _buildHtmlContent(
+    ReaderSettings readerSettings,
+    List<String> paragraphs,
+  ) {
     final fontWeight =
         (readerSettings.fontWeight == FontWeight.bold ? 'bold' : 'normal');
 
@@ -229,7 +246,11 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             font-weight: $fontWeight;
             padding-top: ${_headerMargin}px;
             padding-bottom: ${_bottomMargin}px;
-            word-wrap: break-word; 
+            word-wrap: break-word;
+            -webkit-user-select: text; /* Permite seleção no iOS */
+            -moz-user-select: text; /* Permite seleção no Firefox */
+            -ms-user-select: text; /* Permite seleção no IE/Edge */
+            user-select: text; /* Permite seleção na maioria dos navegadores */
           }
           h1 {
             font-size: ${readerSettings.fontSize + 6}px;
@@ -241,11 +262,12 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           }
           p {
             color: ${_colorToHtmlColor(readerSettings.textColor)};
-            margin-bottom: 1em; 
+            margin-bottom: 1em;
           }
           a {
             color: ${_colorToHtmlColor(readerSettings.textColor)};
-            text-decoration: underline;          }
+            text-decoration: underline;
+          }
           b, strong {
             font-weight: bold;
             color: ${_colorToHtmlColor(readerSettings.textColor)};
@@ -255,27 +277,11 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       </head>
       <body>
         <div class="reader-content">
-            ${_paragraphs.join("<br><br>")}
+            ${paragraphs.join("<br><br>")}
         </div>
       </body>
       </html>
     ''';
-  }
-
-  Future<void> updateWebViewContent() async {
-    if (_webViewController == null) return;
-
-    final readerSettings = widget.readerSettings;
-
-    final newHtmlContent = _buildHtmlContent(readerSettings);
-
-    if (newHtmlContent != _currentHtmlContent) {
-      setState(() {
-        _isLoading = true;
-      });
-      await _webViewController!.loadHtmlString(newHtmlContent);
-      _currentHtmlContent = newHtmlContent;
-    }
   }
 
   @override
@@ -283,50 +289,36 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     super.build(context);
     final theme = Theme.of(context);
 
-    if (false) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('HTML Content (Dev Mode)'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.copy),
-              tooltip: 'Copy HTML to Clipboard',
-              onPressed: () {
-                Clipboard.setData(
-                  ClipboardData(text: widget.chapterContent ?? ''),
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('HTML copied to clipboard!')),
-                );
-              },
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: SelectableText(
-            widget.chapterContent ?? 'No content available',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      );
-    }
-
     return Stack(
       children: [
-        Listener(
-          onPointerSignal: (pointerSignal) {
-            if (pointerSignal is PointerScrollEvent) {}
+        FutureBuilder<String>(
+          future: _htmlContentFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return Listener(
+                onPointerSignal: (pointerSignal) {
+                  if (pointerSignal is PointerScrollEvent) {}
+                },
+                child: RefreshIndicator(
+                  onRefresh: _reloadWebView,
+                  backgroundColor: theme.colorScheme.surface,
+                  color: theme.colorScheme.primary,
+                  child: WebViewWidget(controller: _webViewController!),
+                ),
+              );
+            } else {
+              return Container(
+                color: theme.colorScheme.surface.withOpacity(0.8),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              );
+            }
           },
-          child: RefreshIndicator(
-            onRefresh: updateWebViewContent,
-            backgroundColor: theme.colorScheme.surface,
-            color: theme.colorScheme.primary,
-            child: WebViewWidget(controller: _webViewController!),
-          ),
         ),
         if (_isLoading)
           Container(
@@ -345,5 +337,10 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
   String _colorToHtmlColor(Color color) {
     return '#${color.value.toRadixString(16).substring(2)}';
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
