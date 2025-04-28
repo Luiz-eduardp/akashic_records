@@ -177,6 +177,9 @@
   "Andamento": "In Progress",
   "Completa": "Completed",
   "Pausada": "Paused",
-  "Desconhecido": "Unknown"
+  "Desconhecido": "Unknown",
+  "Opções Avançadas": "Advanced Options",
+  "Cor do Texto:": "Advanced Options:",
+  "Cor de Fundo:": "Background Color:"
 
 }
