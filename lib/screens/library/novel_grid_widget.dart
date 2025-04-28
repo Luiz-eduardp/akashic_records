@@ -24,12 +24,23 @@ class NovelGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (isLoading) {
       return NovelGridSkeletonWidget(itemCount: 8);
     }
 
     if (errorMessage != null) {
-      return Center(child: Text(errorMessage!));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            errorMessage!,
+            style: TextStyle(color: theme.colorScheme.error),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
 
     if (novels.isEmpty) {
@@ -43,8 +54,8 @@ class NovelGridWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 200,
-          crossAxisSpacing: 16.0,
-          mainAxisSpacing: 16.0,
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
           childAspectRatio: 0.7,
         ),
         itemCount: novels.length,
@@ -61,6 +72,7 @@ class NovelGridWidget extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, viewportConstraints) {
         return SingleChildScrollView(
@@ -70,28 +82,45 @@ class NovelGridWidget extends StatelessWidget {
               minHeight: viewportConstraints.maxHeight,
             ),
             child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 50,
-                    color: Theme.of(context).disabledColor,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Nenhuma novel encontrada.".translate,
-                    style: TextStyle(color: Theme.of(context).disabledColor),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/plugins');
-                    },
-                    child: Text('Plugins'.translate),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 60,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Nenhuma novel encontrada.".translate,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/plugins');
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          'Plugins'.translate,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.inversePrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
           ),
