@@ -1,9 +1,10 @@
 import 'dart:convert';
+
+import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/screens/history/history_card_widget.dart';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/screens/history/history_card_widget.dart';
-import 'package:akashic_records/i18n/i18n.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -45,53 +46,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
         setState(() {
           _fullHistory = loadedHistory;
           _availableNovels = novels.toList();
+          _availableNovels.insert(0, 'Todas as Novels'.translate);
           _filterHistory();
           _setLoading(false);
         });
       }
     } catch (e) {
       debugPrint("Erro ao carregar histórico: $e");
-      _showErrorSnackBar(context, "Falha ao carregar o histórico: $e");
+      _showErrorSnackBar("Falha ao carregar o histórico: $e");
       if (_mounted) {
         _setLoading(false);
       }
     }
   }
 
-  void _setLoading(bool isLoading) {
-    if (_mounted) {
-      setState(() {
-        _isLoading = isLoading;
-      });
-    }
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(color: Theme.of(context).colorScheme.onError),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
-    );
-  }
-
   Future<List<Map<String, dynamic>>> _loadHistoryFromPreferences(
     SharedPreferences prefs,
   ) async {
-    List<Map<String, dynamic>> loadedHistory = [];
-
+    final loadedHistory = <Map<String, dynamic>>[];
     final historyKeys =
         prefs.getKeys().where((key) => key.startsWith('history_')).toList();
 
     for (final historyKey in historyKeys) {
       final historyString = prefs.getString(historyKey) ?? '[]';
       try {
-        List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+        final history = jsonDecode(historyString) as List<dynamic>;
         loadedHistory.addAll(
-          history.map((item) => Map<String, dynamic>.from(item)),
+          history.map((item) => item as Map<String, dynamic>),
         );
       } catch (e) {
         debugPrint(
@@ -101,24 +82,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     loadedHistory.sort((a, b) {
-      DateTime? dateA;
-      DateTime? dateB;
-
-      try {
-        dateA = a['lastRead'] != null ? DateTime.parse(a['lastRead']) : null;
-      } catch (e) {
-        debugPrint(
-          "Erro ao fazer o parse da data A: ${a['lastRead']}, erro: $e",
-        );
-      }
-
-      try {
-        dateB = b['lastRead'] != null ? DateTime.parse(b['lastRead']) : null;
-      } catch (e) {
-        debugPrint(
-          "Erro ao fazer o parse da data B: ${b['lastRead']}, erro: $e",
-        );
-      }
+      final dateA = _parseDate(a['lastRead']);
+      final dateB = _parseDate(b['lastRead']);
 
       if (dateA == null && dateB == null) return 0;
       if (dateA == null) return 1;
@@ -130,25 +95,52 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return loadedHistory;
   }
 
-  Set<String> _extractNovelTitles(List<Map<String, dynamic>> history) {
-    Set<String> novels = {};
-    for (var item in history) {
-      novels.add(item['novelTitle']);
+  DateTime? _parseDate(dynamic dateString) {
+    try {
+      if (dateString != null) {
+        return DateTime.parse(dateString.toString());
+      }
+    } catch (e) {
+      debugPrint("Erro ao fazer o parse da data: $dateString, erro: $e");
+      return null;
     }
-    return novels;
+    return null;
+  }
+
+  void _setLoading(bool isLoading) {
+    if (_mounted) {
+      setState(() {
+        _isLoading = isLoading;
+      });
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(color: Theme.of(context).colorScheme.onError),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  Set<String> _extractNovelTitles(List<Map<String, dynamic>> history) {
+    return history.map((item) => item['novelTitle'] as String).toSet();
   }
 
   void _filterHistory() {
-    List<Map<String, dynamic>> filteredHistory = [];
-
-    if (_selectedNovel == null || _selectedNovel == 'Todas as Novels') {
-      filteredHistory = List.from(_fullHistory);
-    } else {
-      filteredHistory =
-          _fullHistory
-              .where((item) => item['novelTitle'] == _selectedNovel)
-              .toList();
-    }
+    List<Map<String, dynamic>> filteredHistory =
+        _fullHistory.where((item) {
+          if (_selectedNovel == null ||
+              _selectedNovel == 'Todas as Novels'.translate) {
+            return true;
+          }
+          return item['novelTitle'] == _selectedNovel;
+        }).toList();
 
     setState(() {
       _history = filteredHistory;
@@ -196,9 +188,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildFilterButton(ThemeData theme) {
     return FloatingActionButton(
-      onPressed: () {
-        _showFilterDialog(context, theme);
-      },
+      onPressed: () => _showFilterDialog(context, theme),
       backgroundColor: theme.colorScheme.primary,
       foregroundColor: theme.colorScheme.onPrimary,
       tooltip: 'Filtrar'.translate,
@@ -218,36 +208,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           content: SingleChildScrollView(
             child: ListBody(
-              children: <Widget>[
-                RadioListTile<String?>(
-                  title: Text(
-                    'Todas as Novels'.translate,
-                    style: TextStyle(color: theme.colorScheme.onSurface),
-                  ),
-                  value: null,
-                  groupValue: _selectedNovel,
-                  onChanged: (String? value) {
-                    _updateSelectedNovel(value);
-                    Navigator.of(context).pop();
-                  },
-                  activeColor: theme.colorScheme.primary,
-                ),
-                ..._availableNovels.map((novel) {
-                  return RadioListTile<String?>(
-                    title: Text(
-                      novel,
-                      style: TextStyle(color: theme.colorScheme.onSurface),
-                    ),
-                    value: novel,
-                    groupValue: _selectedNovel,
-                    onChanged: (String? value) {
-                      _updateSelectedNovel(value);
-                      Navigator.of(context).pop();
-                    },
-                    activeColor: theme.colorScheme.primary,
-                  );
-                }),
-              ],
+              children:
+                  _availableNovels.map((novel) {
+                    return RadioListTile<String?>(
+                      title: Text(
+                        novel,
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
+                      value:
+                          novel == 'Todas as Novels'.translate ? null : novel,
+                      groupValue: _selectedNovel,
+                      onChanged: (String? value) {
+                        _updateSelectedNovel(value);
+                        Navigator.of(context).pop();
+                      },
+                      activeColor: theme.colorScheme.primary,
+                    );
+                  }).toList(),
             ),
           ),
           actions: <Widget>[
@@ -276,46 +253,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     if (_history.isEmpty) {
-      return LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.history,
-                      size: 60,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Seu histórico está vazio.'.translate,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Comece a ler para ver seus livros aqui.'.translate,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
+      return _buildEmptyHistoryView(theme);
     }
 
     return Column(
@@ -334,9 +272,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 novelTitle: item['novelTitle'],
                 chapterTitle: item['chapterTitle'],
                 pluginId: item['pluginId'] ?? '',
-                lastRead: DateTime.parse(
-                  item['lastRead'] ?? DateTime.now().toIso8601String(),
-                ),
+                lastRead: _parseDate(item['lastRead']) ?? DateTime.now(),
                 onTap:
                     () => _handleHistoryTap(
                       item['novelId'],
@@ -351,19 +287,63 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildMetricsWidget(ThemeData theme) {
-    int totalChaptersRead = _history.length;
+  Widget _buildEmptyHistoryView(ThemeData theme) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history,
+                    size: 60,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Seu histórico está vazio.'.translate,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Comece a ler para ver seus livros aqui.'.translate,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-    Map<String, int> novelChapterCounts = {};
-    for (var item in _history) {
+  Widget _buildMetricsWidget(ThemeData theme) {
+    final totalChaptersRead = _history.length;
+
+    final novelChapterCounts = <String, int>{};
+    for (final item in _history) {
+      final novelTitle = item['novelTitle'] as String;
       novelChapterCounts.update(
-        item['novelTitle'],
+        novelTitle,
         (value) => value + 1,
         ifAbsent: () => 1,
       );
     }
 
-    String mostReadNovel =
+    final mostReadNovel =
         novelChapterCounts.entries.isNotEmpty
             ? novelChapterCounts.entries
                 .reduce((a, b) => a.value > b.value ? a : b)
