@@ -43,9 +43,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   String? _lastReadChapterId;
   bool _mounted = false;
   final bool _isFetchingNextChapter = false;
-  bool _isUiVisible = true;
-  Timer? _hideUiTimer;
-  Timer? _tapTimer;
 
   @override
   void initState() {
@@ -58,8 +55,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   void dispose() {
     _mounted = false;
-    _hideUiTimer?.cancel();
-    _tapTimer?.cancel();
     super.dispose();
   }
 
@@ -247,32 +242,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     print('Capítulo marcado como lido: $chapterId');
   }
 
-  void _toggleUiVisibility() {
-    if (_tapTimer?.isActive ?? false) {
-      return;
-    }
-
-    setState(() {
-      _isUiVisible = !_isUiVisible;
-    });
-
-    if (_isUiVisible) {
-      _startUiHideTimer();
-    } else {
-      _hideUiTimer?.cancel();
-    }
-
-    _tapTimer = Timer(const Duration(milliseconds: 200), () {});
-  }
-
-  void _startUiHideTimer() {
-    _hideUiTimer = Timer(const Duration(seconds: 3), () {
-      setState(() {
-        _isUiVisible = false;
-      });
-    });
-  }
-
   Future<void> _addToHistory() async {
     if (novel == null || currentChapter == null) return;
 
@@ -314,31 +283,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
       backgroundColor: appState.readerSettings.backgroundColor,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
-        child: GestureDetector(
-          onTap: _toggleUiVisibility,
-          child:
-              _isUiVisible
-                  ? ReaderAppBar(
-                    title:
-                        isLoading ||
-                                errorMessage != null ||
-                                currentChapter == null
-                            ? null
-                            : currentChapter!.title,
-                    readerSettings: appState.readerSettings,
-                    onSettingsPressed: () => _showSettingsModal(context),
-                  )
-                  : AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    leading: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: Colors.white.withOpacity(0.5),
-                      ),
-                      onPressed: _toggleUiVisibility,
-                    ),
-                  ),
+        child: ReaderAppBar(
+          title:
+              isLoading || errorMessage != null || currentChapter == null
+                  ? null
+                  : currentChapter!.title,
+          readerSettings: appState.readerSettings,
+          onSettingsPressed: () => _showSettingsModal(context),
         ),
       ),
       endDrawer:
@@ -363,20 +314,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       readerSettings: appState.readerSettings,
                     ),
                   ),
-                  if (_isUiVisible)
-                    ChapterNavigation(
-                      onPreviousChapter: _goToPreviousChapter,
-                      onNextChapter: _goToNextChapter,
-                      isLoading: isLoading || _isFetchingNextChapter,
-                      readerSettings: appState.readerSettings,
-                      currentChapterIndex: currentChapterIndex,
-                      chapters: novel!.chapters,
-                      novelId: widget.novelId,
-                      onChapterTap: _onChapterTap,
-                      lastReadChapterId: _lastReadChapterId,
-                      readChapterIds: const {},
-                      onMarkAsRead: _onMarkAsRead,
-                    ),
+                  ChapterNavigation(
+                    onPreviousChapter: _goToPreviousChapter,
+                    onNextChapter: _goToNextChapter,
+                    isLoading: isLoading || _isFetchingNextChapter,
+                    readerSettings: appState.readerSettings,
+                    currentChapterIndex: currentChapterIndex,
+                    chapters: novel!.chapters,
+                    novelId: widget.novelId,
+                    onChapterTap: _onChapterTap,
+                    lastReadChapterId: _lastReadChapterId,
+                    readChapterIds: const {},
+                    onMarkAsRead: _onMarkAsRead,
+                  ),
                 ],
               ),
     );
