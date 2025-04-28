@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
-import 'package:akashic_records/screens/library/novel_grid_skeleton_widget.dart';
+import 'package:akashic_records/widgets/skeleton/novel_grid_skeleton.dart';
 import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +13,7 @@ import 'package:akashic_records/state/app_state.dart';
 import 'dart:async';
 import 'package:akashic_records/widgets/novel_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:akashic_records/screens/library/novel_tile_skeleton_widget.dart';
+import 'package:akashic_records/widgets/skeleton/novel_tile_skeleton.dart';
 import 'package:path_provider/path_provider.dart';
 
 class LibraryScreen extends StatefulWidget {
