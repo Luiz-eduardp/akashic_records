@@ -2,12 +2,14 @@
 # Akashic Records
 
 An open-source, cross-platform novel reader built to offer a rich and customizable reading experience. Inspired by the mystical concept of the Akashic Records, the app organizes and presents knowledge in a user-friendly way — accessible anytime, anywhere.
-
-[![Release](https://img.shields.io/github/release/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/releases)
-[![License](https://img.shields.io/github/license/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/blob/main/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/commits/main)
-[![GitHub issues](https://img.shields.io/github/issues/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/issues)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AkashicRecordsApp/akashic_records/pulls)
+<p align="center">
+  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/AkashicRecordsApp/akashic_records?style=for-the-badge&color=brightgreen">
+  <img alt="GitHub License" src="https://img.shields.io/github/license/AkashicRecordsApp/akashic_records?style=for-the-badge&color=blue">
+  <img alt="GitHub Last Commit" src="https://img.shields.io/github/last-commit/AkashicRecordsApp/akashic_records?style=for-the-badge&color=blueviolet">
+  <img alt="GitHub Issues" src="https://img.shields.io/github/issues/AkashicRecordsApp/akashic_records?style=for-the-badge&color=orange">
+  <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge">
+  <img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/AkashicRecordsApp/akashic_records/total?style=for-the-badge&color=%23478da7">
+</p>
 
 > Join our community on [Discord](https://discord.gg/eSuc2znz5V)
 
