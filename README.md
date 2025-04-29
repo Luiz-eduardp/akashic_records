@@ -133,6 +133,10 @@ We welcome all contributions! Whether you're fixing bugs, adding new features, o
 
 ---
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/AkashicRecordsApp/akashic_records.svg?variant=adaptive)](https://starchart.cc/AkashicRecordsApp/akashic_records)
+
 ## 📌 Topics
 
 `android` `app` `novels` `novelreader`
