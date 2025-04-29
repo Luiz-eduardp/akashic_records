@@ -22,12 +22,12 @@ class ReaderScreen extends StatefulWidget {
   final String? chapterId;
 
   const ReaderScreen({
-    Key? key,
+    super.key,
     required this.pluginId,
     required this.novelId,
     this.chapterId,
     String? initialChapterId,
-  }) : super(key: key);
+  });
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
@@ -42,7 +42,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   late SharedPreferences _prefs;
   String? _lastReadChapterId;
   bool _mounted = false;
-  bool _isFetchingNextChapter = false;
+  final bool _isFetchingNextChapter = false;
 
   @override
   void initState() {

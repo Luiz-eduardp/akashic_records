@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ChapterDisplaySkeleton extends StatelessWidget {
-  const ChapterDisplaySkeleton({Key? key}) : super(key: key);
+  const ChapterDisplaySkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {

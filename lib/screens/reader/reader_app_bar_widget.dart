@@ -8,11 +8,11 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onSettingsPressed;
 
   const ReaderAppBar({
-    Key? key,
+    super.key,
     required this.title,
     required this.readerSettings,
     required this.onSettingsPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
