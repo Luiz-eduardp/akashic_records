@@ -76,7 +76,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _initializeMyAppState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeMyAppState();
+    });
   }
 
   Future<void> _initializeMyAppState() async {
@@ -136,7 +138,7 @@ class _MyAppState extends State<MyApp> {
           _downloadUrl = apkDownloadUrl;
 
           if (_updateAvailable && _downloadUrl != null) {
-            if (_hasShownInitialScreen) {
+            if (!_hasShownInitialScreen) {
               debugPrint(
                 "Update available ($latestVersion > $currentVersion), forcing initial screen.",
               );
