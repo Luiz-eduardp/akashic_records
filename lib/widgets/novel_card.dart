@@ -8,11 +8,11 @@ class NovelCard extends StatelessWidget {
   final VoidCallback onLongPress;
 
   const NovelCard({
-    super.key,
+    Key? key,
     required this.novel,
     required this.onTap,
     required this.onLongPress,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,73 +22,79 @@ class NovelCard extends StatelessWidget {
       elevation: 4,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: GestureDetector(
+      child: InkWell(
+        onTap: onTap,
         onLongPress: onLongPress,
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: CachedNetworkImage(
-                  imageUrl:
-                      novel.coverImageUrl.isNotEmpty
-                          ? novel.coverImageUrl
-                          : 'https://placehold.co/400x450.png?text=Sem%20Capa',
-                  fit: BoxFit.cover,
-                  placeholder:
-                      (context, url) => Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.secondary,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return CachedNetworkImage(
+                    imageUrl:
+                        novel.coverImageUrl.isNotEmpty
+                            ? novel.coverImageUrl
+                            : 'https://placehold.co/400x450.png?text=Sem%20Capa',
+                    fit: BoxFit.cover,
+                    width: constraints.maxWidth,
+                    height: constraints.maxHeight,
+                    placeholder:
+                        (context, url) => Center(
+                          child: CircularProgressIndicator(
+                            color: theme.colorScheme.secondary,
+                          ),
                         ),
-                      ),
-                  errorWidget:
-                      (context, url, error) => Image.network(
-                        'https://placehold.co/400x450.png?text=Sem%20Capa',
-                        fit: BoxFit.cover,
-                      ),
-                ),
+                    errorWidget:
+                        (context, url, error) => Image.network(
+                          'https://placehold.co/400x450.png?text=Sem%20Capa',
+                          fit: BoxFit.cover,
+                          width: constraints.maxWidth,
+                          height: constraints.maxHeight,
+                        ),
+                  );
+                },
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Tooltip(
+                    message: novel.title,
+                    child: Text(
+                      novel.title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (novel.author != null && novel.author.isNotEmpty)
                     Tooltip(
-                      message: novel.title,
+                      message: novel.author,
                       child: Text(
-                        novel.title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        novel.author,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.hintColor,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (novel.author != null && novel.author.isNotEmpty)
-                      Tooltip(
-                        message: novel.author,
-                        child: Text(
-                          novel.author,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.hintColor,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    Text(
-                      novel.pluginId,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.disabledColor,
-                        fontSize: 10,
-                      ),
+                  Text(
+                    novel.pluginId,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.disabledColor,
+                      fontSize: 10,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
