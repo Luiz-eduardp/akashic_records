@@ -39,35 +39,38 @@ class _PluginsScreenState extends State<PluginsScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Plugins'.translate), centerTitle: true),
       body: SafeArea(
-        child: ListView(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildPluginSection(
-              context,
-              'Português (Brasil)'.translate,
-              availablePluginsPtBr,
-              selectedPlugins,
-              appState,
-            ),
-            const SizedBox(height: 16),
-            _buildPluginSection(
-              context,
-              'Inglês'.translate,
-              availablePluginsEn,
-              selectedPlugins,
-              appState,
-            ),
-            const SizedBox(height: 16),
-            _buildPluginSection(
-              context,
-              'Espanhol'.translate,
-              availablePluginsEspanish,
-              selectedPlugins,
-              appState,
-            ),
-            const SizedBox(height: 16),
-            _buildRequestPluginSection(context),
-          ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPluginSection(
+                context,
+                'Português (Brasil)'.translate,
+                availablePluginsPtBr,
+                selectedPlugins,
+                appState,
+              ),
+              const SizedBox(height: 16),
+              _buildPluginSection(
+                context,
+                'Inglês'.translate,
+                availablePluginsEn,
+                selectedPlugins,
+                appState,
+              ),
+              const SizedBox(height: 16),
+              _buildPluginSection(
+                context,
+                'Espanhol'.translate,
+                availablePluginsEspanish,
+                selectedPlugins,
+                appState,
+              ),
+              const SizedBox(height: 16),
+              _buildRequestPluginSection(context),
+            ],
+          ),
         ),
       ),
     );
@@ -81,48 +84,48 @@ class _PluginsScreenState extends State<PluginsScreen> {
     AppState appState,
   ) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
+    return ExpansionTile(
+      title: Text(
+        title,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.onSurface,
         ),
-        const SizedBox(height: 8),
-        ...plugins.map((plugin) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: CheckboxListTile(
-              title: Text(
-                plugin,
-                style: TextStyle(color: theme.colorScheme.onSurface),
+      ),
+      children:
+          plugins.map((plugin) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 4.0,
+                horizontal: 16.0,
               ),
-              value: selectedPlugins.contains(plugin),
-              onChanged: (bool? newValue) {
-                if (newValue != null) {
-                  final updatedPlugins = Set<String>.from(selectedPlugins);
-                  if (newValue) {
-                    updatedPlugins.add(plugin);
-                  } else {
-                    updatedPlugins.remove(plugin);
+              child: CheckboxListTile(
+                title: Text(
+                  plugin,
+                  style: TextStyle(color: theme.colorScheme.onSurface),
+                ),
+                value: selectedPlugins.contains(plugin),
+                onChanged: (bool? newValue) {
+                  if (newValue != null) {
+                    final updatedPlugins = Set<String>.from(selectedPlugins);
+                    if (newValue) {
+                      updatedPlugins.add(plugin);
+                    } else {
+                      updatedPlugins.remove(plugin);
+                    }
+                    appState.setSelectedPlugins(updatedPlugins);
                   }
-                  appState.setSelectedPlugins(updatedPlugins);
-                }
-              },
-              controlAffinity: ListTileControlAffinity.leading,
-              activeColor: theme.colorScheme.primary,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: theme.colorScheme.primary,
+                contentPadding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
               ),
-              side: BorderSide(color: theme.colorScheme.outlineVariant),
-            ),
-          );
-        }),
-      ],
+            );
+          }).toList(),
     );
   }
 
