@@ -67,6 +67,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (_previousPlugins != appState.selectedPlugins) {
       _previousPlugins = Set<String>.from(appState.selectedPlugins);
       _refreshNovels();
+      updateNovels();
     }
   }
 
@@ -162,7 +163,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _updateNovels() async {
+  Future<void> updateNovels() async {
     allNovels.clear();
     novels.clear();
 
@@ -456,7 +457,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     tooltip: 'Atualizar Novels',
-                    onPressed: _updateNovels,
+                    onPressed: updateNovels,
                   ),
                 ],
               ),
