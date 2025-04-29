@@ -1,8 +1,7 @@
+
 # Akashic Records
 
-## Description
-
-Akashic Records is a mobile application designed to organize and present meaningful data, drawing inspiration from the concept of the Akashic Records as a repository of universal knowledge. The app offers offline access to data, features from various web sources, and tools to personalize the reading experience.
+An open-source, cross-platform novel reader built to offer a rich and customizable reading experience. Inspired by the mystical concept of the Akashic Records, the app organizes and presents knowledge in a user-friendly way — accessible anytime, anywhere.
 
 [![Release](https://img.shields.io/github/release/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/releases)
 [![License](https://img.shields.io/github/license/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/blob/main/LICENSE)
@@ -10,93 +9,128 @@ Akashic Records is a mobile application designed to organize and present meaning
 [![GitHub issues](https://img.shields.io/github/issues/AkashicRecordsApp/akashic_records.svg)](https://github.com/AkashicRecordsApp/akashic_records/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AkashicRecordsApp/akashic_records/pulls)
 
-## Features
+> Join our community on [Discord](https://discord.gg/eSuc2znz5V)
 
-* **Offline Mode:** Access your data even without an internet connection, leveraging local storage.
-* **Data Sourcing:** Fetch data from various web services and sources (scraping sites).
-* **Favorites:** Save and organize your preferred content.
-* **History:** Keep track of what you've read.
-* **Custom Themes:** Personalize the app's appearance to your liking.
-* **Reader:**
-  * **Customizable:** Adjust font, colors, themes, font sizes, line spacing, and text alignment for an optimal reading experience.
+---
 
-## TODO - Checklist
+## 📖 Description
 
-**Functionality & Features:**
+**Akashic Records** is a mobile application for reading and managing digital novels. It supports offline usage, customizable themes, content sourcing from multiple web platforms (including scraping), and tools to personalize your reading journey. Designed with accessibility and flexibility in mind, it aims to make digital reading enjoyable for all.
 
-* [ ] Add advanced search functionality (keywords, filters, date ranges, etc.).
-* [ ] Implement filter settings for search results and content browsing.
-* [ ] **Reader Improvements:**
-  * [x] Add support for different text formats (e.g., Markdown, HTML).
-  * [ ] Implement text-to-speech functionality.
-  * [x] Add night mode and other theme options.
-  * [ ] Allow for customizable page turning animations.
-* [ ] Enhance data sourcing capabilities:
-  * [ ] Add support for more sources.
-  * [ ] Improve scraping accuracy and reliability.
-  * [ ] Implement background data updates.
-* [ ] **Content Management:**
-  * [ ] Allow users to create and organize content into notebooks or collections.
-  * [ ] Implement tagging system for easy content categorization.
-* [ ] **User Experience & Design:**
-  * [ ] Refine UI/UX design for improved usability.
-  * [ ] Add onboarding screens to guide new users.
-  * [ ] Implement a feedback mechanism for users to report issues and suggest improvements.
-  * [ ] Add notifications for updates and new content.
+---
 
-**Performance & Storage:**
+## ✨ Features
 
-* [ ] Improve storage efficiency and loading speed. Optimize database queries and caching mechanisms.
-* [ ] Implement data compression techniques to reduce storage space.
+- **Offline Mode** – Read without an internet connection using local storage.
+- **Content Sourcing** – Fetch data from various web sources (scrapers included).
+- **Favorites & History** – Save and track your favorite novels and your reading progress.
+- **Reader Customization**
+  - Adjust font size, line spacing, alignment, and themes
+  - Switch between day/night modes
+  - Supports different formats like HTML & Markdown
 
-**Data & Security:**
+---
 
-* [ ] Integrate cloud backup for user data.
-* [ ] Implement robust data encryption to protect user privacy.
+## 🛠️ Roadmap
 
-**Accessibility & Platform:**
+### Features & Functionality
 
-* [ ] Enhance accessibility features (e.g., screen reader compatibility, adjustable font sizes, high contrast mode).
-* [ ] Implement support for different languages and localization.
+- [ ] Advanced search (filters, keywords, dates)
+- [ ] Content filtering and browsing enhancements
+- [x] Markdown/HTML format support
+- [ ] Text-to-speech
+- [x] Night mode and additional themes
+- [ ] Page turning animation options
 
-## Screenshots
+### Content & Management
+
+- [ ] User-created notebooks or collections
+- [ ] Tag-based categorization system
+
+### User Experience
+
+- [ ] UI/UX refinements
+- [ ] Onboarding for new users
+- [ ] User feedback/report system
+- [ ] Notifications for updates and new chapters
+
+### Performance & Storage
+
+- [ ] Database optimization and caching improvements
+- [ ] Data compression support
+
+### Data & Security
+
+- [ ] Cloud backup integration
+- [ ] Data encryption for user privacy
+
+### Accessibility & Localization
+
+- [ ] Screen reader compatibility
+- [ ] Adjustable font sizes and high-contrast mode
+- [ ] Multi-language support
+
+---
+
+## 🖼️ Screenshots
 
 <div align="center">
-    <img src="lib/src/screenshots/scs2.png" alt="Screenshot 2" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs3.png" alt="Screenshot 3" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs2.png" width="30%">
+    <img src="lib/src/screenshots/scs3.png" width="30%">
     <br>
-    <img src="lib/src/screenshots/scs4.png" alt="Screenshot 4" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs5.png" alt="Screenshot 5" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs6.png" alt="Screenshot 6" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs4.png" width="30%">
+    <img src="lib/src/screenshots/scs5.png" width="30%">
+    <img src="lib/src/screenshots/scs6.png" width="30%">
     <br>
-    <img src="lib/src/screenshots/scs7.png" alt="Screenshot 7" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs8.png" alt="Screenshot 8" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs9.png" alt="Screenshot 9" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs7.png" width="30%">
+    <img src="lib/src/screenshots/scs8.png" width="30%">
+    <img src="lib/src/screenshots/scs9.png" width="30%">
     <br>
-    <img src="lib/src/screenshots/scs10.png" alt="Screenshot 10" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs11.png" alt="Screenshot 11" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs12.png" alt="Screenshot 12" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs10.png" width="30%">
+    <img src="lib/src/screenshots/scs11.png" width="30%">
+    <img src="lib/src/screenshots/scs12.png" width="30%">
     <br>
-    <img src="lib/src/screenshots/scs13.png" alt="Screenshot 13" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs14.png" alt="Screenshot 14" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs15.png" alt="Screenshot 15" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs13.png" width="30%">
+    <img src="lib/src/screenshots/scs14.png" width="30%">
+    <img src="lib/src/screenshots/scs15.png" width="30%">
     <br>
-    <img src="lib/src/screenshots/scs16.png" alt="Screenshot 16" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs17.png" alt="Screenshot 17" width="30%" style="display: inline-block; margin: 5px;">
-    <img src="lib/src/screenshots/scs18.png" alt="Screenshot 18" width="30%" style="display: inline-block; margin: 5px;">
+    <img src="lib/src/screenshots/scs16.png" width="30%">
+    <img src="lib/src/screenshots/scs17.png" width="30%">
+    <img src="lib/src/screenshots/scs18.png" width="30%">
 </div>
 
-## About the Name: Akashic Records
+---
 
-The name "Akashic Records" reflects the app's purpose of serving as a knowledge repository. It draws inspiration from the concept of Akashic Records, a philosophical term referring to a compendium of universal events, thoughts, and emotions. This aligns with the app's goal of organizing and presenting meaningful data, providing users with a centralized source of information and wisdom.
+## 📚 The Meaning Behind the Name
 
-## Technologies Used
+The term **"Akashic Records"** originates from theosophy and mysticism, referring to a universal archive of knowledge, emotions, and events. This concept aligns with our goal of providing a dynamic and personalized information hub for readers, wherever they are.
 
-* **Flutter:** For building a cross-platform mobile application (iOS and Android, linux, windows).
-* **Dart:** The programming language used with Flutter.
-* **SQLite:** For local data storage.
-* **Provider:** For state management within the Flutter application.
+---
 
-## Contributing
+## 🧰 Tech Stack
 
-[Contribution Guidelines](Contribution.md)
+- **Flutter** – Cross-platform framework for building mobile and desktop apps
+- **Dart** – Core language for Flutter development
+- **SQLite** – Local data storage engine
+- **Provider** – State management solution for Flutter
+
+---
+
+## 🤝 Contributing
+
+We welcome all contributions! Whether you're fixing bugs, adding new features, or improving documentation—your help is appreciated.
+
+👉 Check out our [Contribution Guidelines](Contribution.md)
+
+---
+
+## 🔗 Links
+
+- **Repository:** [github.com/AkashicRecordsApp/akashic_records](https://github.com/AkashicRecordsApp/akashic_records)
+- **Discord Community:** [discord.gg/eSuc2znz5V](https://discord.gg/eSuc2znz5V)
+
+---
+
+## 📌 Topics
+
+`android` `app` `novels` `novelreader`
