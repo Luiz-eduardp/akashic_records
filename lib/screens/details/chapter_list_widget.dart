@@ -46,7 +46,6 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     _chapters = List.from(widget.chapters);
     _sortChapters();
     _loadInitialChapters();
-
     _scrollController.addListener(_onScroll);
   }
 
@@ -55,10 +54,12 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     super.didUpdateWidget(oldWidget);
     if (widget.chapters != oldWidget.chapters ||
         widget.readChapterIds != oldWidget.readChapterIds) {
-      _chapters = List.from(widget.chapters);
-      _sortChapters();
-      _searchChapters();
-      _resetPagination();
+      setState(() {
+        _chapters = List.from(widget.chapters);
+        _sortChapters();
+        _searchChapters();
+        _resetPagination();
+      });
     }
   }
 
@@ -80,11 +81,10 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   void _loadInitialChapters() {
     if (!_mounted) return;
 
-    _displayedChapters = _chapters.sublist(
-      0,
-      _pageSize.clamp(0, _chapters.length),
-    );
-    if (_mounted) {
+    final endIndex = _pageSize.clamp(0, _chapters.length);
+    _displayedChapters = _chapters.sublist(0, endIndex);
+
+    if (mounted) {
       setState(() {});
     }
   }
@@ -97,9 +97,12 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     }
   }
 
-  void _loadMoreChapters() async {
+  Future<void> _loadMoreChapters() async {
     if (_isLoadingMore || !_mounted) return;
-    _isLoadingMore = true;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
 
     await Future.delayed(const Duration(milliseconds: 200));
 
@@ -110,24 +113,18 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     );
 
     if (_firstItemIndex < _chapters.length) {
-      if (_mounted) {
-        setState(() {
-          _displayedChapters.addAll(
-            _chapters.sublist(_firstItemIndex, endIndex),
-          );
-          _isLoadingMore = false;
-        });
-      }
+      setState(() {
+        _displayedChapters.addAll(_chapters.sublist(_firstItemIndex, endIndex));
+        _isLoadingMore = false;
+      });
     } else {
-      _isLoadingMore = false;
+      setState(() {
+        _isLoadingMore = false;
+      });
     }
   }
 
   void _sortChapters() {
-    if (!_mounted) return;
-
-    _displayedChapters = List.from(_chapters);
-
     _displayedChapters.sort((a, b) {
       final comparison =
           _isAscending
@@ -139,14 +136,9 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               );
       return comparison;
     });
-
-    if (_mounted) {
-      setState(() {});
-    }
   }
 
   void _toggleSortOrder() {
-    if (!_mounted) return;
     setState(() {
       _isAscending = !_isAscending;
       _sortChapters();
@@ -154,42 +146,30 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   }
 
   void _searchChapters() {
-    if (!_mounted) return;
-
-    String query = _searchController.text.toLowerCase();
-    if (query.isEmpty) {
-      _sortChapters();
-    } else {
-      if (_mounted) {
-        setState(() {
-          _displayedChapters =
-              _chapters.where((chapter) {
-                return chapter.title.toLowerCase().contains(query) ||
-                    (chapter.chapterNumber != null &&
-                        chapter.chapterNumber!.toString().contains(query));
-              }).toList();
-
-          _displayedChapters.sort((a, b) {
-            if (_isAscending) {
-              return (a.chapterNumber ?? double.infinity).compareTo(
-                b.chapterNumber ?? double.infinity,
-              );
-            } else {
-              return (b.chapterNumber ?? double.infinity).compareTo(
-                a.chapterNumber ?? double.infinity,
-              );
-            }
-          });
-        });
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _displayedChapters = List.from(_chapters);
+      } else {
+        _displayedChapters =
+            _chapters
+                .where(
+                  (chapter) =>
+                      chapter.title.toLowerCase().contains(query) ||
+                      (chapter.chapterNumber?.toString().contains(query) ??
+                          false),
+                )
+                .toList();
       }
-    }
+      _sortChapters();
+    });
   }
 
   Future<void> _addToHistory(Chapter chapter) async {
     final prefs = await SharedPreferences.getInstance();
     final historyKey = 'history_${widget.novelId}';
-    final historyString = prefs.getString(historyKey) ?? '[]';
-    List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+    String historyString = prefs.getString(historyKey) ?? '[]';
+    List<dynamic> history = List.from(jsonDecode(historyString));
 
     final newItem = {
       'novelId': widget.novelId,
@@ -198,23 +178,11 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
       'chapterTitle': chapter.title,
       'pluginId': '',
       'chapterNumber': chapter.chapterNumber,
+      'lastRead': DateTime.now().toIso8601String(),
     };
 
-    int existingIndex = history.indexWhere(
-      (item) => item['chapterId'] == newItem['chapterId'],
-    );
-
-    if (existingIndex != -1) {
-      history[existingIndex] = {
-        ...newItem,
-        'lastRead': history[existingIndex]['lastRead'],
-      };
-    } else {
-      history.insert(0, {
-        ...newItem,
-        'lastRead': DateTime.now().toIso8601String(),
-      });
-    }
+    history.removeWhere((item) => item['chapterId'] == chapter.id);
+    history.insert(0, newItem);
 
     if (history.length > 10) {
       history = history.sublist(0, 10);
@@ -287,11 +255,13 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     if (isUnread) {
                       fontWeight = FontWeight.bold;
                     }
+
                     String chapterDisplay = chapter.title;
                     if (chapter.chapterNumber != null) {
                       chapterDisplay =
                           "${chapter.chapterNumber}: ${chapter.title}";
                     }
+
                     return Card(
                       elevation: 1.5,
                       margin: EdgeInsets.symmetric(vertical: 4.0),
@@ -300,9 +270,8 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(8.0),
                           onTap: () {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              widget.onChapterTap(chapter.id);
-                            });
+                            widget.onChapterTap(chapter.id);
+                            _addToHistory(chapter);
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -325,30 +294,21 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                                     ),
                                   ),
                                 ),
-                                if (isLastRead)
-                                  Icon(
-                                    Icons.bookmark,
-                                    color: theme.colorScheme.secondary,
-                                  ),
                                 InkWell(
                                   borderRadius: BorderRadius.circular(24.0),
                                   onTap: () {
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                          widget.onMarkAsRead(chapter.id);
-                                          if (!isRead) {
-                                            _addToHistory(chapter);
-                                          }
-                                        });
+                                    widget.onMarkAsRead(chapter.id);
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Icon(
-                                      isRead
+                                      widget.readChapterIds.contains(chapter.id)
                                           ? Icons.check_circle
                                           : Icons.radio_button_unchecked,
                                       color:
-                                          isRead
+                                          widget.readChapterIds.contains(
+                                                chapter.id,
+                                              )
                                               ? Colors.green
                                               : theme.disabledColor,
                                     ),
