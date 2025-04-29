@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:akashic_records/widgets/novel_tile.dart';
+import 'package:async/async.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:akashic_records/i18n/i18n.dart';
@@ -16,6 +17,7 @@ import 'package:akashic_records/state/app_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/widgets/skeleton/novel_tile_skeleton.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -35,10 +37,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
   String _searchTerm = "";
   List<Novel> allNovels = [];
   Set<String> _previousPlugins = {};
-  Timer? _debounce;
+
+  final _searchTextController = BehaviorSubject<String>();
+
   bool _mounted = false;
   bool _isListView = false;
   Set<String> _hiddenNovelIds = {};
+  CancelableOperation? _currentSearchOperation;
 
   @override
   void initState() {
@@ -48,6 +53,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _loadViewMode();
     _loadHiddenNovels();
     _loadNovelsFromJSON();
+
+    _searchTextController
+        .debounceTime(const Duration(milliseconds: 500))
+        .listen(_searchNovels);
   }
 
   @override
@@ -66,7 +75,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _mounted = false;
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
-    _debounce?.cancel();
+    _searchTextController.close();
+
+    _currentSearchOperation?.cancel();
     super.dispose();
   }
 
@@ -278,7 +289,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _searchNovels(String term) async {
-    if (isLoading) return;
+    _currentSearchOperation?.cancel();
 
     if (_mounted) {
       setState(() {
@@ -288,6 +299,37 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     }
 
+    _currentSearchOperation = CancelableOperation.fromFuture(
+      _performSearch(term),
+      onCancel: () {
+        if (_mounted) {
+          setState(() {
+            isLoading = false;
+            errorMessage = "Pesquisa cancelada.".translate;
+          });
+        }
+      },
+    );
+
+    try {
+      await _currentSearchOperation!.value;
+    } catch (e) {
+      if (_mounted && e is! CancelableOperation) {
+        setState(() {
+          errorMessage = 'Erro ao pesquisar novels: ${e.toString()}'.translate;
+          isLoading = false;
+        });
+      }
+    } finally {
+      if (_mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _performSearch(String term) async {
     try {
       final appState = Provider.of<AppState>(context, listen: false);
 
@@ -329,16 +371,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
         setState(() {
           novels = filteredSearchResults;
           hasMore = false;
-          isLoading = false;
         });
       }
     } catch (e) {
       if (_mounted) {
         setState(() {
           errorMessage = 'Erro ao pesquisar novels: ${e.toString()}'.translate;
-          isLoading = false;
         });
       }
+      rethrow;
     }
   }
 
@@ -364,7 +405,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       novels.clear();
     } else {
       shouldLoadData = false;
-      await _searchNovels(_searchTerm);
+      _searchNovels(_searchTerm);
     }
 
     if (shouldLoadData) {
@@ -382,21 +423,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   void _onSearchChanged(String term) {
     _searchTerm = term;
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (_mounted) {
-        setState(() {
-          currentPage = 1;
-          hasMore = false;
-        });
-      }
-      if (term.isNotEmpty) {
-        _searchNovels(term);
-      } else {
-        _refreshNovels();
-      }
-    });
+    _searchTextController.add(term);
   }
 
   void _toggleView() {
@@ -482,6 +509,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           itemBuilder: (context, index) {
             final novel = novels[index];
             return NovelListTile(
+              key: Key('${novel.pluginId}-${novel.id}'),
               novel: novel,
               onTap: () => _handleNovelTap(novel),
               onLongPress: () => _hideNovel(novel),
