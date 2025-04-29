@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  const HistoryScreen({Key? key}) : super(key: key);
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -35,6 +35,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadHistoryData() async {
+    if (!_mounted) return;
+
     _setLoading(true);
 
     try {
@@ -48,12 +50,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
           _availableNovels = novels.toList();
           _availableNovels.insert(0, 'Todas as Novels'.translate);
           _filterHistory();
-          _setLoading(false);
         });
       }
     } catch (e) {
       debugPrint("Erro ao carregar histórico: $e");
       _showErrorSnackBar("Falha ao carregar o histórico: $e");
+    } finally {
       if (_mounted) {
         _setLoading(false);
       }
@@ -68,12 +70,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         prefs.getKeys().where((key) => key.startsWith('history_')).toList();
 
     for (final historyKey in historyKeys) {
-      final historyString = prefs.getString(historyKey) ?? '[]';
       try {
+        final historyString = prefs.getString(historyKey) ?? '[]';
         final history = jsonDecode(historyString) as List<dynamic>;
-        loadedHistory.addAll(
-          history.map((item) => item as Map<String, dynamic>),
-        );
+        loadedHistory.addAll(history.whereType<Map<String, dynamic>>());
       } catch (e) {
         debugPrint(
           "Erro ao decodificar histórico para a chave $historyKey: $e",
@@ -98,7 +98,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   DateTime? _parseDate(dynamic dateString) {
     try {
       if (dateString != null) {
-        return DateTime.parse(dateString.toString());
+        return DateTime.tryParse(dateString.toString());
       }
     } catch (e) {
       debugPrint("Erro ao fazer o parse da data: $dateString, erro: $e");
@@ -116,16 +116,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: TextStyle(color: Theme.of(context).colorScheme.onError),
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: TextStyle(color: Theme.of(context).colorScheme.onError),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
-    );
+      );
+    }
   }
 
   Set<String> _extractNovelTitles(List<Map<String, dynamic>> history) {
@@ -133,13 +134,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _filterHistory() {
+    if (!_mounted) return;
+
     List<Map<String, dynamic>> filteredHistory =
         _fullHistory.where((item) {
-          if (_selectedNovel == null ||
-              _selectedNovel == 'Todas as Novels'.translate) {
-            return true;
-          }
-          return item['novelTitle'] == _selectedNovel;
+          return _selectedNovel == null ||
+              _selectedNovel == 'Todas as Novels'.translate ||
+              item['novelTitle'] == _selectedNovel;
         }).toList();
 
     setState(() {
@@ -233,9 +234,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 'Fechar'.translate,
                 style: TextStyle(color: theme.colorScheme.onSurface),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         );
@@ -269,15 +268,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             itemBuilder: (context, index) {
               final item = _history[index];
               return HistoryCardWidget(
+                key: ValueKey('${item['novelId']}-${item['chapterId']}'),
                 novelTitle: item['novelTitle'],
                 chapterTitle: item['chapterTitle'],
-                pluginId: item['pluginId'] ?? '',
+                pluginId: item['pluginId'] as String,
                 lastRead: _parseDate(item['lastRead']) ?? DateTime.now(),
                 onTap:
                     () => _handleHistoryTap(
-                      item['novelId'],
-                      item['pluginId'],
-                      item['chapterId'],
+                      item['novelId'] as String,
+                      item['pluginId'] as String,
+                      item['chapterId'] as String,
                     ),
               );
             },
