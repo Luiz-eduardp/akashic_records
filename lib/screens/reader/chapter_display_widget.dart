@@ -6,6 +6,7 @@ import 'package:html/parser.dart' as htmlParser;
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:html/dom.dart' as dom;
+import 'dart:async';
 
 class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
@@ -26,6 +27,8 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   late Future<String> _htmlContentFuture;
   WebViewController? _webViewController;
   bool _isLoading = true;
+  final Completer<WebViewController> _controllerCompleter =
+      Completer<WebViewController>();
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
@@ -52,30 +55,40 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           ..setNavigationDelegate(
             NavigationDelegate(
               onPageStarted: (String url) {
-                setState(() {
-                  _isLoading = true;
-                });
+                if (mounted) {
+                  setState(() {
+                    _isLoading = true;
+                  });
+                }
               },
               onPageFinished: (String url) async {
                 await _injectJavaScript();
-                setState(() {
-                  _isLoading = false;
-                });
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
               },
               onWebResourceError: (WebResourceError error) {
                 if (kDebugMode) {
                   print('Web resource error: ${error.description}');
                 }
-                setState(() {
-                  _isLoading = false;
-                });
+                if (mounted) {
+                  setState(() {
+                    _isLoading = false;
+                  });
+                }
               },
             ),
           )
           ..loadHtmlString(await _htmlContentFuture);
+    if (!_controllerCompleter.isCompleted) {
+      _controllerCompleter.complete(_webViewController);
+    }
   }
 
   Future<void> _injectJavaScript() async {
+    if (_webViewController == null) return;
     await _webViewController!.runJavaScript('''
       document.addEventListener('touchstart', function(event) {
         if (event.touches.length > 1) {
@@ -121,6 +134,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   }
 
   Future<void> _injectCustomJavaScript(String? customJs) async {
+    if (_webViewController == null) return;
     if (customJs != null && customJs.isNotEmpty) {
       try {
         await _webViewController?.runJavaScript(customJs);
@@ -146,13 +160,19 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   }
 
   Future<void> _reloadWebView() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await _webViewController?.loadHtmlString(await _htmlContentFuture);
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+    if (_webViewController != null) {
+      await _webViewController?.loadHtmlString(await _htmlContentFuture);
+    }
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<String> _prepareHtmlContent(
@@ -247,10 +267,10 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             padding-top: ${_headerMargin}px;
             padding-bottom: ${_bottomMargin}px;
             word-wrap: break-word;
-            -webkit-user-select: text; /* Permite seleção no iOS */
-            -moz-user-select: text; /* Permite seleção no Firefox */
-            -ms-user-select: text; /* Permite seleção no IE/Edge */
-            user-select: text; /* Permite seleção na maioria dos navegadores */
+            -webkit-user-select: text; 
+            -moz-user-select: text; 
+            -ms-user-select: text; 
+            user-select: text; 
           }
           h1 {
             font-size: ${readerSettings.fontSize + 6}px;
@@ -341,6 +361,8 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
   @override
   void dispose() {
+    _webViewController?.clearCache();
+    _webViewController = null;
     super.dispose();
   }
 }
