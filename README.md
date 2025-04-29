@@ -1,5 +1,5 @@
 
-<img src="lib/src/banner.png" width="100%%">
+<img src="lib/src/banner.png" width="100%">
 
 ---
 
