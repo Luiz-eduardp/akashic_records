@@ -21,6 +21,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   List<Chapter> _displayedChapters = [];
   bool _isAscending = false;
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   final ScrollController _scrollController = ScrollController();
   int _firstItemIndex = 0;
@@ -56,6 +57,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -85,9 +87,11 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     }
   }
 
-  void _loadMoreChapters() async {
+  Future<void> _loadMoreChapters() async {
     if (_isLoadingMore || !_mounted) return;
-    _isLoadingMore = true;
+    setState(() {
+      _isLoadingMore = true;
+    });
 
     await Future.delayed(const Duration(milliseconds: 200));
 
@@ -107,7 +111,11 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
         });
       }
     } else {
-      _isLoadingMore = false;
+      if (_mounted) {
+        setState(() {
+          _isLoadingMore = false;
+        });
+      }
     }
   }
 
@@ -156,7 +164,6 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     (chapter.chapterNumber != null &&
                         chapter.chapterNumber!.toString().contains(query));
               }).toList();
-
           _displayedChapters.sort((a, b) {
             if (_isAscending) {
               return (a.chapterNumber ?? double.infinity).compareTo(
@@ -189,6 +196,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               children: [
                 Expanded(
                   child: TextField(
+                    focusNode: _searchFocusNode,
                     controller: _searchController,
                     decoration: InputDecoration(
                       labelText: 'Pesquisar Capítulo'.translate,
@@ -222,66 +230,76 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               behavior: ScrollConfiguration.of(
                 context,
               ).copyWith(scrollbars: false),
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _displayedChapters.length + (_isLoadingMore ? 1 : 0),
-                padding: EdgeInsets.zero,
-                itemBuilder: (context, index) {
-                  if (index < _displayedChapters.length) {
-                    final chapter = _displayedChapters[index];
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  _resetPagination();
+                  _searchChapters();
+                  await Future.delayed(Duration(seconds: 1));
+                },
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount:
+                      _displayedChapters.length + (_isLoadingMore ? 1 : 0),
+                  padding: EdgeInsets.zero,
+                  itemBuilder: (context, index) {
+                    if (index < _displayedChapters.length) {
+                      final chapter = _displayedChapters[index];
 
-                    FontWeight fontWeight = FontWeight.normal;
+                      FontWeight fontWeight = FontWeight.normal;
 
-                    String chapterDisplay = chapter.title;
-                    if (chapter.chapterNumber != null) {
-                      chapterDisplay =
-                          "${chapter.chapterNumber}: ${chapter.title}";
-                    }
-                    return Card(
-                      elevation: 1.5,
-                      margin: EdgeInsets.symmetric(vertical: 4.0),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8.0),
-                          onTap: () {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              widget.onChapterTap(chapter.id);
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14.0,
-                              horizontal: 16.0,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '$chapterDisplay${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      fontWeight: fontWeight,
-                                      color: theme.colorScheme.onSurface,
+                      String chapterDisplay = chapter.title;
+                      if (chapter.chapterNumber != null) {
+                        chapterDisplay =
+                            "${chapter.chapterNumber}: ${chapter.title}";
+                      }
+                      return Card(
+                        elevation: 1.5,
+                        margin: EdgeInsets.symmetric(vertical: 4.0),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8.0),
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                widget.onChapterTap(chapter.id);
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14.0,
+                                horizontal: 16.0,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '$chapterDisplay${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
+                                      style: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                            fontWeight: fontWeight,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.secondary,
+                      );
+                    } else {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: theme.colorScheme.secondary,
+                          ),
                         ),
-                      ),
-                    );
-                  }
-                },
+                      );
+                    }
+                  },
+                ),
               ),
             ),
           ),
