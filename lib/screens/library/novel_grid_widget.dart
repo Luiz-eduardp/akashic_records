@@ -31,16 +31,7 @@ class NovelGridWidget extends StatelessWidget {
     }
 
     if (errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            errorMessage!,
-            style: TextStyle(color: theme.colorScheme.error),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
+      return _buildErrorState(context, theme);
     }
 
     if (novels.isEmpty) {
@@ -50,6 +41,7 @@ class NovelGridWidget extends StatelessWidget {
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
       child: GridView.builder(
+        key: const PageStorageKey<String>('novel_grid'),
         controller: scrollController,
         padding: const EdgeInsets.all(16.0),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -62,12 +54,66 @@ class NovelGridWidget extends StatelessWidget {
         itemBuilder: (context, index) {
           final novel = novels[index];
           return NovelCard(
+            key: ValueKey(novel.id),
             novel: novel,
             onTap: () => onNovelTap(novel),
             onLongPress: () => onNovelLongPress(novel),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, ThemeData theme) {
+    return LayoutBuilder(
+      builder: (context, viewportConstraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: viewportConstraints.maxHeight,
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage!,
+                      style: TextStyle(color: theme.colorScheme.error),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    OutlinedButton(
+                      onPressed: () {},
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          'Tentar Novamente'.translate,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
