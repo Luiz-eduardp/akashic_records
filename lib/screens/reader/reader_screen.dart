@@ -47,9 +47,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   void initState() {
     super.initState();
-    _initSharedPreferences().then((_) {
-      _loadNovel();
-    });
+    _mounted = true;
+    _init();
+  }
+
+  Future<void> _init() async {
+    _prefs = await SharedPreferences.getInstance();
+    await _loadNovel();
   }
 
   @override
@@ -58,31 +62,28 @@ class _ReaderScreenState extends State<ReaderScreen> {
     super.dispose();
   }
 
-  Future<void> _initSharedPreferences() async {
-    _prefs = await SharedPreferences.getInstance();
-  }
-
   Future<void> _loadLastReadChapter() async {
+    if (novel == null || !_mounted) return;
+
     _lastReadChapterId = _prefs.getString('lastRead_${widget.novelId}');
 
-    if (novel != null) {
-      if (_lastReadChapterId != null) {
-        currentChapterIndex = novel!.chapters.indexWhere(
-          (chapter) => chapter.id == _lastReadChapterId,
-        );
-        if (currentChapterIndex == -1) {
-          currentChapterIndex = 0;
-        }
-      } else {
+    if (_lastReadChapterId != null) {
+      currentChapterIndex = novel!.chapters.indexWhere(
+        (chapter) => chapter.id == _lastReadChapterId,
+      );
+      if (currentChapterIndex == -1) {
         currentChapterIndex = 0;
       }
+    } else {
+      currentChapterIndex = 0;
+    }
 
-      if (novel!.chapters.isNotEmpty) {
-        currentChapter = novel!.chapters[currentChapterIndex];
-        await _loadChapterContent();
-      } else {
+    if (novel!.chapters.isNotEmpty) {
+      currentChapter = novel!.chapters[currentChapterIndex];
+      await _loadChapterContent();
+    } else {
+      if (_mounted) {
         setState(() {
-          if (!_mounted) return;
           errorMessage = 'Erro: Nenhum capítulo encontrado.'.translate;
           isLoading = false;
         });
@@ -91,8 +92,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Future<void> _loadNovel() async {
+    if (!_mounted) return;
+
     setState(() {
-      _mounted = true;
       isLoading = true;
       errorMessage = null;
       novel = null;
@@ -103,57 +105,70 @@ class _ReaderScreenState extends State<ReaderScreen> {
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[widget.pluginId];
 
-      if (plugin != null) {
-        novel = await loadNovelWithTimeout(
-          () => plugin.parseNovel(widget.novelId),
-        );
-
-        if (novel != null) {
-          novel!.pluginId = widget.pluginId;
-
-          novel!.chapters.sort((a, b) {
-            return (a.chapterNumber ?? 0).compareTo(b.chapterNumber ?? 0);
-          });
-
-          if (widget.chapterId != null) {
-            currentChapterIndex = novel!.chapters.indexWhere(
-              (chapter) => chapter.id == widget.chapterId,
-            );
-            if (currentChapterIndex != -1) {
-              currentChapter = novel!.chapters[currentChapterIndex];
-              await _loadChapterContent();
-            } else {
-              await _loadLastReadChapter();
-            }
-          } else {
-            await _loadLastReadChapter();
-          }
-        } else {
+      if (plugin == null) {
+        if (_mounted) {
           setState(() {
-            errorMessage = 'Novel não encontrada.'.translate;
+            errorMessage = 'Plugin não encontrado.'.translate;
+            isLoading = false;
           });
         }
+        return;
+      }
+
+      final loadedNovel = await loadNovelWithTimeout(
+        () => plugin.parseNovel(widget.novelId),
+      );
+
+      if (loadedNovel == null) {
+        if (_mounted) {
+          setState(() {
+            errorMessage = 'Novel não encontrada.'.translate;
+            isLoading = false;
+          });
+        }
+        return;
+      }
+
+      loadedNovel.pluginId = widget.pluginId;
+      loadedNovel.chapters.sort(
+        (a, b) => (a.chapterNumber ?? 0).compareTo(b.chapterNumber ?? 0),
+      );
+
+      if (widget.chapterId != null) {
+        final chapterIndex = loadedNovel.chapters.indexWhere(
+          (chapter) => chapter.id == widget.chapterId,
+        );
+        if (chapterIndex != -1) {
+          currentChapterIndex = chapterIndex;
+          currentChapter = loadedNovel.chapters[currentChapterIndex];
+          novel = loadedNovel;
+          await _loadChapterContent();
+        } else {
+          novel = loadedNovel;
+          await _loadLastReadChapter();
+        }
       } else {
-        setState(() {
-          errorMessage = 'Plugin não encontrado.'.translate;
-        });
+        novel = loadedNovel;
+        await _loadLastReadChapter();
       }
     } catch (e) {
-      setState(() {
-        if (!_mounted) return;
-        errorMessage = 'Erro ao carregar novel: $e'.translate;
-        isLoading = false;
-      });
+      if (_mounted) {
+        setState(() {
+          errorMessage = 'Erro ao carregar novel: $e'.translate;
+          isLoading = false;
+        });
+      }
     } finally {
-      setState(() {
-        if (!_mounted) return;
-        isLoading = false;
-      });
+      if (_mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _loadChapterContent() async {
-    if (novel == null || currentChapter == null) return;
+    if (novel == null || currentChapter == null || !_mounted) return;
 
     setState(() {
       isLoading = true;
@@ -163,9 +178,30 @@ class _ReaderScreenState extends State<ReaderScreen> {
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[novel!.pluginId];
 
-      if (plugin != null) {
-        final content = await plugin.parseChapter(currentChapter!.id);
+      if (plugin == null) {
+        if (_mounted) {
+          setState(() {
+            errorMessage = 'Erro: Plugin inválido.'.translate;
+            isLoading = false;
+          });
+        }
+        return;
+      }
 
+      final content = await plugin.parseChapter(currentChapter!.id);
+
+      if (content == null) {
+        if (_mounted) {
+          setState(() {
+            errorMessage =
+                'Erro: Falha ao carregar o conteúdo do capítulo.'.translate;
+            isLoading = false;
+          });
+        }
+        return;
+      }
+
+      if (_mounted) {
         setState(() {
           currentChapter = Chapter(
             id: currentChapter!.id,
@@ -176,21 +212,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
           );
           isLoading = false;
         });
-        _saveLastReadChapter(currentChapter!.id);
-        _addToHistory();
-      } else {
+      }
+      _saveLastReadChapter(currentChapter!.id);
+      _addToHistory();
+    } catch (e) {
+      if (_mounted) {
         setState(() {
-          if (!_mounted) return;
-          errorMessage = 'Erro: Plugin inválido.'.translate;
+          errorMessage = 'Erro ao carregar capítulo: $e'.translate;
           isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        if (!_mounted) return;
-        errorMessage = 'Erro ao carregar capítulo: $e'.translate;
-        isLoading = false;
-      });
     }
   }
 
@@ -227,11 +258,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _onChapterTap(String chapterId) {
+    if (novel == null) return;
+
+    final newIndex = novel!.chapters.indexWhere(
+      (chapter) => chapter.id == chapterId,
+    );
+    if (newIndex == -1) return;
+
     setState(() {
       isLoading = true;
-      currentChapterIndex = novel!.chapters.indexWhere(
-        (chapter) => chapter.id == chapterId,
-      );
+      currentChapterIndex = newIndex;
       currentChapter = novel!.chapters[currentChapterIndex];
     });
     _loadChapterContent();
@@ -243,7 +279,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Future<void> _addToHistory() async {
-    if (novel == null || currentChapter == null) return;
+    if (novel == null || currentChapter == null || !_mounted) return;
 
     final historyKey = 'history_${widget.novelId}';
     final historyString = _prefs.getString(historyKey) ?? '[]';
@@ -301,40 +337,47 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 ),
               )
               : null,
-      body:
-          isLoading
-              ? const Center(child: ChapterDisplaySkeleton())
-              : errorMessage != null
-              ? Center(child: ErrorMessageWidget(errorMessage: errorMessage!))
-              : Column(
-                children: [
-                  Expanded(
-                    child: ChapterDisplay(
-                      chapterContent: currentChapter?.content,
-                      readerSettings: appState.readerSettings,
-                    ),
-                  ),
-                  ChapterNavigation(
-                    onPreviousChapter: _goToPreviousChapter,
-                    onNextChapter: _goToNextChapter,
-                    isLoading: isLoading || _isFetchingNextChapter,
+      body: Builder(
+        builder: (context) {
+          if (isLoading) {
+            return const Center(child: ChapterDisplaySkeleton());
+          } else if (errorMessage != null) {
+            return Center(
+              child: ErrorMessageWidget(errorMessage: errorMessage!),
+            );
+          } else if (novel == null || currentChapter == null) {
+            return Center(child: Text("Erro Inesperado".translate));
+          } else {
+            return Column(
+              children: [
+                Expanded(
+                  child: ChapterDisplay(
+                    chapterContent: currentChapter?.content,
                     readerSettings: appState.readerSettings,
-                    currentChapterIndex: currentChapterIndex,
-                    chapters: novel!.chapters,
-                    novelId: widget.novelId,
-                    onChapterTap: _onChapterTap,
-                    lastReadChapterId: _lastReadChapterId,
-                    readChapterIds: const {},
-                    onMarkAsRead: _onMarkAsRead,
                   ),
-                ],
-              ),
+                ),
+                ChapterNavigation(
+                  onPreviousChapter: _goToPreviousChapter,
+                  onNextChapter: _goToNextChapter,
+                  isLoading: isLoading || _isFetchingNextChapter,
+                  readerSettings: appState.readerSettings,
+                  currentChapterIndex: currentChapterIndex,
+                  chapters: novel!.chapters,
+                  novelId: widget.novelId,
+                  onChapterTap: _onChapterTap,
+                  lastReadChapterId: _lastReadChapterId,
+                  readChapterIds: const {},
+                  onMarkAsRead: _onMarkAsRead,
+                ),
+              ],
+            );
+          }
+        },
+      ),
     );
   }
 
   Future<void> _saveLastReadChapter(String chapterId) async {
-    final now = DateTime.now();
-    final timestamp = now.millisecondsSinceEpoch;
-    await _prefs.setString('lastRead_${widget.novelId}_$timestamp', chapterId);
+    await _prefs.setString('lastRead_${widget.novelId}', chapterId);
   }
 }

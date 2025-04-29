@@ -35,6 +35,8 @@ class ReaderAppBar extends StatelessWidget implements PreferredSizeWidget {
             color: readerSettings.textColor,
             fontWeight: FontWeight.w500,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           IconButton(

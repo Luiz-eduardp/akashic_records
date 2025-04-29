@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -23,17 +24,28 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
   }
 
   Future<void> _loadScripts() async {
+    setState(() {
+      isLoading = true;
+      scripts.clear();
+    });
+
     final appState = Provider.of<AppState>(context, listen: false);
-    scripts.clear();
-    for (String url in appState.scriptUrls) {
-      await _extractScriptsFromJson(url);
+    try {
+      for (String url in appState.scriptUrls) {
+        await _extractScriptsFromJson(url);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    Provider.of<AppState>(context);
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -55,9 +67,7 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                 MaterialPageRoute(
                   builder: (context) => const UrlManagementScreen(),
                 ),
-              ).then((_) {
-                _loadScripts();
-              });
+              ).then((_) => _loadScripts());
             },
           ),
         ],
@@ -68,52 +78,51 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: IntrinsicHeight(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Card(
-                      elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Scripts Encontrados'.translate,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card(
+                    elevation: 2,
+                    color: theme.colorScheme.surface,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Scripts Encontrados'.translate,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          if (isLoading)
+                            const Center(child: CircularProgressIndicator())
+                          else if (scripts.isEmpty)
+                            Center(
+                              child: Text(
+                                'Nenhum script encontrado.'.translate,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            )
+                          else
+                            SizedBox(
+                              height: screenHeight * 0.7,
+                              child: ListView.builder(
+                                itemCount: scripts.length,
+                                itemBuilder: (context, index) {
+                                  return _buildScriptTile(
+                                    context,
+                                    scripts[index],
+                                  );
+                                },
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            if (isLoading)
-                              const Center(child: CircularProgressIndicator())
-                            else if (scripts.isEmpty)
-                              Center(
-                                child: Text(
-                                  'Nenhum script encontrado.'.translate,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              )
-                            else
-                              SizedBox(
-                                height: screenHeight * 0.8,
-                                child: ListView.builder(
-                                  itemCount: scripts.length,
-                                  itemBuilder: (context, index) {
-                                    return _buildScriptTile(
-                                      context,
-                                      scripts[index],
-                                    );
-                                  },
-                                ),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -124,23 +133,20 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
   }
 
   Future<void> _extractScriptsFromJson(String url) async {
-    setState(() {
-      isLoading = true;
-    });
-
     try {
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
 
+        List<ScriptInfo> newScripts = [];
         for (var item in jsonList) {
-          String use = item['use'] ?? '';
-          String code = item['code'] ?? '';
-          String name = item['name'] ?? 'Sem nome';
+          if (item is Map<String, dynamic>) {
+            final use = item['use'] as String? ?? '';
+            final code = item['code'] as String? ?? '';
+            final name = item['name'] as String? ?? 'Sem nome';
 
-          setState(() {
-            scripts.add(
+            newScripts.add(
               ScriptInfo(
                 type: ScriptType.json,
                 name: name,
@@ -148,30 +154,45 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                 code: code,
               ),
             );
+          } else {
+            if (kDebugMode) {
+              print('Unexpected data type in script list: ${item.runtimeType}');
+            }
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            scripts.addAll(newScripts);
           });
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao carregar a página: ${response.statusCode}'),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Erro ao carregar a página: ${response.statusCode}',
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: Invalid Json')));
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro: JSON inválido')));
+      }
+      if (kDebugMode) {
+        debugPrint("Error parsing JSON: $e");
+      }
     }
   }
 
   Widget _buildScriptTile(BuildContext context, ScriptInfo scriptInfo) {
     final theme = Theme.of(context);
-    String subtitle = scriptInfo.use ?? 'Sem descrição';
-    String title = scriptInfo.name ?? 'Sem nome';
+    final subtitle = scriptInfo.use ?? 'Sem descrição';
+    final title = scriptInfo.name ?? 'Sem nome';
 
     return Card(
       color: theme.colorScheme.surface,
@@ -203,9 +224,9 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
     BuildContext context,
   ) async {
     final theme = Theme.of(context);
-    String scriptContent = scriptInfo.code ?? '';
-    String scriptName = scriptInfo.name ?? 'Sem nome';
-    String scriptUse = scriptInfo.use ?? '';
+    final scriptContent = scriptInfo.code ?? '';
+    final scriptName = scriptInfo.name ?? 'Sem nome';
+    final scriptUse = scriptInfo.use ?? '';
 
     showDialog(
       context: context,
@@ -240,9 +261,7 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                     ),
                   ),
                   initialValue: name,
-                  onChanged: (value) {
-                    name = value;
-                  },
+                  onChanged: (value) => name = value,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -262,9 +281,7 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                     ),
                   ),
                   initialValue: use,
-                  onChanged: (value) {
-                    use = value;
-                  },
+                  onChanged: (value) => use = value,
                 ),
               ],
             ),
@@ -275,9 +292,7 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                 'Cancelar'.translate,
                 style: TextStyle(color: theme.colorScheme.onSurface),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -300,7 +315,6 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                   );
                   appState.addCustomPlugin(plugin);
                   Navigator.of(context).pop();
-                  Navigator.of(context).pop();
                 }
               },
             ),
@@ -308,11 +322,6 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
         );
       },
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }
 
@@ -412,9 +421,7 @@ class _UrlManagementScreenState extends State<UrlManagementScreen> {
                           Icons.remove_circle_outline,
                           color: theme.colorScheme.error,
                         ),
-                        onPressed: () {
-                          appState.removeScriptUrl(index);
-                        },
+                        onPressed: () => appState.removeScriptUrl(index),
                       ),
                     ),
                   );
@@ -425,9 +432,7 @@ class _UrlManagementScreenState extends State<UrlManagementScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
+        onPressed: () => Navigator.pop(context),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         tooltip: "Voltar".translate,

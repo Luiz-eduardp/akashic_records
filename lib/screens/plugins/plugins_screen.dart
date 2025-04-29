@@ -51,7 +51,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 selectedPlugins,
                 appState,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildPluginSection(
                 context,
                 'Inglês'.translate,
@@ -59,7 +59,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 selectedPlugins,
                 appState,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildPluginSection(
                 context,
                 'Espanhol'.translate,
@@ -67,7 +67,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 selectedPlugins,
                 appState,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildRequestPluginSection(context),
             ],
           ),
@@ -84,27 +84,21 @@ class _PluginsScreenState extends State<PluginsScreen> {
     AppState appState,
   ) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
+    return ExpansionTile(
+      title: Text(
+        title,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.onSurface,
         ),
-        const SizedBox(height: 12),
-        ...plugins.map((plugin) {
-          return Card(
-            elevation: 1,
-            surfaceTintColor: theme.colorScheme.surfaceVariant,
-            margin: const EdgeInsets.symmetric(vertical: 4.0),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      ),
+      children:
+          plugins.map((plugin) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 4.0,
+                horizontal: 16.0,
+              ),
               child: CheckboxListTile(
                 title: Text(
                   plugin,
@@ -124,15 +118,14 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 },
                 controlAffinity: ListTileControlAffinity.leading,
                 activeColor: theme.colorScheme.primary,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                contentPadding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
               ),
-            ),
-          );
-        }),
-      ],
+            );
+          }).toList(),
     );
   }
 
@@ -162,7 +155,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         Text(
           'Clique no link acima para abrir uma solicitação no GitHub.'
               .translate,

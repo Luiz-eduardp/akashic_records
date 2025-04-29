@@ -1,5 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
+import 'package:akashic_records/widgets/novel_tile.dart';
+import 'package:async/async.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
@@ -10,11 +14,10 @@ import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'dart:async';
-import 'package:akashic_records/widgets/novel_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/widgets/skeleton/novel_tile_skeleton.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -28,16 +31,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
   bool isLoading = false;
   bool hasMore = true;
   int currentPage = 1;
-  int itemsPerPage = 20;
+  final int itemsPerPage = 20;
   String? errorMessage;
   final ScrollController _scrollController = ScrollController();
   String _searchTerm = "";
   List<Novel> allNovels = [];
   Set<String> _previousPlugins = {};
-  Timer? _debounce;
+
+  final _searchTextController = BehaviorSubject<String>();
+
   bool _mounted = false;
   bool _isListView = false;
   Set<String> _hiddenNovelIds = {};
+  CancelableOperation? _currentSearchOperation;
 
   @override
   void initState() {
@@ -47,6 +53,33 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _loadViewMode();
     _loadHiddenNovels();
     _loadNovelsFromJSON();
+
+    _searchTextController
+        .debounceTime(const Duration(milliseconds: 500))
+        .listen(_searchNovels);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final appState = Provider.of<AppState>(context);
+
+    if (_previousPlugins != appState.selectedPlugins) {
+      _previousPlugins = Set<String>.from(appState.selectedPlugins);
+      _refreshNovels();
+      updateNovels();
+    }
+  }
+
+  @override
+  void dispose() {
+    _mounted = false;
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    _searchTextController.close();
+
+    _currentSearchOperation?.cancel();
+    super.dispose();
   }
 
   Future<String> get _localPath async {
@@ -66,11 +99,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final jsonString = jsonEncode(novelList);
 
     try {
-      await file.writeAsString(jsonString);
-      print("Novels saved to JSON successfully!");
+      await compute(_writeToFile, {'file': file, 'data': jsonString});
+      if (kDebugMode) {
+        print("Novels saved to JSON successfully!");
+      }
     } catch (e) {
-      print("Error writing to JSON file: $e");
+      if (kDebugMode) {
+        print("Error writing to JSON file: $e");
+      }
     }
+  }
+
+  static Future<void> _writeToFile(Map<String, dynamic> params) async {
+    final File file = params['file'] as File;
+    final String data = params['data'] as String;
+    await file.writeAsString(data);
   }
 
   Future<void> _loadNovelsFromJSON() async {
@@ -78,21 +121,49 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     try {
       final jsonString = await file.readAsString();
-      final List<dynamic> novelList = jsonDecode(jsonString);
+      final dynamic decodedJson = await compute(jsonDecode, jsonString);
+
+      final List<dynamic> novelList =
+          decodedJson is List
+              ? decodedJson
+              : (decodedJson is Map ? [decodedJson] : []);
 
       setState(() {
         allNovels = novelList.map((json) => Novel.fromMap(json)).toList();
         novels = List<Novel>.from(allNovels);
       });
 
-      print("Novels loaded from JSON successfully!");
+      if (kDebugMode) {
+        print("Novels loaded from JSON successfully!");
+      }
+    } on FormatException catch (e) {
+      if (kDebugMode) {
+        print("Error parsing JSON: $e");
+      }
+      setState(() {
+        errorMessage = "Erro ao analisar o arquivo JSON.".translate;
+      });
+      _loadPopularNovels();
+    } on FileSystemException catch (e) {
+      if (kDebugMode) {
+        print("Error reading file: $e");
+      }
+      setState(() {
+        errorMessage = "Erro ao ler o arquivo.".translate;
+      });
+      _loadPopularNovels();
     } catch (e) {
-      print("Error reading or parsing JSON file: $e");
+      if (kDebugMode) {
+        print("Unexpected error: $e");
+      }
+      setState(() {
+        errorMessage = "Erro inesperado: ${e.toString()}".translate;
+      });
       _loadPopularNovels();
     }
   }
 
-  Future<void> _updateNovels() async {
+  Future<void> updateNovels() async {
     allNovels.clear();
     novels.clear();
 
@@ -138,26 +209,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _refreshNovels();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final appState = Provider.of<AppState>(context);
-
-    if (_previousPlugins != appState.selectedPlugins) {
-      _previousPlugins = Set<String>.from(appState.selectedPlugins);
-      _refreshNovels();
-    }
-  }
-
-  @override
-  void dispose() {
-    _mounted = false;
-    _scrollController.removeListener(_scrollListener);
-    _scrollController.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
-
   void _scrollListener() {
     double triggerPercentage = 0.8;
     if (_scrollController.position.pixels >=
@@ -181,19 +232,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     try {
-      List<Novel> newNovels = [];
       final appState = Provider.of<AppState>(context, listen: false);
+      final pluginNames = appState.selectedPlugins;
 
-      for (final pluginName in appState.selectedPlugins) {
-        final plugin = appState.pluginServices[pluginName];
-        if (plugin != null) {
-          final pluginNovels = await plugin.popularNovels(currentPage);
-          for (final novel in pluginNovels) {
-            novel.pluginId = pluginName;
-          }
-          newNovels.addAll(pluginNovels);
-        }
-      }
+      final futures =
+          pluginNames.map((pluginName) async {
+            final plugin = appState.pluginServices[pluginName];
+            if (plugin != null) {
+              final pluginNovels = await plugin.popularNovels(currentPage);
+              for (final novel in pluginNovels) {
+                novel.pluginId = pluginName;
+              }
+              return pluginNovels;
+            }
+            return <Novel>[];
+          }).toList();
+
+      final List<List<Novel>> results = await Future.wait(futures);
+
+      List<Novel> newNovels = results.expand((list) => list).toList();
 
       final Set<String> seenNovelIds =
           allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
@@ -224,7 +281,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     } catch (e) {
       if (_mounted) {
         setState(() {
-          errorMessage = 'Erro ao carregar novels: $e'.translate;
+          errorMessage = 'Erro ao carregar novels: ${e.toString()}'.translate;
           hasMore = false;
           isLoading = false;
         });
@@ -233,7 +290,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _searchNovels(String term) async {
-    if (isLoading) return;
+    _currentSearchOperation?.cancel();
 
     if (_mounted) {
       setState(() {
@@ -243,24 +300,60 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     }
 
+    _currentSearchOperation = CancelableOperation.fromFuture(
+      _performSearch(term),
+      onCancel: () {
+        if (_mounted) {
+          setState(() {
+            isLoading = false;
+            errorMessage = "Pesquisa cancelada.".translate;
+          });
+        }
+      },
+    );
+
     try {
-      List<Novel> searchResults = [];
+      await _currentSearchOperation!.value;
+    } catch (e) {
+      if (_mounted && e is! CancelableOperation) {
+        setState(() {
+          errorMessage = 'Erro ao pesquisar novels: ${e.toString()}'.translate;
+          isLoading = false;
+        });
+      }
+    } finally {
+      if (_mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _performSearch(String term) async {
+    try {
       final appState = Provider.of<AppState>(context, listen: false);
 
-      for (final pluginName in appState.selectedPlugins) {
-        final plugin = appState.pluginServices[pluginName];
-        if (plugin != null) {
-          final pluginSearchResults = await plugin.searchNovels(term, 1);
-          for (final novel in pluginSearchResults) {
-            novel.pluginId = pluginName;
-          }
-          searchResults.addAll(pluginSearchResults);
-        }
-      }
+      final futures =
+          appState.selectedPlugins.map((pluginName) async {
+            final plugin = appState.pluginServices[pluginName];
+            if (plugin != null) {
+              final pluginSearchResults = await plugin.searchNovels(term, 1);
+              for (final novel in pluginSearchResults) {
+                novel.pluginId = pluginName;
+              }
+              return pluginSearchResults;
+            }
+            return <Novel>[];
+          }).toList();
+
+      final List<List<Novel>> results = await Future.wait(futures);
+      List<Novel> searchResultsTotal = results.expand((list) => list).toList();
+
       final Set<String> seenNovelIds =
           allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
       List<Novel> actuallyNewNovels = [];
-      for (final novel in searchResults) {
+      for (final novel in searchResultsTotal) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
           actuallyNewNovels.add(novel);
@@ -279,16 +372,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
         setState(() {
           novels = filteredSearchResults;
           hasMore = false;
-          isLoading = false;
         });
       }
     } catch (e) {
       if (_mounted) {
         setState(() {
-          errorMessage = 'Erro ao pesquisar novels: $e'.translate;
-          isLoading = false;
+          errorMessage = 'Erro ao pesquisar novels: ${e.toString()}'.translate;
         });
       }
+      rethrow;
     }
   }
 
@@ -306,12 +398,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
         isLoading = false;
       });
     }
+
+    bool shouldLoadData = true;
+
     if (_searchTerm.isEmpty) {
       allNovels.clear();
       novels.clear();
-      await _loadPopularNovels();
     } else {
-      await _searchNovels(_searchTerm);
+      shouldLoadData = false;
+      _searchNovels(_searchTerm);
+    }
+
+    if (shouldLoadData) {
+      await _loadPopularNovels();
     }
     await _saveNovelsToJSON();
   }
@@ -325,21 +424,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   void _onSearchChanged(String term) {
     _searchTerm = term;
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (_mounted) {
-        setState(() {
-          currentPage = 1;
-          hasMore = false;
-        });
-      }
-      if (term.isNotEmpty) {
-        _searchNovels(term);
-      } else {
-        _refreshNovels();
-      }
-    });
+    _searchTextController.add(term);
   }
 
   void _toggleView() {
@@ -372,7 +457,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     tooltip: 'Atualizar Novels',
-                    onPressed: _updateNovels,
+                    onPressed: updateNovels,
                   ),
                 ],
               ),
@@ -424,13 +509,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
           itemCount: novels.length,
           itemBuilder: (context, index) {
             final novel = novels[index];
-            return GestureDetector(
+            return NovelListTile(
+              key: Key('${novel.pluginId}-${novel.id}'),
+              novel: novel,
               onTap: () => _handleNovelTap(novel),
-              child: NovelListTile(
-                novel: novel,
-                onTap: () => _handleNovelTap(novel),
-                onLongPress: () => _hideNovel(novel),
-              ),
+              onLongPress: () => _hideNovel(novel),
             );
           },
         );

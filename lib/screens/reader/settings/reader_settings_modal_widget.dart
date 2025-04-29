@@ -32,89 +32,86 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 20,
-          left: 20,
-          right: 20,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Configurações de Leitura'.translate,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Configurações de Leitura'.translate,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            TabBar(
-              controller: _tabController,
-              indicatorColor: theme.colorScheme.primary,
-              labelColor: theme.colorScheme.onSurface,
-              unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-              isScrollable: true,
-              tabs: [
-                Tab(
-                  text: 'Aparência'.translate,
-                  icon: const Icon(Icons.palette),
-                ),
-                Tab(
-                  text: 'Texto'.translate,
-                  icon: const Icon(Icons.text_fields),
-                ),
-                Tab(
-                  text: 'Plugins'.translate,
-                  icon: const Icon(Icons.extension),
-                ),
-                Tab(text: 'CSS'.translate, icon: const Icon(Icons.css)),
-              ],
-            ),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.6,
-              ),
-              child: TabBarView(
+              const SizedBox(height: 20),
+              TabBar(
                 controller: _tabController,
-                children: [
-                  const AppearanceTab(),
-                  TextTab(),
-                  const CustomPluginTab(),
-                  const CustomCssTab(),
+                indicatorColor: theme.colorScheme.primary,
+                labelColor: theme.colorScheme.onSurface,
+                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                isScrollable: true,
+                tabs: [
+                  Tab(
+                    text: 'Aparência'.translate,
+                    icon: const Icon(Icons.palette),
+                  ),
+                  Tab(
+                    text: 'Texto'.translate,
+                    icon: const Icon(Icons.text_fields),
+                  ),
+                  Tab(
+                    text: 'Plugins'.translate,
+                    icon: const Icon(Icons.extension),
+                  ),
+                  Tab(text: 'CSS'.translate, icon: const Icon(Icons.css)),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.center,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+              Flexible(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: const [
+                    AppearanceTab(),
+                    TextTab(),
+                    CustomPluginTab(),
+                    CustomCssTab(),
+                  ],
                 ),
-                child: Text('Salvar'.translate),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+              Align(
+                alignment: Alignment.center,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text('Salvar'.translate),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

@@ -5,7 +5,7 @@ import 'package:akashic_records/i18n/i18n.dart';
 class HistoryCardWidget extends StatelessWidget {
   final String novelTitle;
   final String chapterTitle;
-  final String? pluginId;
+  final String pluginId;
   final DateTime lastRead;
   final VoidCallback onTap;
 
@@ -20,9 +20,8 @@ class HistoryCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(lastRead);
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(lastRead);
 
     return Card(
       elevation: 2,
@@ -39,10 +38,9 @@ class HistoryCardWidget extends StatelessWidget {
             children: [
               Text(
                 novelTitle,
-                style: TextStyle(
-                  fontSize: 17,
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurface,
+                  color: theme.colorScheme.onSurface,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -50,9 +48,8 @@ class HistoryCardWidget extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 chapterTitle,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: colorScheme.onSurfaceVariant,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -63,28 +60,29 @@ class HistoryCardWidget extends StatelessWidget {
                   Icon(
                     Icons.history,
                     size: 16,
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     formattedDate,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
+                        0.7,
+                      ),
                     ),
                   ),
                   const Spacer(),
                   Chip(
                     label: Text(
-                      pluginId != null && pluginId!.isNotEmpty
-                          ? pluginId!
+                      pluginId.isNotEmpty
+                          ? pluginId
                           : 'Plugin desativado'.translate,
                       style: TextStyle(
                         fontSize: 12,
-                        color: colorScheme.onSecondaryContainer,
+                        color: theme.colorScheme.onSecondaryContainer,
                       ),
                     ),
-                    backgroundColor: colorScheme.secondaryContainer,
+                    backgroundColor: theme.colorScheme.secondaryContainer,
                     visualDensity: VisualDensity.compact,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

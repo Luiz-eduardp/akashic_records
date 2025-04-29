@@ -1,11 +1,10 @@
 import 'package:akashic_records/i18n/i18n.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/settings/update_settings.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/screens/settings/about_button.dart';
-import 'package:akashic_records/widgets/skeleton/skeleton_card.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -20,20 +19,11 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadInitialData();
-  }
-
-  Future<void> _loadInitialData() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   @override
@@ -59,6 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text('Configurações'.translate),
+        centerTitle: true,
         backgroundColor: theme.colorScheme.surfaceVariant,
         foregroundColor: theme.colorScheme.onSurfaceVariant,
         surfaceTintColor: theme.colorScheme.surfaceVariant,
@@ -109,47 +100,27 @@ class _SettingsScreenState extends State<SettingsScreen>
         child: TabBarView(
           controller: _tabController,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child:
-                  _isLoading
-                      ? const SkeletonCard()
-                      : Card(
-                        elevation: 1,
-                        color: theme.colorScheme.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: AppearanceSettings(
-                            appState: appState,
-                            theme: theme,
-                          ),
-                        ),
-                      ),
+            _buildTabContent(
+              context,
+              AppearanceSettings(appState: appState, theme: theme),
             ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child:
-                  _isLoading
-                      ? const SkeletonCard()
-                      : Card(
-                        elevation: 1,
-                        color: theme.colorScheme.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: UpdateSettings(),
-                        ),
-                      ),
-            ),
+            _buildTabContent(context, UpdateSettings()),
           ],
         ),
       ),
       bottomNavigationBar: const AboutButton(),
+    );
+  }
+
+  Widget _buildTabContent(BuildContext context, Widget content) {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Card(
+        elevation: 1,
+        color: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(padding: const EdgeInsets.all(16), child: content),
+      ),
     );
   }
 }

@@ -23,17 +23,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _selectedIndex = _tabController.index;
-      });
-    });
+    _tabController.addListener(_handleTabChange);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _handleTabChange() {
+    if (_tabController.indexIsChanging) {
+      setState(() {
+        _selectedIndex = _tabController.index;
+      });
+    }
   }
 
   void _onItemTapped(int index) {
@@ -80,16 +85,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           centerTitle: true,
           leading: IconButton(
             onPressed: _handleMenuButtonPressed,
-            icon: ValueListenableBuilder<AdvancedDrawerValue>(
-              valueListenable: _advancedDrawerController,
-              builder: (_, value, __) {
-                return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: Icon(
-                    value.visible ? Icons.clear : Icons.menu,
-                    key: ValueKey<bool>(value.visible),
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+            icon: AnimatedBuilder(
+              animation: _advancedDrawerController,
+              builder: (context, child) {
+                return Icon(
+                  _advancedDrawerController.value.visible
+                      ? Icons.clear
+                      : Icons.menu,
+                  color: theme.colorScheme.onSurfaceVariant,
                 );
               },
             ),
@@ -98,88 +101,71 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         body: TabBarView(
           controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
           children: const [LibraryScreen(), FavoritesScreen(), HistoryScreen()],
         ),
-        bottomNavigationBar:
-            isTablet
-                ? Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Material(
-                    elevation: 8.0,
-                    borderRadius: BorderRadius.circular(24.0),
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: GNav(
-                        gap: 8,
-                        activeColor: theme.colorScheme.primary,
-                        iconSize: 24,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        duration: const Duration(milliseconds: 400),
-                        tabBackgroundColor: theme.colorScheme.primary
-                            .withOpacity(0.1),
-                        color: theme.colorScheme.onSurfaceVariant,
-                        tabs: [
-                          GButton(
-                            icon: Icons.library_books,
-                            text: 'Biblioteca'.translate,
-                          ),
-                          GButton(
-                            icon: Icons.favorite,
-                            text: 'Favoritos'.translate,
-                          ),
-                          GButton(
-                            icon: Icons.history,
-                            text: 'Histórico'.translate,
-                          ),
-                        ],
-                        selectedIndex: _selectedIndex,
-                        onTabChange: _onItemTapped,
-                      ),
-                    ),
-                  ),
-                )
-                : Container(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 0,
-                    vertical: 10,
-                  ),
-                  child: GNav(
-                    gap: 8,
-                    activeColor: theme.colorScheme.primary,
-                    iconSize: 24,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    duration: const Duration(milliseconds: 400),
-                    tabBackgroundColor: theme.colorScheme.primary.withOpacity(
-                      0.1,
-                    ),
-                    color: theme.colorScheme.onSurfaceVariant,
-                    tabs: [
-                      GButton(
-                        icon: Icons.library_books,
-                        text: 'Biblioteca'.translate,
-                      ),
-                      GButton(
-                        icon: Icons.favorite,
-                        text: 'Favoritos'.translate,
-                      ),
-                      GButton(icon: Icons.history, text: 'Histórico'.translate),
-                    ],
-                    selectedIndex: _selectedIndex,
-                    onTabChange: _onItemTapped,
-                  ),
-                ),
+        bottomNavigationBar: _buildBottomNavigationBar(isTablet, theme),
       ),
     );
+  }
+
+  Widget _buildBottomNavigationBar(bool isTablet, ThemeData theme) {
+    return isTablet
+        ? Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Material(
+            elevation: 8.0,
+            borderRadius: BorderRadius.circular(24.0),
+            color: theme.colorScheme.surfaceContainerHighest,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: GNav(
+                gap: 8,
+                activeColor: theme.colorScheme.primary,
+                iconSize: 24,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                duration: const Duration(milliseconds: 400),
+                tabBackgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.onSurfaceVariant,
+                tabs: [
+                  GButton(
+                    icon: Icons.library_books,
+                    text: 'Biblioteca'.translate,
+                  ),
+                  GButton(icon: Icons.favorite, text: 'Favoritos'.translate),
+                  GButton(icon: Icons.history, text: 'Histórico'.translate),
+                ],
+                selectedIndex: _selectedIndex,
+                onTabChange: _onItemTapped,
+              ),
+            ),
+          ),
+        )
+        : Container(
+          color: theme.colorScheme.surfaceContainerHighest,
+          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+          child: GNav(
+            gap: 8,
+            activeColor: theme.colorScheme.primary,
+            iconSize: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            duration: const Duration(milliseconds: 400),
+            tabBackgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.onSurfaceVariant,
+            tabs: [
+              GButton(icon: Icons.library_books, text: 'Biblioteca'.translate),
+              GButton(icon: Icons.favorite, text: 'Favoritos'.translate),
+              GButton(icon: Icons.history, text: 'Histórico'.translate),
+            ],
+            selectedIndex: _selectedIndex,
+            onTabChange: _onItemTapped,
+          ),
+        );
   }
 }

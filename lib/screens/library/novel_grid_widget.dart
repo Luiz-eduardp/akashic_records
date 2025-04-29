@@ -24,12 +24,14 @@ class NovelGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (isLoading) {
       return NovelGridSkeletonWidget(itemCount: 8);
     }
 
     if (errorMessage != null) {
-      return Center(child: Text(errorMessage!));
+      return _buildErrorState(context, theme);
     }
 
     if (novels.isEmpty) {
@@ -39,18 +41,20 @@ class NovelGridWidget extends StatelessWidget {
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
       child: GridView.builder(
+        key: const PageStorageKey<String>('novel_grid'),
         controller: scrollController,
         padding: const EdgeInsets.all(16.0),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 200,
-          crossAxisSpacing: 16.0,
-          mainAxisSpacing: 16.0,
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
           childAspectRatio: 0.7,
         ),
         itemCount: novels.length,
         itemBuilder: (context, index) {
           final novel = novels[index];
           return NovelCard(
+            key: ValueKey(novel.id),
             novel: novel,
             onTap: () => onNovelTap(novel),
             onLongPress: () => onNovelLongPress(novel),
@@ -60,7 +64,7 @@ class NovelGridWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildErrorState(BuildContext context, ThemeData theme) {
     return LayoutBuilder(
       builder: (context, viewportConstraints) {
         return SingleChildScrollView(
@@ -70,28 +74,99 @@ class NovelGridWidget extends StatelessWidget {
               minHeight: viewportConstraints.maxHeight,
             ),
             child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 50,
-                    color: Theme.of(context).disabledColor,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "Nenhuma novel encontrada.".translate,
-                    style: TextStyle(color: Theme.of(context).disabledColor),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/plugins');
-                    },
-                    child: Text('Plugins'.translate),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage!,
+                      style: TextStyle(color: theme.colorScheme.error),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    OutlinedButton(
+                      onPressed: () {},
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          'Tentar Novamente'.translate,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, viewportConstraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: viewportConstraints.maxHeight,
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.search_off,
+                      size: 60,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Nenhuma novel encontrada.".translate,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/plugins');
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          'Plugins'.translate,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.inversePrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
           ),
