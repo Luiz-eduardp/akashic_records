@@ -10,13 +10,13 @@ class HistoryCardWidget extends StatelessWidget {
   final VoidCallback onTap;
 
   const HistoryCardWidget({
-    Key? key,
+    super.key,
     required this.novelTitle,
     required this.chapterTitle,
     required this.pluginId,
     required this.lastRead,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

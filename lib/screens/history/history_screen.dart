@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({Key? key}) : super(key: key);
+  const HistoryScreen({super.key});
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
