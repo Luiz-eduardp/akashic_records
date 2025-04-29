@@ -11,12 +11,10 @@ import 'package:akashic_records/state/app_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
-
 import 'package:akashic_records/screens/changelog/initial_loading_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   SharedPreferences prefs;
   Locale initialLocale;
   const List<String> supportedLanguageCodes = ['en', 'pt', 'es'];
@@ -24,7 +22,6 @@ void main() async {
   try {
     prefs = await SharedPreferences.getInstance();
     final savedLocaleCode = prefs.getString('locale');
-
     if (savedLocaleCode != null &&
         supportedLanguageCodes.contains(savedLocaleCode)) {
       initialLocale = Locale(savedLocaleCode);
