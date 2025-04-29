@@ -2,6 +2,13 @@ import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/state/app_state.dart';
 
+class AkashicColors {
+  static const Color gold = Color(0xFFD4AF37);
+  static const Color brownDark = Color(0xFF2B1B0E);
+  static const Color bronze = Color(0xFFCD7F32);
+  static const Color beige = Color(0xFFF5DEB3);
+}
+
 class AppearanceSettings extends StatelessWidget {
   const AppearanceSettings({
     super.key,
@@ -130,6 +137,10 @@ class ColorPalette extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const availableColors = [
+      AkashicColors.gold,
+      AkashicColors.beige,
+      AkashicColors.bronze,
+      AkashicColors.brownDark,
       Colors.blue,
       Colors.green,
       Colors.red,
@@ -172,7 +183,7 @@ class ColorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = appState.accentColor == color;
+    final isSelected = appState.accentColor.value == color.value;
 
     return InkWell(
       onTap: () => appState.setAccentColor(color),
