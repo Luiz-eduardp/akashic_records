@@ -1,3 +1,4 @@
+import 'package:akashic_records/utils/launchUrl.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
@@ -38,6 +39,23 @@ class AppDrawer extends StatelessWidget {
                   Navigator.pushNamed(context, '/plugins');
                   advancedDrawerController.hideDrawer();
                 },
+                splashColor: theme.splashColor,
+                hoverColor: theme.hoverColor,
+              ),
+              ListTile(
+                leading: const Icon(Icons.discord),
+                title: Text("Discord"),
+                onTap: () => launchURL('https://discord.gg/eSuc2znz5V'),
+                splashColor: theme.splashColor,
+                hoverColor: theme.hoverColor,
+              ),
+              ListTile(
+                leading: const Icon(Icons.paid),
+                title: Text("Github Sponsor"),
+                onTap:
+                    () => launchURL(
+                      'https://github.com/sponsors/AkashicRecordsApp',
+                    ),
                 splashColor: theme.splashColor,
                 hoverColor: theme.hoverColor,
               ),
