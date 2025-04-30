@@ -1,4 +1,5 @@
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -309,6 +310,10 @@ class ColorPicker extends StatelessWidget {
     return Wrap(
       children: [
         _buildColorButton(Colors.black),
+        _buildColorButton(AkashicColors.brownDark),
+        _buildColorButton(AkashicColors.gold),
+        _buildColorButton(AkashicColors.beige),
+        _buildColorButton(AkashicColors.bronze),
         _buildColorButton(Colors.white),
         _buildColorButton(Colors.blue),
         _buildColorButton(Colors.red),

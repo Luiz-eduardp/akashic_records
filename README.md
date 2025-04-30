@@ -1,5 +1,7 @@
 
-# Akashic Records
+<img src="lib/src/banner.png" width="100%">
+
+---
 
 An open-source, cross-platform novel reader built to offer a rich and customizable reading experience. Inspired by the mystical concept of the Akashic Records, the app organizes and presents knowledge in a user-friendly way — accessible anytime, anywhere.
 <p align="center">

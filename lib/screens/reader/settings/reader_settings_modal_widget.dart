@@ -34,6 +34,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
 
     return Padding(
       padding: EdgeInsets.only(
+        top: 40,
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(

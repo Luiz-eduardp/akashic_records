@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/services/plugins/spanish/novelsligera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +24,7 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
 enum ReaderTheme {
+  Akashic,
   light,
   dark,
   sepia,
@@ -204,7 +206,7 @@ class CustomPlugin {
 
 class AppState with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
-  Color _accentColor = Colors.blue;
+  Color _accentColor = AkashicColors.bronze;
   bool _settingsLoaded = false;
   Set<String> _selectedPlugins = {};
   ReaderSettings _readerSettings = ReaderSettings();
@@ -567,7 +569,9 @@ class AppState with ChangeNotifier {
       final themeModeIndex =
           prefs.getInt('themeMode') ?? ThemeMode.system.index;
       _themeMode = ThemeMode.values[themeModeIndex];
-      _accentColor = Color(prefs.getInt('accentColor') ?? Colors.blue.value);
+      _accentColor = Color(
+        prefs.getInt('accentColor') ?? AkashicColors.gold.value,
+      );
 
       final plugins = prefs.getStringList('selectedPlugins');
       _selectedPlugins =

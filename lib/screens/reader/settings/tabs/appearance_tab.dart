@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 enum ReaderTheme {
+  Akashic,
   light,
   dark,
   sepia,
@@ -127,6 +128,17 @@ class _AppearanceTabState extends State<AppearanceTab> {
           scaffoldBackgroundColor: const Color(0xFFFAF0E6),
           textTheme: const TextTheme(
             bodyMedium: TextStyle(color: Color(0xFF795548)),
+          ),
+        );
+      case ReaderTheme.Akashic:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFD4AF37),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF2B1B0E),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFF5DEB3)),
           ),
         );
       case ReaderTheme.darkGreen:
