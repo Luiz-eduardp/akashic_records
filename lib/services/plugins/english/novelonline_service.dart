@@ -124,7 +124,7 @@ class NovelsOnline implements PluginService {
         final path = e.querySelector("h2 a")?.attributes['href'] ?? '';
         if (path.isNotEmpty) {
           final novel = Novel(
-            pluginId: name,
+            pluginId: this.name,
             id: path.replaceAll(site, ''),
             title: name,
             coverImageUrl: cover,
@@ -283,8 +283,7 @@ class NovelsOnline implements PluginService {
 
   @override
   Future<List<Novel>> getAllNovels({BuildContext? context}) async {
-    List<Novel> allNovels = [];
-    for (String letter in [
+    final letters = [
       '#',
       'A',
       'B',
@@ -312,15 +311,13 @@ class NovelsOnline implements PluginService {
       'X',
       'Y',
       'Z',
-    ]) {
-      try {
-        final novels = await _getNovelsByLetter(letter, context: context);
-        allNovels.addAll(novels);
-      } catch (e) {
-        print('Erro ao carregar novels da letra $letter: $e');
-      }
-    }
-    return allNovels;
+    ];
+
+    final novelsByLetter = await Future.wait(
+      letters.map((letter) => _getNovelsByLetter(letter, context: context)),
+    );
+
+    return novelsByLetter.expand((novels) => novels).toList();
   }
 
   Future<List<Novel>> _getNovelsByLetter(
@@ -329,20 +326,19 @@ class NovelsOnline implements PluginService {
   }) async {
     final url = '$site/novel-list?l=$letter';
     try {
-      final data = await safeFetch(
-        url,
-        context: context,
-        headers: {},
-      ).then((res) => res.body);
+      final response = await safeFetch(url, context: context, headers: {});
+      final data = response.body;
 
-      String modifiedData = data.replaceAll(
+      final modifiedData = data.replaceAll(
         'display:none',
         'display:block !important',
       );
 
       final dom.Document $ = parser.parse(modifiedData);
-      List<Novel> novels = [];
-      for (final e in $.querySelectorAll('.list-by-word-body > ul > li > a')) {
+      final novels = <Novel>[];
+      final elements = $.querySelectorAll('.list-by-word-body > ul > li > a');
+
+      for (final e in elements) {
         final name = e.text;
         final path = e.attributes['href'] ?? '';
         String coverImageUrl = '';
@@ -357,7 +353,10 @@ class NovelsOnline implements PluginService {
             if (popoverElement != null) {
               final coverSelector = '#$popoverId img';
               coverImageUrl =
-                  $.querySelector(coverSelector)?.attributes['src'] ?? '';
+                  popoverElement
+                      .querySelector(coverSelector)
+                      ?.attributes['src'] ??
+                  '';
             }
           } catch (e) {
             print('Erro ao obter a URL da capa: $e');
