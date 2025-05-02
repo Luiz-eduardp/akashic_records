@@ -378,8 +378,79 @@ class BoxNovel implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    final url = '$site/sort/nov-love-popular';
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+
+    while (hasNextPage) {
+      try {
+        final pageUrl = '$url?page=$page';
+        final data = await safeFetch(pageUrl).then((res) => res.body);
+        final dom.Document $ = parser.parse(data);
+        final novels = parseNovelsFromListPage($);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+
+    return allNovels;
+  }
+
+  List<Novel> parseNovelsFromListPage(dom.Document $) {
+    List<Novel> novels = [];
+    $.querySelectorAll('.list.list-novel.col-xs-12 .row').forEach((element) {
+      try {
+        final imgElement = element.querySelector('.col-xs-3 img');
+        final coverImageUrl =
+            imgElement?.attributes['data-src'] ??
+            imgElement?.attributes['src'] ??
+            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
+
+        final titleElement = element.querySelector('.col-xs-7 .novel-title a');
+        final title = titleElement?.text.trim() ?? '';
+        final novelPath =
+            titleElement?.attributes['href']?.replaceAll(
+              RegExp(r'https?:\/\/.*?\//'),
+              "/",
+            ) ??
+            '';
+
+        final authorElement = element.querySelector('.col-xs-7 .author');
+        final author =
+            authorElement?.text
+                .replaceAll(RegExp(r'[^\w\s]+'), '')
+                .replaceAll('Author', '')
+                .trim() ??
+            '';
+
+        if (title.isNotEmpty && novelPath.isNotEmpty) {
+          final novel = Novel(
+            pluginId: nameService,
+            id: novelPath,
+            title: title,
+            coverImageUrl: coverImageUrl,
+            author: author,
+            description: '',
+            genres: [],
+            chapters: [],
+            artist: '',
+            statusString: '',
+          );
+          novels.add(novel);
+        }
+      } catch (e) {
+        print('Erro ao analisar um romance: $e');
+      }
+    });
+    return novels;
   }
 }
