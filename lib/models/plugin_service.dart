@@ -1,4 +1,5 @@
 import 'package:akashic_records/models/model.dart';
+import 'package:flutter/material.dart';
 
 abstract class PluginService {
   String get name;
@@ -11,4 +12,5 @@ abstract class PluginService {
     int pageNo, {
     Map<String, dynamic> filters,
   });
+    Future<List<Novel>> getAllNovels({BuildContext? context}); // Added getAllNovels
 }

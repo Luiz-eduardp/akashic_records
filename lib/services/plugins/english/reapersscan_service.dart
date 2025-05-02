@@ -290,4 +290,10 @@ class ReaperScans implements PluginService {
   String getCoverUrl(String thumbnail) {
     return thumbnail.startsWith('novels/') ? mediaBase + thumbnail : thumbnail;
   }
+  
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
+  }
 }

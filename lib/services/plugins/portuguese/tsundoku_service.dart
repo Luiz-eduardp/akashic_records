@@ -1,3 +1,4 @@
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart' as dom;
@@ -341,5 +342,11 @@ class Tsundoku implements PluginService {
     final body = await _fetchApi(url);
     final document = parse(body);
     return _parseNovels(document);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

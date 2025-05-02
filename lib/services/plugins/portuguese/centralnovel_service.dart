@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
@@ -204,5 +205,11 @@ class CentralNovel implements PluginService {
   }) async {
     final url = 'https://centralnovel.com/series/?s=$searchTerm&page=$pageNo';
     return await _parseList(url);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

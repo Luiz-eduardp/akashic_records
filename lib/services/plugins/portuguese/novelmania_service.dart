@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
@@ -354,5 +355,11 @@ class NovelMania implements PluginService {
       print('Error fetching or parsing popular novels: $e');
       return [];
     }
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

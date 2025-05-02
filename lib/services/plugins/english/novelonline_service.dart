@@ -280,4 +280,103 @@ class NovelsOnline implements PluginService {
       return [];
     }
   }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    for (String letter in [
+      '#',
+      'A',
+      'B',
+      'C',
+      'D',
+      'E',
+      'F',
+      'G',
+      'H',
+      'I',
+      'J',
+      'K',
+      'L',
+      'M',
+      'N',
+      'O',
+      'P',
+      'Q',
+      'R',
+      'S',
+      'T',
+      'U',
+      'V',
+      'W',
+      'X',
+      'Y',
+      'Z',
+    ]) {
+      try {
+        final novels = await _getNovelsByLetter(letter, context: context);
+        allNovels.addAll(novels);
+      } catch (e) {
+        print('Erro ao carregar novels da letra $letter: $e');
+      }
+    }
+    return allNovels;
+  }
+
+  Future<List<Novel>> _getNovelsByLetter(
+    String letter, {
+    BuildContext? context,
+  }) async {
+    final url = '$site/novel-list?l=$letter';
+    try {
+      final data = await safeFetch(
+        url,
+        context: context,
+        headers: {},
+      ).then((res) => res.body);
+      final dom.Document $ = parser.parse(data);
+      List<Novel> novels = [];
+      for (final e in $.querySelectorAll('.list-by-word-body > ul > li > a')) {
+        final name = e.text;
+        final path = e.attributes['href'] ?? '';
+        String coverImageUrl = '';
+
+        final popoverId =
+            e.attributes['data-toggle'] == 'popover'
+                ? e.attributes['data-wrapper']
+                : null;
+
+        if (popoverId != null) {
+          final coverSelector =
+              '$popoverId > div.popover-content > div > div.pop-container > div.pop-body > div.pop-cover > img';
+          try {
+            coverImageUrl =
+                $.querySelector(coverSelector)?.attributes['src'] ?? '';
+          } catch (e) {
+            print('Erro ao obter a URL da capa: $e');
+          }
+        }
+
+        if (path.isNotEmpty) {
+          final novel = Novel(
+            pluginId: this.name,
+            id: path.replaceAll(site, ''),
+            title: name,
+            coverImageUrl: coverImageUrl,
+            author: '',
+            description: '',
+            genres: [],
+            chapters: [],
+            artist: '',
+            statusString: '',
+          );
+          novels.add(novel);
+        }
+      }
+      return novels;
+    } catch (e) {
+      print('Erro ao carregar novels da letra $letter: $e');
+      return [];
+    }
+  }
 }

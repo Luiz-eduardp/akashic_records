@@ -1,5 +1,6 @@
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
@@ -218,6 +219,12 @@ class NovelBin implements PluginService {
     final body = await _fetchApi(searchURL);
     final document = parse(body);
     return _parseBookResults(document);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }
 

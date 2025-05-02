@@ -26,8 +26,13 @@ class LibraryScreen extends StatefulWidget {
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
+enum NovelDisplayMode {
+  popular,
+  all,
+}
+
 class _LibraryScreenState extends State<LibraryScreen> {
-  List<Novel> novels = [];
+  List<Novel> novels = []; // Novels to display in the current mode
   bool isLoading = false;
   bool hasMore = true;
   int currentPage = 1;
@@ -35,7 +40,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   String? errorMessage;
   final ScrollController _scrollController = ScrollController();
   String _searchTerm = "";
-  List<Novel> allNovels = [];
+  List<Novel> allNovels = []; // All novels from all plugins
   Set<String> _previousPlugins = {};
 
   final _searchTextController = BehaviorSubject<String>();
@@ -44,6 +49,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   bool _isListView = false;
   Set<String> _hiddenNovelIds = {};
   CancelableOperation? _currentSearchOperation;
+  NovelDisplayMode _displayMode = NovelDisplayMode
+      .popular; // Current display mode (popular or all)
 
   @override
   void initState() {
@@ -67,7 +74,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (_previousPlugins != appState.selectedPlugins) {
       _previousPlugins = Set<String>.from(appState.selectedPlugins);
       _refreshNovels();
-      updateNovels();
+      // No need to call updateNovels here anymore, _refreshNovels handles it based on display mode
     }
   }
 
@@ -77,7 +84,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
     _searchTextController.close();
-
     _currentSearchOperation?.cancel();
     super.dispose();
   }
@@ -123,14 +129,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
       final jsonString = await file.readAsString();
       final dynamic decodedJson = await compute(jsonDecode, jsonString);
 
-      final List<dynamic> novelList =
-          decodedJson is List
-              ? decodedJson
-              : (decodedJson is Map ? [decodedJson] : []);
+      final List<dynamic> novelList = decodedJson is List
+          ? decodedJson
+          : (decodedJson is Map ? [decodedJson] : []);
 
       setState(() {
         allNovels = novelList.map((json) => Novel.fromMap(json)).toList();
-        novels = List<Novel>.from(allNovels);
+        _filterNovelsForDisplay(); // Initial filtering based on display mode
       });
 
       if (kDebugMode) {
@@ -143,7 +148,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       setState(() {
         errorMessage = "Erro ao analisar o arquivo JSON.".translate;
       });
-      _loadPopularNovels();
+      _loadDataBasedOnMode(); // Load initial data based on display mode
     } on FileSystemException catch (e) {
       if (kDebugMode) {
         print("Error reading file: $e");
@@ -151,7 +156,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       setState(() {
         errorMessage = "Erro ao ler o arquivo.".translate;
       });
-      _loadPopularNovels();
+      _loadDataBasedOnMode(); // Load initial data based on display mode
     } catch (e) {
       if (kDebugMode) {
         print("Unexpected error: $e");
@@ -159,19 +164,110 @@ class _LibraryScreenState extends State<LibraryScreen> {
       setState(() {
         errorMessage = "Erro inesperado: ${e.toString()}".translate;
       });
+      _loadDataBasedOnMode(); // Load initial data based on display mode
+    }
+  }
+
+  Future<void> _loadAllNovels() async {
+    if (isLoading) return;
+
+    if (_mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+    }
+
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final pluginNames = appState.selectedPlugins;
+
+      List<Novel> allFetchedNovels = [];
+      for (final pluginName in pluginNames) {
+        final plugin = appState.pluginServices[pluginName];
+        if (plugin != null) {
+          try {
+            final pluginNovels = await plugin.getAllNovels();
+            for (final novel in pluginNovels) {
+              novel.pluginId = pluginName;
+            }
+            allFetchedNovels.addAll(pluginNovels);
+          } catch (e) {
+            print(
+                'Erro ao carregar todas as novels do plugin $pluginName: $e'); //More specific error message
+            //Consider showing a user-friendly error message about this plugin
+          }
+        }
+      }
+
+      // Filter new novels against existing allNovels
+      final Set<String> seenNovelIds =
+          allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
+      List<Novel> actuallyNewNovels = [];
+      for (final novel in allFetchedNovels) {
+        final novelId = "${novel.id}-${novel.pluginId}";
+        if (!seenNovelIds.contains(novelId)) {
+          actuallyNewNovels.add(novel);
+          allNovels.add(novel);
+          seenNovelIds.add(novelId);
+        }
+      }
+
+      //Filter hidden novels
+      List<Novel> filteredNovels = actuallyNewNovels.where((novel) {
+        final novelIdentifier = "${novel.pluginId}-${novel.id}";
+        return !_hiddenNovelIds.contains(novelIdentifier);
+      }).toList();
+
+      if (_mounted) {
+        setState(() {
+          novels = filteredNovels; //Display the new novels immediately
+          isLoading = false;
+          hasMore =
+              false; //  Since you fetched ALL novels, there's no more to load
+        });
+      }
+      await _saveNovelsToJSON();
+    } catch (e) {
+      if (_mounted) {
+        setState(() {
+          errorMessage = 'Erro ao carregar todas as novels: ${e.toString()}'
+              .translate; // More specific error message
+          isLoading = false;
+          hasMore = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadDataBasedOnMode() async {
+    if (_displayMode == NovelDisplayMode.popular) {
       _loadPopularNovels();
+    } else {
+      _loadAllNovels();
     }
   }
 
   Future<void> updateNovels() async {
-    allNovels.clear();
-    novels.clear();
+    if (isLoading) return; // Prevent multiple updates at once
 
-    await _loadPopularNovels();
+    allNovels.clear(); // Clear existing allNovels list
+    novels.clear(); //Clear displayed novels
 
-    await _saveNovelsToJSON();
+    if (_displayMode ==
+        NovelDisplayMode.popular) //Load popular novels logic
+    {
+      currentPage = 1; //Reset pagination
+      hasMore = true;
+      _loadPopularNovels();
+    } else //Load all novels logic
+    {
+      _loadAllNovels();
+    }
 
-    setState(() {});
+    await _saveNovelsToJSON(); //Save changes
+
+    setState(() {}); //Refresh UI
   }
 
   Future<void> _loadViewMode() async {
@@ -206,7 +302,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       _hiddenNovelIds.add(novelId);
     });
     await _saveHiddenNovels();
-    _refreshNovels();
+    _filterNovelsForDisplay();
   }
 
   void _scrollListener() {
@@ -214,7 +310,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent * triggerPercentage &&
         hasMore &&
-        !isLoading) {
+        !isLoading &&
+        _displayMode == NovelDisplayMode.popular) {
       if (_searchTerm.isEmpty) {
         _loadMorePopularNovels();
       }
@@ -265,11 +362,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
-      List<Novel> filteredNovels =
-          actuallyNewNovels.where((novel) {
-            final novelIdentifier = "${novel.pluginId}-${novel.id}";
-            return !_hiddenNovelIds.contains(novelIdentifier);
-          }).toList();
+      List<Novel> filteredNovels = actuallyNewNovels.where((novel) {
+        final novelIdentifier = "${novel.pluginId}-${novel.id}";
+        return !_hiddenNovelIds.contains(novelIdentifier);
+      }).toList();
 
       if (_mounted) {
         setState(() {
@@ -281,7 +377,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     } catch (e) {
       if (_mounted) {
         setState(() {
-          errorMessage = 'Erro ao carregar novels: ${e.toString()}'.translate;
+          errorMessage = 'Erro ao carregar novels populares: ${e.toString()}'
+              .translate; // More specific message
           hasMore = false;
           isLoading = false;
         });
@@ -362,11 +459,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
         }
       }
 
-      List<Novel> filteredSearchResults =
-          actuallyNewNovels.where((novel) {
-            final novelIdentifier = "${novel.pluginId}-${novel.id}";
-            return !_hiddenNovelIds.contains(novelIdentifier);
-          }).toList();
+      List<Novel> filteredSearchResults = actuallyNewNovels.where((novel) {
+        final novelIdentifier = "${novel.pluginId}-${novel.id}";
+        return !_hiddenNovelIds.contains(novelIdentifier);
+      }).toList();
 
       if (_mounted) {
         setState(() {
@@ -399,20 +495,23 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     }
 
-    bool shouldLoadData = true;
+    bool shouldLoadData = true; //Flag for whether to load data
 
     if (_searchTerm.isEmpty) {
-      allNovels.clear();
+      //  Clear only if not searching
       novels.clear();
     } else {
+      //If searching, cancel popular novels loading
       shouldLoadData = false;
-      _searchNovels(_searchTerm);
+      _searchNovels(_searchTerm); //Perform a search instead
     }
 
     if (shouldLoadData) {
-      await _loadPopularNovels();
+      //Load the selected novels (either popular or all)
+      await _loadDataBasedOnMode();
     }
-    await _saveNovelsToJSON();
+
+    await _saveNovelsToJSON(); //Persist state
   }
 
   void _handleNovelTap(Novel novel) {
@@ -432,6 +531,38 @@ class _LibraryScreenState extends State<LibraryScreen> {
       _isListView = !_isListView;
     });
     _saveViewMode(_isListView);
+  }
+
+  void _changeDisplayMode(NovelDisplayMode mode) {
+    if (_displayMode != mode) {
+      setState(() {
+        _displayMode = mode;
+        novels.clear(); // Clear current novels
+        currentPage = 1; // Reset pagination
+        hasMore = true; // Reset hasMore flag
+      });
+      _loadDataBasedOnMode(); //Load data based on mode
+    }
+  }
+
+  void _filterNovelsForDisplay() {
+    //Apply hidden novel filtering to allNovels and update the display list
+    List<Novel> filteredNovels = allNovels.where((novel) {
+      final novelIdentifier = "${novel.pluginId}-${novel.id}";
+      return !_hiddenNovelIds.contains(novelIdentifier);
+    }).toList();
+
+    if (_displayMode == NovelDisplayMode.popular) {
+      //Display all popular filtered novels
+      setState(() {
+        novels = filteredNovels;
+      });
+    } else {
+      //Display ALL novels (and apply the filter)
+      setState(() {
+        novels = filteredNovels;
+      });
+    }
   }
 
   @override
@@ -462,6 +593,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ],
               ),
             ),
+            _buildDisplayModeButtons(), // Display mode buttons
+
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _refreshNovels,
@@ -493,17 +626,65 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
+  Widget _buildDisplayModeButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _displayMode == NovelDisplayMode.popular
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+              foregroundColor: _displayMode == NovelDisplayMode.popular
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : null,
+            ),
+            onPressed: () => _changeDisplayMode(NovelDisplayMode.popular),
+            child: Text('Populares'.translate),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _displayMode == NovelDisplayMode.all
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+              foregroundColor: _displayMode == NovelDisplayMode.all
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : null,
+            ),
+            onPressed: () => _changeDisplayMode(NovelDisplayMode.all),
+            child: Text('Todas'.translate),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNovelDisplay() {
     if (isLoading && novels.isEmpty) {
+      //Skeleton Loading
       return _isListView
           ? ListView.builder(
-            controller: _scrollController,
-            itemCount: 5,
-            itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
-          )
-          : NovelGridSkeletonWidget(itemCount: 4);
+              controller: _scrollController,
+              itemCount: 5,
+              itemBuilder: (context, index) =>
+                  const NovelTileSkeletonWidget(), //List Skeleton
+            )
+          : NovelGridSkeletonWidget(
+              itemCount: 4); // Grid Skeleton
     } else {
+      if (novels.isEmpty && !isLoading && errorMessage == null) {
+        return Center(
+          child: Text(
+              "Nenhuma novel encontrada.".translate, //Empty State message
+              style: TextStyle(fontSize: 16)),
+        );
+      }
+
       if (_isListView) {
+        //List View
         return ListView.builder(
           controller: _scrollController,
           itemCount: novels.length,
@@ -518,6 +699,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           },
         );
       } else {
+        //Grid View
         return NovelGridWidget(
           novels: novels,
           isLoading: isLoading,

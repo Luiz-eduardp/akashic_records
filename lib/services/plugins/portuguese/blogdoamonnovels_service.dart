@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 import 'package:akashic_records/models/model.dart';
@@ -276,5 +277,11 @@ class BlogDoAmonNovels implements PluginService {
     int page,
   ) {
     return baseURL;
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

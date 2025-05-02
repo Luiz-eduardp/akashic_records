@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 
@@ -442,5 +443,11 @@ class SkyNovels implements PluginService {
       pluginId: id,
       author: '',
     );
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

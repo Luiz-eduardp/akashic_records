@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
@@ -455,6 +456,12 @@ class RoyalRoad implements PluginService {
         ).replace(queryParameters: params).toString();
     final body = await _fetchApi(searchUrl);
     return _parseNovels(body);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }
 
