@@ -28,7 +28,8 @@ class LibraryScreen extends StatefulWidget {
 
 enum NovelDisplayMode { popular, all }
 
-class _LibraryScreenState extends State<LibraryScreen> {
+class _LibraryScreenState extends State<LibraryScreen>
+    with TickerProviderStateMixin {
   List<Novel> novels = [];
   bool isLoading = false;
   bool hasMore = true;
@@ -48,6 +49,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   CancelableOperation? _currentSearchOperation;
   NovelDisplayMode _displayMode = NovelDisplayMode.popular;
 
+  late TabController _tabController;
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +63,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _searchTextController
         .debounceTime(const Duration(milliseconds: 500))
         .listen(_searchNovels);
+
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.index = _displayMode == NovelDisplayMode.popular ? 0 : 1;
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        _changeDisplayMode(
+          _tabController.index == 0
+              ? NovelDisplayMode.popular
+              : NovelDisplayMode.all,
+        );
+      }
+    });
   }
 
   @override
@@ -80,6 +95,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _scrollController.dispose();
     _searchTextController.close();
     _currentSearchOperation?.cancel();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -530,6 +546,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         hasMore = true;
       });
       _loadDataBasedOnMode();
+
+      _tabController.animateTo(mode == NovelDisplayMode.popular ? 0 : 1);
     }
   }
 
@@ -579,8 +597,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ],
               ),
             ),
-            _buildDisplayModeButtons(),
-
+            _buildDisplayModeTabs(),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _refreshNovels,
@@ -612,42 +629,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _buildDisplayModeButtons() {
+  Widget _buildDisplayModeTabs() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _displayMode == NovelDisplayMode.popular
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-              foregroundColor:
-                  _displayMode == NovelDisplayMode.popular
-                      ? Theme.of(context).colorScheme.onPrimary
-                      : null,
-            ),
-            onPressed: () => _changeDisplayMode(NovelDisplayMode.popular),
-            child: Text('Populares'.translate),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _displayMode == NovelDisplayMode.all
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-              foregroundColor:
-                  _displayMode == NovelDisplayMode.all
-                      ? Theme.of(context).colorScheme.onPrimary
-                      : null,
-            ),
-            onPressed: () => _changeDisplayMode(NovelDisplayMode.all),
-            child: Text('Todas'.translate),
-          ),
+      child: TabBar(
+        controller: _tabController,
+        tabs: [
+          Tab(text: 'Populares'.translate),
+          Tab(text: 'Todas as Novels'.translate),
         ],
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        labelColor: Theme.of(context).colorScheme.onPrimary,
+        unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+        indicatorSize: TabBarIndicatorSize.tab,
       ),
     );
   }
