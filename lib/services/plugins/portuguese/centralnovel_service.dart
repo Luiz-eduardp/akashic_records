@@ -208,8 +208,27 @@ class CentralNovel implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+    String url = 'https://centralnovel.com/series/';
+
+    while (hasNextPage) {
+      try {
+        final pageUrl = '$url?page=$page';
+        final novels = await _parseList(pageUrl);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+    return allNovels;
   }
 }
