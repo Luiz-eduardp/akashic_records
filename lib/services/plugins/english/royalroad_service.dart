@@ -459,9 +459,30 @@ class RoyalRoad implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+
+    while (hasNextPage) {
+      try {
+        final url = '${baseURL}fictions/weekly-popular?page=$page';
+        final body = await _fetchApi(url);
+        final novels = await _parseNovels(body);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+
+    return allNovels;
   }
 }
 
