@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom;
 import 'package:akashic_records/models/model.dart';
-
 import 'package:akashic_records/models/plugin_service.dart';
 import 'dart:convert';
 
@@ -265,8 +264,66 @@ class MtlNovelPt implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+    Map<String, dynamic> filters = {
+      'order': {'value': 'date'},
+      'sort': {'value': 'desc'},
+      'storyStatus': {'value': 'all'},
+    };
+
+    while (hasNextPage) {
+      String pageUrl = '${site}novel-list/?';
+      if (filters != null) {
+        pageUrl += 'orderby=${filters['order']?['value']}';
+        pageUrl += '&order=${filters['sort']?['value']}';
+        pageUrl += '&status=${filters['storyStatus']?['value']}';
+      }
+      pageUrl += '&pg=$page';
+      try {
+        final data = await safeFetch(pageUrl).then((res) => res.body);
+        final dom.Document $ = parser.parse(data);
+        List<Novel> novels = [];
+
+        $.querySelectorAll('div.box.wide').forEach((el) {
+          final name = el.querySelector('a.list-title')?.text.trim() ?? '';
+          String cover = el.querySelector('amp-img')?.attributes['src'] ?? '';
+          if (cover.isNotEmpty &&
+              cover == 'https://www.mtlnovel.net/no-image.jpg.webp') {
+            cover =
+                'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
+          }
+          final path = el.querySelector('a.list-title')?.attributes['href'];
+          if (path != null) {
+            final novel = Novel(
+              pluginId: nameService,
+              id: path.replaceAll(mainUrl, '').replaceAll(site, ''),
+              title: name,
+              coverImageUrl: cover,
+              author: '',
+              description: '',
+              genres: [],
+              chapters: [],
+              artist: '',
+              statusString: '',
+            );
+            novels.add(novel);
+          }
+        });
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+
+    return allNovels;
   }
 }
