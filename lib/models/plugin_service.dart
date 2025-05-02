@@ -12,5 +12,5 @@ abstract class PluginService {
     int pageNo, {
     Map<String, dynamic> filters,
   });
-    Future<List<Novel>> getAllNovels({BuildContext? context}); // Added getAllNovels
+  Future<List<Novel>> getAllNovels({BuildContext? context});
 }
