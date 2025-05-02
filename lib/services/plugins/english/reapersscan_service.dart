@@ -290,10 +290,30 @@ class ReaperScans implements PluginService {
   String getCoverUrl(String thumbnail) {
     return thumbnail.startsWith('novels/') ? mediaBase + thumbnail : thumbnail;
   }
-  
+
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+
+    while (hasNextPage) {
+      try {
+        List<Novel> novels = await query(page, '', context: context);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+
+    return allNovels;
   }
 }
+
+enum FilterTypes { picker, toggle }
