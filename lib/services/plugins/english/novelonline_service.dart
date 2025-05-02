@@ -165,7 +165,7 @@ class NovelsOnline implements PluginService {
                 .querySelector('.novel-cover')
                 ?.querySelector('a > img')
                 ?.attributes['src'] ??
-            'https://placehold.co/400x450.png?text=Sem%20Capa',
+            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
         description: '',
         chapters: [],
         author: '',
@@ -334,24 +334,31 @@ class NovelsOnline implements PluginService {
         context: context,
         headers: {},
       ).then((res) => res.body);
-      final dom.Document $ = parser.parse(data);
+
+      String modifiedData = data.replaceAll(
+        'display:none',
+        'display:block !important',
+      );
+
+      final dom.Document $ = parser.parse(modifiedData);
       List<Novel> novels = [];
       for (final e in $.querySelectorAll('.list-by-word-body > ul > li > a')) {
         final name = e.text;
         final path = e.attributes['href'] ?? '';
         String coverImageUrl = '';
 
-        final popoverId =
-            e.attributes['data-toggle'] == 'popover'
-                ? e.attributes['data-wrapper']
-                : null;
+        final popoverId = e.attributes['data-wrapper'];
 
         if (popoverId != null) {
-          final coverSelector =
-              '$popoverId > div.popover-content > div > div.pop-container > div.pop-body > div.pop-cover > img';
+          final popoverSelector = '.popover.fade.top.in[id="$popoverId"]';
           try {
-            coverImageUrl =
-                $.querySelector(coverSelector)?.attributes['src'] ?? '';
+            final popoverElement = $.querySelector(popoverSelector);
+
+            if (popoverElement != null) {
+              final coverSelector = '#$popoverId img';
+              coverImageUrl =
+                  $.querySelector(coverSelector)?.attributes['src'] ?? '';
+            }
           } catch (e) {
             print('Erro ao obter a URL da capa: $e');
           }

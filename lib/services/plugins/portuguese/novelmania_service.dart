@@ -102,7 +102,7 @@ class NovelMania implements PluginService {
   final String site = 'https://novelmania.com.br';
   final String version = '1.0.0';
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   Future<String> _fetchApi(String url) async {
     final response = await http.get(Uri.parse(url));

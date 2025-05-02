@@ -29,7 +29,7 @@ class CentralNovel implements PluginService {
   final String version = '1.0.1';
 
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   CentralNovel() {
     HttpOverrides.global = MyHttpOverrides();

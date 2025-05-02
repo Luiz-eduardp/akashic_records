@@ -35,7 +35,7 @@ class NovelCard extends StatelessWidget {
                     imageUrl:
                         novel.coverImageUrl.isNotEmpty
                             ? novel.coverImageUrl
-                            : 'https://placehold.co/400x450.png?text=Sem%20Capa',
+                            : 'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
                     fit: BoxFit.cover,
                     width: constraints.maxWidth,
                     height: constraints.maxHeight,
@@ -47,7 +47,7 @@ class NovelCard extends StatelessWidget {
                         ),
                     errorWidget:
                         (context, url, error) => Image.network(
-                          'https://placehold.co/400x450.png?text=Sem%20Capa',
+                          'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
                           fit: BoxFit.cover,
                           width: constraints.maxWidth,
                           height: constraints.maxHeight,

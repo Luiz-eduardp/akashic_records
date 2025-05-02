@@ -23,7 +23,7 @@ class SkyNovels implements PluginService {
   final String icon = 'src/es/skynovels/icon.png';
 
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   Future<dynamic> _fetchApi(String url) async {
     try {
