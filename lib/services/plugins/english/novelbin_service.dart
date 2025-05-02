@@ -14,7 +14,7 @@ class NovelBin implements PluginService {
   String get version => '1.0.0';
 
   final String baseURL = 'https://novelbin.me/';
-  final String catalogURL = 'https://novelbin.me/sort/novelbin-daily-update';
+  final String catalogURL = 'https://novelbin.me/sort/novelbin-popular';
   final String iconURL = 'https://novelbin.me/img/logo.png';
 
   @override
@@ -222,9 +222,31 @@ class NovelBin implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    final url = catalogURL;
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+
+    while (hasNextPage) {
+      try {
+        final pageUrl = '$url?page=$page';
+        final data = await _fetchApi(pageUrl);
+        final dom.Document $ = parse(data);
+        final novels = _parseBookResults($);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+
+    return allNovels;
   }
 }
 
