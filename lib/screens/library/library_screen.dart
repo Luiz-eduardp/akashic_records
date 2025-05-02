@@ -30,7 +30,7 @@ enum NovelDisplayMode { popular, all }
 
 class _LibraryScreenState extends State<LibraryScreen>
     with TickerProviderStateMixin {
-  List<Novel> novels = [];
+  List<Novel> _allNovels = [];
   bool isLoading = false;
   bool hasMore = true;
   int currentPage = 1;
@@ -38,7 +38,6 @@ class _LibraryScreenState extends State<LibraryScreen>
   String? errorMessage;
   final ScrollController _scrollController = ScrollController();
   String _searchTerm = "";
-  List<Novel> allNovels = [];
   Set<String> _previousPlugins = {};
 
   final _searchTextController = BehaviorSubject<String>();
@@ -50,6 +49,11 @@ class _LibraryScreenState extends State<LibraryScreen>
   NovelDisplayMode _displayMode = NovelDisplayMode.popular;
 
   late TabController _tabController;
+
+  final Map<NovelDisplayMode, _TabState> _tabStates = {
+    NovelDisplayMode.popular: _TabState(),
+    NovelDisplayMode.all: _TabState(),
+  };
 
   @override
   void initState() {
@@ -112,7 +116,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   Future<void> _saveNovelsToJSON() async {
     final file = await _localFile;
 
-    final novelList = allNovels.map((novel) => novel.toMap()).toList();
+    final novelList = _allNovels.map((novel) => novel.toMap()).toList();
     final jsonString = jsonEncode(novelList);
 
     try {
@@ -146,7 +150,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               : (decodedJson is Map ? [decodedJson] : []);
 
       setState(() {
-        allNovels = novelList.map((json) => Novel.fromMap(json)).toList();
+        _allNovels = novelList.map((json) => Novel.fromMap(json)).toList();
         _filterNovelsForDisplay();
       });
 
@@ -180,12 +184,14 @@ class _LibraryScreenState extends State<LibraryScreen>
     }
   }
 
-  Future<void> _loadAllNovels() async {
-    if (isLoading) return;
+  Future<void> _loadAllNovelsFromPlugins() async {
+    final tabState = _tabStates[NovelDisplayMode.all]!;
+
+    if (tabState.isLoading) return;
 
     if (_mounted) {
       setState(() {
-        isLoading = true;
+        tabState.isLoading = true;
         errorMessage = null;
       });
     }
@@ -211,13 +217,13 @@ class _LibraryScreenState extends State<LibraryScreen>
       }
 
       final Set<String> seenNovelIds =
-          allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
+          _allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
       List<Novel> actuallyNewNovels = [];
       for (final novel in allFetchedNovels) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
           actuallyNewNovels.add(novel);
-          allNovels.add(novel);
+          _allNovels.add(novel);
           seenNovelIds.add(novelId);
         }
       }
@@ -230,9 +236,9 @@ class _LibraryScreenState extends State<LibraryScreen>
 
       if (_mounted) {
         setState(() {
-          novels = filteredNovels;
-          isLoading = false;
-          hasMore = false;
+          _tabStates[NovelDisplayMode.all]!.novels.addAll(filteredNovels);
+          tabState.isLoading = false;
+          tabState.hasMore = false;
         });
       }
       await _saveNovelsToJSON();
@@ -241,8 +247,8 @@ class _LibraryScreenState extends State<LibraryScreen>
         setState(() {
           errorMessage =
               'Erro ao carregar todas as novels: ${e.toString()}'.translate;
-          isLoading = false;
-          hasMore = false;
+          tabState.isLoading = false;
+          tabState.hasMore = false;
         });
       }
     }
@@ -252,22 +258,20 @@ class _LibraryScreenState extends State<LibraryScreen>
     if (_displayMode == NovelDisplayMode.popular) {
       _loadPopularNovels();
     } else {
-      _loadAllNovels();
+      _loadAllNovelsFromPlugins();
     }
   }
 
   Future<void> updateNovels() async {
-    if (isLoading) return;
-
-    allNovels.clear();
-    novels.clear();
+    final tabState = _tabStates[_displayMode]!;
+    tabState.novels.clear();
+    tabState.currentPage = 1;
+    tabState.hasMore = true;
 
     if (_displayMode == NovelDisplayMode.popular) {
-      currentPage = 1;
-      hasMore = true;
       _loadPopularNovels();
     } else {
-      _loadAllNovels();
+      _loadAllNovelsFromPlugins();
     }
 
     await _saveNovelsToJSON();
@@ -324,11 +328,13 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Future<void> _loadPopularNovels() async {
-    if (isLoading) return;
+    final tabState = _tabStates[NovelDisplayMode.popular]!;
+
+    if (tabState.isLoading) return;
 
     if (_mounted) {
       setState(() {
-        isLoading = true;
+        tabState.isLoading = true;
         errorMessage = null;
       });
     }
@@ -341,7 +347,9 @@ class _LibraryScreenState extends State<LibraryScreen>
           pluginNames.map((pluginName) async {
             final plugin = appState.pluginServices[pluginName];
             if (plugin != null) {
-              final pluginNovels = await plugin.popularNovels(currentPage);
+              final pluginNovels = await plugin.popularNovels(
+                tabState.currentPage,
+              );
               for (final novel in pluginNovels) {
                 novel.pluginId = pluginName;
               }
@@ -355,14 +363,14 @@ class _LibraryScreenState extends State<LibraryScreen>
       List<Novel> newNovels = results.expand((list) => list).toList();
 
       final Set<String> seenNovelIds =
-          allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
+          _allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
 
       List<Novel> actuallyNewNovels = [];
       for (final novel in newNovels) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
           actuallyNewNovels.add(novel);
-          allNovels.add(novel);
+          _allNovels.add(novel);
           seenNovelIds.add(novelId);
         }
       }
@@ -375,9 +383,9 @@ class _LibraryScreenState extends State<LibraryScreen>
 
       if (_mounted) {
         setState(() {
-          novels.addAll(filteredNovels);
-          hasMore = newNovels.length == itemsPerPage;
-          isLoading = false;
+          tabState.novels.addAll(filteredNovels);
+          tabState.hasMore = newNovels.length == itemsPerPage;
+          tabState.isLoading = false;
         });
       }
     } catch (e) {
@@ -385,8 +393,8 @@ class _LibraryScreenState extends State<LibraryScreen>
         setState(() {
           errorMessage =
               'Erro ao carregar novels populares: ${e.toString()}'.translate;
-          hasMore = false;
-          isLoading = false;
+          tabState.hasMore = false;
+          tabState.isLoading = false;
         });
       }
     }
@@ -454,13 +462,13 @@ class _LibraryScreenState extends State<LibraryScreen>
       List<Novel> searchResultsTotal = results.expand((list) => list).toList();
 
       final Set<String> seenNovelIds =
-          allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
+          _allNovels.map((n) => "${n.id}-${n.pluginId}").toSet();
       List<Novel> actuallyNewNovels = [];
       for (final novel in searchResultsTotal) {
         final novelId = "${novel.id}-${novel.pluginId}";
         if (!seenNovelIds.contains(novelId)) {
           actuallyNewNovels.add(novel);
-          allNovels.add(novel);
+          _allNovels.add(novel);
           seenNovelIds.add(novelId);
         }
       }
@@ -473,7 +481,10 @@ class _LibraryScreenState extends State<LibraryScreen>
 
       if (_mounted) {
         setState(() {
-          novels = filteredSearchResults;
+          _tabStates.forEach((key, value) {
+            value.novels.clear();
+            value.novels.addAll(filteredSearchResults);
+          });
           hasMore = false;
         });
       }
@@ -488,24 +499,26 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Future<void> _loadMorePopularNovels() async {
-    if (isLoading || !hasMore) return;
-    currentPage++;
+    final tabState = _tabStates[NovelDisplayMode.popular]!;
+    if (tabState.isLoading || !tabState.hasMore) return;
+    tabState.currentPage++;
     await _loadPopularNovels();
   }
 
   Future<void> _refreshNovels() async {
+    final tabState = _tabStates[_displayMode]!;
     if (_mounted) {
       setState(() {
-        currentPage = 1;
-        hasMore = true;
-        isLoading = false;
+        tabState.currentPage = 1;
+        tabState.hasMore = true;
+        tabState.isLoading = false;
       });
     }
 
     bool shouldLoadData = true;
 
     if (_searchTerm.isEmpty) {
-      novels.clear();
+      tabState.novels.clear();
     } else {
       shouldLoadData = false;
       _searchNovels(_searchTerm);
@@ -541,37 +554,46 @@ class _LibraryScreenState extends State<LibraryScreen>
     if (_displayMode != mode) {
       setState(() {
         _displayMode = mode;
-        novels.clear();
-        currentPage = 1;
-        hasMore = true;
       });
-      _loadDataBasedOnMode();
-
       _tabController.animateTo(mode == NovelDisplayMode.popular ? 0 : 1);
+
+      final tabState = _tabStates[mode]!;
+      if (tabState.novels.isEmpty && !tabState.isLoading) {
+        if (mode == NovelDisplayMode.popular) {
+          _loadPopularNovels();
+        } else {
+          _loadAllNovelsFromPlugins();
+        }
+      }
     }
   }
 
   void _filterNovelsForDisplay() {
     List<Novel> filteredNovels =
-        allNovels.where((novel) {
+        _allNovels.where((novel) {
           final novelIdentifier = "${novel.pluginId}-${novel.id}";
           return !_hiddenNovelIds.contains(novelIdentifier);
         }).toList();
 
-    if (_displayMode == NovelDisplayMode.popular) {
-      setState(() {
-        novels = filteredNovels;
-      });
-    } else {
-      setState(() {
-        novels = filteredNovels;
-      });
-    }
+    setState(() {
+      _allNovels = filteredNovels;
+    });
+
+    _tabStates.forEach((mode, tabState) {
+      tabState.novels.clear();
+      if (mode == NovelDisplayMode.popular) {
+        tabState.novels.addAll(_allNovels);
+      } else {
+        tabState.novels.addAll(_allNovels);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tabState = _tabStates[_displayMode]!;
+
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       body: SafeArea(
@@ -606,7 +628,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                 child: _buildNovelDisplay(),
               ),
             ),
-            if (isLoading && novels.isNotEmpty)
+            if (tabState.isLoading && tabState.novels.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: CircularProgressIndicator(
@@ -635,8 +657,18 @@ class _LibraryScreenState extends State<LibraryScreen>
       child: TabBar(
         controller: _tabController,
         tabs: [
-          Tab(text: 'Populares'.translate),
-          Tab(text: 'Todas as Novels'.translate),
+          Tab(
+            text:
+                'Populares'.translate +
+                ' - ' +
+                _tabStates[NovelDisplayMode.popular]!.novels.length.toString(),
+          ),
+          Tab(
+            text:
+                'Todas as Novels'.translate +
+                ' - ' +
+                _tabStates[NovelDisplayMode.all]!.novels.length.toString(),
+          ),
         ],
         indicator: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
@@ -650,7 +682,8 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   Widget _buildNovelDisplay() {
-    if (isLoading && novels.isEmpty) {
+    final tabState = _tabStates[_displayMode]!;
+    if (tabState.isLoading && tabState.novels.isEmpty) {
       return _isListView
           ? ListView.builder(
             controller: _scrollController,
@@ -659,7 +692,9 @@ class _LibraryScreenState extends State<LibraryScreen>
           )
           : NovelGridSkeletonWidget(itemCount: 4);
     } else {
-      if (novels.isEmpty && !isLoading && errorMessage == null) {
+      if (tabState.novels.isEmpty &&
+          !tabState.isLoading &&
+          errorMessage == null) {
         return Center(
           child: Text(
             "Nenhuma novel encontrada.".translate,
@@ -671,9 +706,9 @@ class _LibraryScreenState extends State<LibraryScreen>
       if (_isListView) {
         return ListView.builder(
           controller: _scrollController,
-          itemCount: novels.length,
+          itemCount: tabState.novels.length,
           itemBuilder: (context, index) {
-            final novel = novels[index];
+            final novel = tabState.novels[index];
             return NovelListTile(
               key: Key('${novel.pluginId}-${novel.id}'),
               novel: novel,
@@ -684,8 +719,8 @@ class _LibraryScreenState extends State<LibraryScreen>
         );
       } else {
         return NovelGridWidget(
-          novels: novels,
-          isLoading: isLoading,
+          novels: tabState.novels,
+          isLoading: tabState.isLoading,
           errorMessage: errorMessage,
           scrollController: _scrollController,
           onNovelTap: _handleNovelTap,
@@ -694,4 +729,11 @@ class _LibraryScreenState extends State<LibraryScreen>
       }
     }
   }
+}
+
+class _TabState {
+  List<Novel> novels = [];
+  bool isLoading = false;
+  bool hasMore = true;
+  int currentPage = 1;
 }
