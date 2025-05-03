@@ -22,6 +22,7 @@ analyzer:
     file_names: ignore
     curly_braces_in_flow_control_structures: ignore
     implementation_imports: ignore
+    non_constant_identifier_names: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
