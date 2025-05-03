@@ -6,8 +6,6 @@ import 'package:akashic_records/i18n/i18n.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
 import 'package:akashic_records/widgets/app_drawer.dart';
-import 'package:provider/provider.dart';
-import 'package:akashic_records/state/app_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,8 +55,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
-    final appState = Provider.of<AppState>(context);
-
     return AdvancedDrawer(
       backdropColor: theme.colorScheme.surfaceVariant,
       controller: _advancedDrawerController,
@@ -77,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            'Akashic Records'.translate + ' - ${appState.novelCount}',
+            'Akashic Records'.translate,
           ),
           backgroundColor: theme.colorScheme.surfaceContainerHighest,
           iconTheme: IconThemeData(color: theme.colorScheme.onSurfaceVariant),
