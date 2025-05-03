@@ -556,8 +556,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "O primeiro carregamento pode demorar um pouco devido à quantidade de informações.",
+             Text(
+              'O primeiro carregamento pode demorar um pouco devido à quantidade de informações'.translate,
               style: TextStyle(fontSize: 16, color: Colors.white),
               textAlign: TextAlign.center,
             ),
