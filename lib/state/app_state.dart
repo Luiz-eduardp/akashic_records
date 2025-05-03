@@ -258,6 +258,34 @@ class CachedNovel extends HiveObject {
   }
 }
 
+@HiveType(typeId: 2)
+class FavoriteListHive extends HiveObject {
+  @HiveField(0)
+  String id;
+  @HiveField(1)
+  String name;
+  @HiveField(2)
+  List<String> novelIds;
+
+  FavoriteListHive({
+    required this.id,
+    required this.name,
+    required this.novelIds,
+  });
+
+  FavoriteList toFavoriteList() {
+    return FavoriteList(id: id, name: name, novelIds: novelIds.toList());
+  }
+
+  factory FavoriteListHive.fromFavoriteList(FavoriteList list) {
+    return FavoriteListHive(
+      id: list.id,
+      name: list.name,
+      novelIds: list.novelIds.toList(),
+    );
+  }
+}
+
 class AppState with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   Color _accentColor = AkashicColors.bronze;
@@ -616,8 +644,10 @@ class AppState with ChangeNotifier {
     await Hive.initFlutter();
     Hive.registerAdapter(CustomPluginAdapter());
     Hive.registerAdapter(CachedNovelAdapter());
+    Hive.registerAdapter(FavoriteListHiveAdapter());
     await Hive.openBox<CustomPlugin>('customPlugins');
     await Hive.openBox<CachedNovel>('novelCache');
+    await Hive.openBox<FavoriteListHive>('favoriteLists');
     debugPrint("Hive initialized.");
   }
 
@@ -675,7 +705,9 @@ class AppState with ChangeNotifier {
 
       _scriptUrls = prefs.getStringList('scriptUrls') ?? [_scriptUrls.first];
 
-      await _createDefaultFavoriteListIfNeeded(prefs);
+      _favoriteLists = await _getFavoriteListsFromHive();
+
+      await _createDefaultFavoriteListIfNeeded();
     } catch (e) {
       debugPrint("Erro CRÍTICO ao carregar configurações: $e");
       _themeMode = ThemeMode.system;
@@ -687,7 +719,7 @@ class AppState with ChangeNotifier {
       _scriptUrls = ['https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/'];
       try {
         prefs = await SharedPreferences.getInstance();
-        await _createDefaultFavoriteListIfNeeded(prefs);
+        await _createDefaultFavoriteListIfNeeded();
       } catch (prefError) {
         debugPrint(
           "Could not create default list after settings load error: $prefError",
@@ -696,14 +728,17 @@ class AppState with ChangeNotifier {
     }
   }
 
+  Future<List<FavoriteList>> _getFavoriteListsFromHive() async {
+    final box = Hive.box<FavoriteListHive>('favoriteLists');
+    return box.values.map((hiveList) => hiveList.toFavoriteList()).toList();
+  }
+
   Future<List<CustomPlugin>> _getCustomPluginsFromHive() async {
     final box = Hive.box<CustomPlugin>('customPlugins');
     return box.values.toList();
   }
 
-  Future<void> _createDefaultFavoriteListIfNeeded(
-    SharedPreferences prefsInstance,
-  ) async {
+  Future<void> _createDefaultFavoriteListIfNeeded() async {
     if (_favoriteLists.isEmpty) {
       debugPrint(
         "No favorite lists found or loaded, creating default 'Favorites' list.",
@@ -711,7 +746,7 @@ class AppState with ChangeNotifier {
       final defaultListName = "Favoritos".translate;
       final defaultList = FavoriteList(id: _uuid.v4(), name: defaultListName);
       _favoriteLists.add(defaultList);
-      await _saveFavoriteLists(prefsInstance);
+      await _saveFavoriteLists();
     }
   }
 
@@ -777,15 +812,20 @@ class AppState with ChangeNotifier {
     }
   }
 
-  Future<void> _saveFavoriteLists([SharedPreferences? prefsInstance]) async {
+  Future<void> _saveFavoriteLists() async {
     try {
-      final prefs = prefsInstance ?? await SharedPreferences.getInstance();
-      final favoriteListsJson =
-          _favoriteLists.map((list) => jsonEncode(list.toJson())).toList();
-      await prefs.setStringList('favoriteLists', favoriteListsJson);
+      final box = Hive.box<FavoriteListHive>('favoriteLists');
+      await box.clear();
+      final Map<String, FavoriteListHive> listMap = {
+        for (var list in _favoriteLists)
+          list.id: FavoriteListHive.fromFavoriteList(list),
+      };
+      await box.putAll(listMap);
+      debugPrint("Favorite lists saved to Hive.");
     } catch (e) {
-      debugPrint("Erro ao salvar listas de favoritos: $e");
+      debugPrint("Erro ao salvar listas de favoritos no Hive: $e");
     }
+    notifyListeners();
   }
 
   void updateNovelCount(int count) {
@@ -882,6 +922,46 @@ class CachedNovelAdapter extends TypeAdapter<CachedNovel> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is CachedNovelAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class FavoriteListHiveAdapter extends TypeAdapter<FavoriteListHive> {
+  @override
+  final typeId = 2;
+
+  @override
+  FavoriteListHive read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return FavoriteListHive(
+      id: fields[0] as String,
+      name: fields[1] as String,
+      novelIds: (fields[2] as List?)?.cast<String>() ?? [],
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, FavoriteListHive obj) {
+    writer
+      ..writeByte(3)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.novelIds);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FavoriteListHiveAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
