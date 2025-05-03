@@ -513,4 +513,10 @@ class Webnovel implements PluginService {
       return [];
     }
   }
+  
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
+  }
 }

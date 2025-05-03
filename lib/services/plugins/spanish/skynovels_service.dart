@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 
@@ -22,7 +23,7 @@ class SkyNovels implements PluginService {
   final String icon = 'src/es/skynovels/icon.png';
 
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   Future<dynamic> _fetchApi(String url) async {
     try {
@@ -71,7 +72,7 @@ class SkyNovels implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final url = '${apiURL}novels?&q';
+    final url = '${apiURL}novels?&q&page=$pageNo';
     final apiResult = await _fetchApi(url);
 
     if (apiResult == null) {
@@ -342,9 +343,8 @@ class SkyNovels implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final searchTermLower = searchTerm.toLowerCase();
-    final url = '${apiURL}novels?&q';
-
+    final encodedSearchTerm = Uri.encodeComponent(searchTerm);
+    final url = '${baseURL}novelas?page=$pageNo&titulo=$encodedSearchTerm';
     final apiResult = await _fetchApi(url);
 
     if (apiResult == null) {
@@ -369,63 +369,57 @@ class SkyNovels implements PluginService {
       }
 
       try {
-        final title = (novelData['nvl_title'] as String?)?.toLowerCase() ?? '';
-        if (searchTermLower.isNotEmpty && title.contains(searchTermLower)) {
-          final novelTitle = novelData['nvl_title'] as String? ?? 'Untitled';
-          final cover =
-              novelData['image'] != null
-                  ? '${apiURL}get-image/${novelData['image']}/novels/false'
-                  : defaultCover;
-
-          final novelId = novelData['id'];
-          final novelName = novelData['nvl_name'];
-          final path =
-              novelId != null && novelName != null
-                  ? 'novelas/$novelId/$novelName/'
-                  : null;
-
-          if (path == null) {
-            print(
-              'Invalid novelId or novelName: novelId=$novelId, novelName=$novelName',
-            );
-            continue;
-          }
-          novels.add(
-            Novel(
-              id: path,
-              title: novelTitle,
-              coverImageUrl: cover,
-              description: novelData['nvl_content'] as String? ?? '',
-              genres:
-                  (novelData['genres'] as List<dynamic>?)
-                      ?.map<String>((genre) {
-                        if (genre is Map<String, dynamic>) {
-                          return genre['genre_name'] as String? ?? '';
-                        }
-                        print(
-                          'searchNovels: Unexpected data type in genres: ${genre.runtimeType}',
-                        );
-                        return '';
-                      })
-                      .where((genre) => genre.isNotEmpty)
-                      .toList() ??
-                  [],
-              chapters: [],
-              artist: '',
-              statusString: novelData['nvl_status'] as String? ?? '',
-              pluginId: id,
-              author: novelData['nvl_writer'] as String? ?? '',
-            ),
+        final title = novelData['nvl_title'] as String? ?? 'Untitled';
+        final cover =
+            novelData['image'] != null
+                ? '${apiURL}get-image/${novelData['image']}/novels/false'
+                : defaultCover;
+        final novelId = novelData['id'];
+        final novelName = novelData['nvl_name'];
+        final path =
+            novelId != null && novelName != null
+                ? 'novelas/$novelId/$novelName/'
+                : null;
+        if (path == null) {
+          print(
+            'Invalid novelId or novelName: novelId=$novelId, novelName=$novelName',
           );
+          continue;
         }
+        novels.add(
+          Novel(
+            id: path,
+            title: title,
+            coverImageUrl: cover,
+            description: novelData['nvl_content'] as String? ?? '',
+            genres:
+                (novelData['genres'] as List<dynamic>?)
+                    ?.map<String>((genre) {
+                      if (genre is Map<String, dynamic>) {
+                        return genre['genre_name'] as String? ?? '';
+                      }
+                      print(
+                        'searchNovels: Unexpected data type in genres: ${genre.runtimeType}',
+                      );
+                      return '';
+                    })
+                    .where((genre) => genre.isNotEmpty)
+                    .toList() ??
+                [],
+            chapters: [],
+            artist: '',
+            statusString: novelData['nvl_status'] as String? ?? '',
+            pluginId: id,
+            author: novelData['nvl_writer'] as String? ?? '',
+          ),
+        );
       } catch (e) {
         print(
-          'searchNovels: Error processing novel data: $e - novelData: $novelData - searchTerm: $searchTerm - url: $url',
+          'searchNovels: Error processing novel data: $e, searchTerm: $searchTerm, url: $url',
         );
       }
     }
 
-    print('searchNovels: filteredNovels.length = ${novels.length}');
     return novels;
   }
 
@@ -442,5 +436,94 @@ class SkyNovels implements PluginService {
       pluginId: id,
       author: '',
     );
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+
+    while (hasNextPage) {
+      final url = '${apiURL}novels?&q&page=$page';
+      final apiResult = await _fetchApi(url);
+
+      if (apiResult == null) {
+        print("apiResult is null, returning empty list");
+        hasNextPage = false;
+        continue;
+      }
+
+      if (apiResult is! Map || apiResult['novels'] is! List) {
+        print('Formato de resposta da API inesperado para popularNovels');
+        hasNextPage = false;
+        continue;
+      }
+
+      final novelList = apiResult['novels'] as List<dynamic>;
+
+      if (novelList.isEmpty) {
+        hasNextPage = false;
+      }
+
+      for (final novelData in novelList) {
+        if (novelData is! Map<String, dynamic>) {
+          print('Unexpected data type in novelList: ${novelData.runtimeType}');
+          continue;
+        }
+
+        try {
+          final title = novelData['nvl_title'] as String? ?? 'Untitled';
+          final cover =
+              novelData['image'] != null
+                  ? '${apiURL}get-image/${novelData['image']}/novels/false'
+                  : defaultCover;
+          final novelId = novelData['id'];
+          final novelName = novelData['nvl_name'];
+          final path =
+              novelId != null && novelName != null
+                  ? 'novelas/$novelId/$novelName/'
+                  : null;
+          if (path == null) {
+            print(
+              'Invalid novelId or novelName: novelId=$novelId, novelName=$novelName',
+            );
+            continue;
+          }
+          allNovels.add(
+            Novel(
+              id: path,
+              title: title,
+              coverImageUrl: cover,
+              description: novelData['nvl_content'] as String? ?? '',
+              genres:
+                  (novelData['genres'] as List<dynamic>?)
+                      ?.map<String>((genre) {
+                        if (genre is Map<String, dynamic>) {
+                          return genre['genre_name'] as String? ?? '';
+                        }
+                        print(
+                          'Unexpected data type in genres: ${genre.runtimeType}',
+                        );
+                        return '';
+                      })
+                      .where((genre) => genre.isNotEmpty)
+                      .toList() ??
+                  [],
+              chapters: [],
+              artist: '',
+              statusString: novelData['nvl_status'] as String? ?? '',
+              pluginId: id,
+              author: novelData['nvl_writer'] as String? ?? '',
+            ),
+          );
+        } catch (e) {
+          print('Erro ao processar dados do novel: $e, data: $novelData');
+        }
+      }
+      page++;
+    }
+
+    return allNovels;
   }
 }

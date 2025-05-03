@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 import 'package:akashic_records/models/model.dart';
@@ -19,7 +20,7 @@ class BlogDoAmonNovels implements PluginService {
   final String icon = 'src/pt-br/blogdoamonnovels/icon.png';
 
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   Future<String> _fetchApi(String url) async {
     try {
@@ -276,5 +277,11 @@ class BlogDoAmonNovels implements PluginService {
     int page,
   ) {
     return baseURL;
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

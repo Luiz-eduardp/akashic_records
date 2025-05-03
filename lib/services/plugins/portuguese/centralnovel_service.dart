@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
@@ -28,7 +29,7 @@ class CentralNovel implements PluginService {
   final String version = '1.0.1';
 
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   CentralNovel() {
     HttpOverrides.global = MyHttpOverrides();
@@ -204,5 +205,30 @@ class CentralNovel implements PluginService {
   }) async {
     final url = 'https://centralnovel.com/series/?s=$searchTerm&page=$pageNo';
     return await _parseList(url);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+    String url = 'https://centralnovel.com/series/';
+
+    while (hasNextPage) {
+      try {
+        final pageUrl = '$url?page=$page';
+        final novels = await _parseList(pageUrl);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+    return allNovels;
   }
 }

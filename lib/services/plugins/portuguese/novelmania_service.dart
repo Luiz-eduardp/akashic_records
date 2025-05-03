@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
@@ -101,7 +102,7 @@ class NovelMania implements PluginService {
   final String site = 'https://novelmania.com.br';
   final String version = '1.0.0';
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   Future<String> _fetchApi(String url) async {
     final response = await http.get(Uri.parse(url));
@@ -354,5 +355,11 @@ class NovelMania implements PluginService {
       print('Error fetching or parsing popular novels: $e');
       return [];
     }
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

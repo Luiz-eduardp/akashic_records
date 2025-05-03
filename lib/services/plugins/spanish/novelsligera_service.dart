@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 
@@ -256,5 +257,11 @@ class NovelasLigera implements PluginService {
       novels = [novels[1]];
     }
     return novels;
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

@@ -115,7 +115,7 @@ The term **"Akashic Records"** originates from theosophy and mysticism, referrin
 
 - **Flutter** – Cross-platform framework for building mobile and desktop apps
 - **Dart** – Core language for Flutter development
-- **SQLite** – Local data storage engine
+- **Hive** – Local data storage engine
 - **Provider** – State management solution for Flutter
 
 ---
