@@ -1,3 +1,4 @@
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom;
@@ -188,7 +189,7 @@ class BoxNovel implements PluginService {
               l?.attributes['data-src'] ??
               l?.attributes['src'] ??
               l?.attributes['data-lazy-srcset'] ??
-              'https://placehold.co/400x450.png?text=Sem%20Capa',
+              'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
           author: '',
           description: '',
           genres: [],
@@ -291,7 +292,7 @@ class BoxNovel implements PluginService {
                 .querySelector('.summary_image > a > img')
                 ?.attributes['data-lazy-src'] ??
             $.querySelector('.summary_image > a > img')?.attributes['src'] ??
-            'https://placehold.co/400x450.png?text=Sem%20Capa',
+            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
         description:
             $.querySelector('div.summary__content > p')?.text.trim() ?? '',
         chapters: [],
@@ -374,5 +375,82 @@ class BoxNovel implements PluginService {
       print('Erro ao pesquisar novels: $e');
       return [];
     }
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    final url = '$site/sort/nov-love-popular';
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+
+    while (hasNextPage) {
+      try {
+        final pageUrl = '$url?page=$page';
+        final data = await safeFetch(pageUrl).then((res) => res.body);
+        final dom.Document $ = parser.parse(data);
+        final novels = parseNovelsFromListPage($);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+
+    return allNovels;
+  }
+
+  List<Novel> parseNovelsFromListPage(dom.Document $) {
+    List<Novel> novels = [];
+    $.querySelectorAll('.list.list-novel.col-xs-12 .row').forEach((element) {
+      try {
+        final imgElement = element.querySelector('.col-xs-3 img');
+        final coverImageUrl =
+            imgElement?.attributes['data-src'] ??
+            imgElement?.attributes['src'] ??
+            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
+
+        final titleElement = element.querySelector('.col-xs-7 .novel-title a');
+        final title = titleElement?.text.trim() ?? '';
+        final novelPath =
+            titleElement?.attributes['href']?.replaceAll(
+              RegExp(r'https?:\/\/.*?\//'),
+              "/",
+            ) ??
+            '';
+
+        final authorElement = element.querySelector('.col-xs-7 .author');
+        final author =
+            authorElement?.text
+                .replaceAll(RegExp(r'[^\w\s]+'), '')
+                .replaceAll('Author', '')
+                .trim() ??
+            '';
+
+        if (title.isNotEmpty && novelPath.isNotEmpty) {
+          final novel = Novel(
+            pluginId: nameService,
+            id: novelPath,
+            title: title,
+            coverImageUrl: coverImageUrl,
+            author: author,
+            description: '',
+            genres: [],
+            chapters: [],
+            artist: '',
+            statusString: '',
+          );
+          novels.add(novel);
+        }
+      } catch (e) {
+        print('Erro ao analisar um romance: $e');
+      }
+    });
+    return novels;
   }
 }

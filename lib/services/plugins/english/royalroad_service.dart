@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
@@ -191,7 +192,7 @@ class RoyalRoad implements PluginService {
   };
 
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   Future<String> _fetchApi(String url) async {
     final response = await http.get(Uri.parse(url));
@@ -455,6 +456,33 @@ class RoyalRoad implements PluginService {
         ).replace(queryParameters: params).toString();
     final body = await _fetchApi(searchUrl);
     return _parseNovels(body);
+  }
+
+  @override
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+    int page = 1;
+    bool hasNextPage = true;
+
+    while (hasNextPage) {
+      try {
+        final url = '${baseURL}fictions/weekly-popular?page=$page';
+        final body = await _fetchApi(url);
+        final novels = await _parseNovels(body);
+        if (novels.isEmpty) {
+          hasNextPage = false;
+        } else {
+          allNovels.addAll(novels);
+          page++;
+        }
+      } catch (e) {
+        print('Erro ao carregar novels da página $page: $e');
+        hasNextPage = false;
+      }
+    }
+
+    return allNovels;
   }
 }
 

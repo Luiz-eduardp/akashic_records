@@ -33,7 +33,7 @@ class NovelListTile extends StatelessWidget {
                 imageUrl:
                     novel.coverImageUrl.isNotEmpty
                         ? novel.coverImageUrl
-                        : 'https://placehold.co/400x450.png?text=Sem%20Capa',
+                        : 'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
                 fit: BoxFit.cover,
                 placeholder:
                     (context, url) => Center(
@@ -50,7 +50,7 @@ class NovelListTile extends StatelessWidget {
                     ),
                 errorWidget:
                     (context, url, error) => Image.network(
-                      'https://placehold.co/400x450.png?text=Sem%20Capa',
+                      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
                       fit: BoxFit.cover,
                     ),
               ),

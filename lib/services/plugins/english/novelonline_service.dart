@@ -124,7 +124,7 @@ class NovelsOnline implements PluginService {
         final path = e.querySelector("h2 a")?.attributes['href'] ?? '';
         if (path.isNotEmpty) {
           final novel = Novel(
-            pluginId: name,
+            pluginId: this.name,
             id: path.replaceAll(site, ''),
             title: name,
             coverImageUrl: cover,
@@ -165,7 +165,7 @@ class NovelsOnline implements PluginService {
                 .querySelector('.novel-cover')
                 ?.querySelector('a > img')
                 ?.attributes['src'] ??
-            'https://placehold.co/400x450.png?text=Sem%20Capa',
+            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
         description: '',
         chapters: [],
         author: '',
@@ -277,6 +277,111 @@ class NovelsOnline implements PluginService {
       return novels;
     } catch (e) {
       print('Erro ao pesquisar novels: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    final letters = [
+      '#',
+      'A',
+      'B',
+      'C',
+      'D',
+      'E',
+      'F',
+      'G',
+      'H',
+      'I',
+      'J',
+      'K',
+      'L',
+      'M',
+      'N',
+      'O',
+      'P',
+      'Q',
+      'R',
+      'S',
+      'T',
+      'U',
+      'V',
+      'W',
+      'X',
+      'Y',
+      'Z',
+    ];
+
+    final novelsByLetter = await Future.wait(
+      letters.map((letter) => _getNovelsByLetter(letter, context: context)),
+    );
+
+    return novelsByLetter.expand((novels) => novels).toList();
+  }
+
+  Future<List<Novel>> _getNovelsByLetter(
+    String letter, {
+    BuildContext? context,
+  }) async {
+    final url = '$site/novel-list?l=$letter';
+    try {
+      final response = await safeFetch(url, context: context, headers: {});
+      final data = response.body;
+
+      final modifiedData = data.replaceAll(
+        'display:none',
+        'display:block !important',
+      );
+
+      final dom.Document $ = parser.parse(modifiedData);
+      final novels = <Novel>[];
+      final elements = $.querySelectorAll('.list-by-word-body > ul > li > a');
+
+      for (final e in elements) {
+        final name = e.text;
+        final path = e.attributes['href'] ?? '';
+        String coverImageUrl = '';
+
+        final popoverId = e.attributes['data-wrapper'];
+
+        if (popoverId != null) {
+          final popoverSelector = '.popover.fade.top.in[id="$popoverId"]';
+          try {
+            final popoverElement = $.querySelector(popoverSelector);
+
+            if (popoverElement != null) {
+              final coverSelector = '#$popoverId img';
+              coverImageUrl =
+                  popoverElement
+                      .querySelector(coverSelector)
+                      ?.attributes['src'] ??
+                  '';
+            }
+          } catch (e) {
+            print('Erro ao obter a URL da capa: $e');
+          }
+        }
+
+        if (path.isNotEmpty) {
+          final novel = Novel(
+            pluginId: this.name,
+            id: path.replaceAll(site, ''),
+            title: name,
+            coverImageUrl: coverImageUrl,
+            author: '',
+            description: '',
+            genres: [],
+            chapters: [],
+            artist: '',
+            statusString: '',
+          );
+          novels.add(novel);
+        }
+      }
+      return novels;
+    } catch (e) {
+      print('Erro ao carregar novels da letra $letter: $e');
       return [];
     }
   }

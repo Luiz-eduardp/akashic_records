@@ -1,3 +1,4 @@
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart' as dom;
@@ -90,7 +91,7 @@ class Tsundoku implements PluginService {
   final String site = 'https://tsundoku.com.br';
   final String version = '1.0.1';
   static const String defaultCover =
-      'https://placehold.co/400x450.png?text=Sem%20Capa';
+      'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
   Future<String> _fetchApi(String url) async {
     final response = await http.get(Uri.parse(url));
@@ -341,5 +342,11 @@ class Tsundoku implements PluginService {
     final body = await _fetchApi(url);
     final document = parse(body);
     return _parseNovels(document);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({BuildContext? context}) {
+    // TODO: implement getAllNovels
+    throw UnimplementedError();
   }
 }

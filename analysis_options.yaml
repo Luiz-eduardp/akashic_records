@@ -21,6 +21,7 @@ analyzer:
     prefer_interpolation_to_compose_strings: ignore
     file_names: ignore
     curly_braces_in_flow_control_structures: ignore
+    implementation_imports: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
