@@ -5,6 +5,7 @@ import 'package:akashic_records/services/plugins/spanish/novelsligera_service.da
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:akashic_records/services/plugins/english/novelbin_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
@@ -172,11 +173,17 @@ class ReaderSettings {
   }
 }
 
-class CustomPlugin {
+@HiveType(typeId: 0)
+class CustomPlugin extends HiveObject {
+  @HiveField(0)
   String name;
+  @HiveField(1)
   String code;
+  @HiveField(2)
   String use;
+  @HiveField(3)
   bool enabled;
+  @HiveField(4)
   int priority;
 
   CustomPlugin({
@@ -204,6 +211,53 @@ class CustomPlugin {
   );
 }
 
+@HiveType(typeId: 1)
+class CachedNovel extends HiveObject {
+  @HiveField(0)
+  String id;
+  @HiveField(1)
+  String pluginId;
+  @HiveField(2)
+  String title;
+  @HiveField(3)
+  String coverImageUrl;
+  @HiveField(4)
+  String author;
+
+  CachedNovel({
+    required this.id,
+    required this.pluginId,
+    required this.title,
+    required this.coverImageUrl,
+    required this.author,
+  });
+
+  factory CachedNovel.fromNovel(Novel novel) {
+    return CachedNovel(
+      id: novel.id,
+      pluginId: novel.pluginId,
+      title: novel.title,
+      coverImageUrl: novel.coverImageUrl,
+      author: novel.author,
+    );
+  }
+
+  Novel toNovel() {
+    return Novel(
+      id: id,
+      pluginId: pluginId,
+      title: title,
+      coverImageUrl: coverImageUrl,
+      author: author,
+      description: '',
+      chapters: [],
+      statusString: '',
+      artist: '',
+      genres: [],
+    );
+  }
+}
+
 class AppState with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   Color _accentColor = AkashicColors.bronze;
@@ -215,6 +269,7 @@ class AppState with ChangeNotifier {
     'https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/',
   ];
   List<FavoriteList> _favoriteLists = [];
+  int _novelCount = 0;
 
   final Map<String, PluginService> _pluginServices = {};
   final _uuid = const Uuid();
@@ -256,6 +311,13 @@ class AppState with ChangeNotifier {
   List<String> get scriptUrls => _scriptUrls;
   Map<String, PluginService> get pluginServices => _pluginServices;
   List<FavoriteList> get favoriteLists => _favoriteLists;
+  int get novelCount => _novelCount;
+
+  @override
+  void dispose() {
+    Hive.close();
+    super.dispose();
+  }
 
   void setThemeMode(ThemeMode newThemeMode) {
     if (_themeMode != newThemeMode) {
@@ -288,6 +350,7 @@ class AppState with ChangeNotifier {
   void addCustomPlugin(CustomPlugin plugin) {
     _customPlugins.add(plugin);
     _saveCustomPlugins();
+    _insertCustomPluginToHive(plugin);
     notifyListeners();
   }
 
@@ -295,14 +358,16 @@ class AppState with ChangeNotifier {
     if (index >= 0 && index < _customPlugins.length) {
       _customPlugins[index] = plugin;
       _saveCustomPlugins();
+      _updateCustomPluginInHive(plugin);
       notifyListeners();
     }
   }
 
   void removeCustomPlugin(int index) {
     if (index >= 0 && index < _customPlugins.length) {
-      _customPlugins.removeAt(index);
+      final pluginToRemove = _customPlugins.removeAt(index);
       _saveCustomPlugins();
+      _deleteCustomPluginFromHive(pluginToRemove);
       notifyListeners();
     }
   }
@@ -310,6 +375,7 @@ class AppState with ChangeNotifier {
   void setCustomPlugins(List<CustomPlugin> plugins) {
     _customPlugins = plugins;
     _saveCustomPlugins();
+    _syncCustomPluginsToHive(plugins);
     notifyListeners();
   }
 
@@ -324,6 +390,7 @@ class AppState with ChangeNotifier {
               .toList();
       _customPlugins.addAll(newPlugins);
       _saveCustomPlugins();
+      _syncCustomPluginsToHive(_customPlugins);
       notifyListeners();
     } catch (e) {
       debugPrint("Erro ao decodificar ou adicionar plugins do JSON: $e");
@@ -500,65 +567,86 @@ class AppState with ChangeNotifier {
 
   Future<void> saveNovelCache(Novel novel) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final cacheKey = getNovelCacheKey(novel.pluginId, novel.id);
-      final cacheData = jsonEncode({
-        'id': novel.id,
-        'pluginId': novel.pluginId,
-        'title': novel.title,
-        'coverImageUrl': novel.coverImageUrl,
-        'author': novel.author,
-      });
-      await prefs.setString(cacheKey, cacheData);
-      debugPrint("Saved cache for ${novel.pluginId}/${novel.id}");
+      final box = Hive.box<CachedNovel>('novelCache');
+      final cachedNovel = CachedNovel.fromNovel(novel);
+      await box.put(getNovelCacheKey(novel.pluginId, novel.id), cachedNovel);
+      debugPrint("Saved cache for ${novel.pluginId}/${novel.id} in Hive");
     } catch (e) {
       debugPrint(
-        "Error saving novel cache for ${novel.pluginId}/${novel.id}: $e",
+        "Error saving novel cache for ${novel.pluginId}/${novel.id} in Hive: $e",
       );
     }
   }
 
   Future<Novel?> getNovelFromCache(String pluginId, String novelId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final cacheKey = getNovelCacheKey(pluginId, novelId);
-      final cacheData = prefs.getString(cacheKey);
-
-      if (cacheData != null) {
-        final Map<String, dynamic> map = jsonDecode(cacheData);
-        return Novel(
-          id: map['id'] as String,
-          pluginId: map['pluginId'] as String,
-          title: map['title'] as String? ?? 'Unknown Title'.translate,
-          coverImageUrl: map['coverImageUrl'] as String? ?? '',
-          author: map['author'] as String? ?? '',
-          description: '',
-          chapters: [],
-          statusString: '',
-          artist: '',
-          genres: [],
-        );
+      final box = Hive.box<CachedNovel>('novelCache');
+      final cachedNovel = box.get(getNovelCacheKey(pluginId, novelId));
+      if (cachedNovel != null) {
+        debugPrint("Retrieved cache for $pluginId/$novelId from Hive");
+        return cachedNovel.toNovel();
       }
     } catch (e) {
-      debugPrint("Error reading novel cache for $pluginId/$novelId: $e");
+      debugPrint(
+        "Error reading novel cache for $pluginId/$novelId from Hive: $e",
+      );
     }
     return null;
   }
 
   Future<void> removeNovelCache(String pluginId, String novelId) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final cacheKey = getNovelCacheKey(pluginId, novelId);
-      await prefs.remove(cacheKey);
-      debugPrint("Removed cache for $pluginId/$novelId");
+      final box = Hive.box<CachedNovel>('novelCache');
+      await box.delete(getNovelCacheKey(pluginId, novelId));
+      debugPrint("Removed cache for $pluginId/$novelId from Hive");
     } catch (e) {
-      debugPrint("Error removing novel cache for $pluginId/$novelId: $e");
+      debugPrint(
+        "Error removing novel cache for $pluginId/$novelId from Hive: $e",
+      );
     }
   }
 
   Future<void> initialize() async {
+    await _initHive();
     await _loadSettings();
     _settingsLoaded = true;
+  }
+
+  Future<void> _initHive() async {
+    await Hive.initFlutter();
+    Hive.registerAdapter(CustomPluginAdapter());
+    Hive.registerAdapter(CachedNovelAdapter());
+    await Hive.openBox<CustomPlugin>('customPlugins');
+    await Hive.openBox<CachedNovel>('novelCache');
+    debugPrint("Hive initialized.");
+  }
+
+  Future<void> _insertCustomPluginToHive(CustomPlugin plugin) async {
+    final box = Hive.box<CustomPlugin>('customPlugins');
+    await box.put(plugin.name, plugin);
+    debugPrint("Custom plugin '${plugin.name}' inserted into Hive.");
+  }
+
+  Future<void> _updateCustomPluginInHive(CustomPlugin plugin) async {
+    final box = Hive.box<CustomPlugin>('customPlugins');
+    await box.put(plugin.name, plugin);
+    debugPrint("Custom plugin '${plugin.name}' updated in Hive.");
+  }
+
+  Future<void> _deleteCustomPluginFromHive(CustomPlugin plugin) async {
+    final box = Hive.box<CustomPlugin>('customPlugins');
+    await box.delete(plugin.name);
+    debugPrint("Custom plugin '${plugin.name}' deleted from Hive.");
+  }
+
+  Future<void> _syncCustomPluginsToHive(List<CustomPlugin> plugins) async {
+    final box = Hive.box<CustomPlugin>('customPlugins');
+    await box.clear();
+    final Map<String, CustomPlugin> pluginMap = {
+      for (var plugin in plugins) plugin.name: plugin,
+    };
+    await box.putAll(pluginMap);
+    debugPrint("Custom plugins synced to Hive.");
   }
 
   Future<void> _loadSettings() async {
@@ -583,31 +671,11 @@ class AppState with ChangeNotifier {
       });
       _readerSettings = ReaderSettings.fromMap(readerSettingsMap);
 
-      final customPluginsJson = prefs.getStringList('customPlugins');
-      if (customPluginsJson != null && customPluginsJson.isNotEmpty) {
-        _customPlugins =
-            customPluginsJson
-                .map((json) => CustomPlugin.fromJson(jsonDecode(json)))
-                .toList();
-      } else {
-        _customPlugins = List.from(_defaultPlugins);
-        await _saveCustomPlugins(prefs);
-      }
+      _customPlugins = await _getCustomPluginsFromHive();
 
       _scriptUrls = prefs.getStringList('scriptUrls') ?? [_scriptUrls.first];
 
-      final favoriteListsJson = prefs.getStringList('favoriteLists');
-      if (favoriteListsJson != null) {
-        _favoriteLists =
-            favoriteListsJson
-                .map(
-                  (jsonString) => FavoriteList.fromJson(jsonDecode(jsonString)),
-                )
-                .toList();
-        await _createDefaultFavoriteListIfNeeded(prefs);
-      } else {
-        await _createDefaultFavoriteListIfNeeded(prefs);
-      }
+      await _createDefaultFavoriteListIfNeeded(prefs);
     } catch (e) {
       debugPrint("Erro CRÍTICO ao carregar configurações: $e");
       _themeMode = ThemeMode.system;
@@ -626,6 +694,11 @@ class AppState with ChangeNotifier {
         );
       }
     }
+  }
+
+  Future<List<CustomPlugin>> _getCustomPluginsFromHive() async {
+    final box = Hive.box<CustomPlugin>('customPlugins');
+    return box.values.toList();
   }
 
   Future<void> _createDefaultFavoriteListIfNeeded(
@@ -714,4 +787,101 @@ class AppState with ChangeNotifier {
       debugPrint("Erro ao salvar listas de favoritos: $e");
     }
   }
+
+  void updateNovelCount(int count) {
+    _novelCount = count;
+    notifyListeners();
+  }
+}
+
+class CustomPluginAdapter extends TypeAdapter<CustomPlugin> {
+  @override
+  final typeId = 0;
+
+  @override
+  CustomPlugin read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return CustomPlugin(
+      name: fields[0] as String,
+      code: fields[1] as String,
+      use: fields[2] as String,
+      enabled: fields[3] as bool,
+      priority: fields[4] as int,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, CustomPlugin obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.name)
+      ..writeByte(1)
+      ..write(obj.code)
+      ..writeByte(2)
+      ..write(obj.use)
+      ..writeByte(3)
+      ..write(obj.enabled)
+      ..writeByte(4)
+      ..write(obj.priority);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CustomPluginAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class CachedNovelAdapter extends TypeAdapter<CachedNovel> {
+  @override
+  final typeId = 1;
+
+  @override
+  CachedNovel read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return CachedNovel(
+      id: fields[0] as String,
+      pluginId: fields[1] as String,
+      title: fields[2] as String,
+      coverImageUrl: fields[3] as String,
+      author: fields[4] as String,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, CachedNovel obj) {
+    writer
+      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.pluginId)
+      ..writeByte(2)
+      ..write(obj.title)
+      ..writeByte(3)
+      ..write(obj.coverImageUrl)
+      ..writeByte(4)
+      ..write(obj.author);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CachedNovelAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }
