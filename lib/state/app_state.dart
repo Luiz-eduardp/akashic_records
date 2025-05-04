@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/services/plugins/japanese/kakuyomu_service.dart';
+import 'package:akashic_records/services/plugins/japanese/syosetu_service.dart';
 import 'package:akashic_records/services/plugins/spanish/novelsligera_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,13 +25,8 @@ import 'package:akashic_records/services/plugins/portuguese/centralnovel_service
 import 'package:akashic_records/models/favorite_list.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
-enum PluginLanguage {
-  ptBr,
-  en,
-  es,
-  ja,
-  // Adicione mais idiomas conforme necessário
-}
+
+enum PluginLanguage { ptBr, en, es, ja }
 
 class PluginInfo {
   final String name;
@@ -38,6 +34,7 @@ class PluginInfo {
 
   PluginInfo({required this.name, required this.language});
 }
+
 enum ReaderTheme {
   Akashic,
   light,
@@ -313,7 +310,7 @@ class AppState with ChangeNotifier {
   List<FavoriteList> _favoriteLists = [];
   int _novelCount = 0;
 
- final Map<String, PluginService> _pluginServices = {};
+  final Map<String, PluginService> _pluginServices = {};
   final Map<String, PluginInfo> _pluginInfo = {};
   final _uuid = const Uuid();
   static const String _novelCachePrefix = 'novel_cache_';
@@ -331,50 +328,93 @@ class AppState with ChangeNotifier {
 
   AppState() {
     _pluginServices['NovelMania'] = NovelMania();
-    _pluginInfo['NovelMania'] = PluginInfo(name: 'NovelMania', language: PluginLanguage.ptBr);
+    _pluginInfo['NovelMania'] = PluginInfo(
+      name: 'NovelMania',
+      language: PluginLanguage.ptBr,
+    );
 
     _pluginServices['Tsundoku'] = Tsundoku();
-    _pluginInfo['Tsundoku'] = PluginInfo(name: 'Tsundoku', language: PluginLanguage.ptBr);
+    _pluginInfo['Tsundoku'] = PluginInfo(
+      name: 'Tsundoku',
+      language: PluginLanguage.ptBr,
+    );
 
     _pluginServices['CentralNovel'] = CentralNovel();
-    _pluginInfo['CentralNovel'] = PluginInfo(name: 'CentralNovel', language: PluginLanguage.ptBr);
+    _pluginInfo['CentralNovel'] = PluginInfo(
+      name: 'CentralNovel',
+      language: PluginLanguage.ptBr,
+    );
 
     _pluginServices['MtlNovelPt'] = MtlNovelPt();
-    _pluginInfo['MtlNovelPt'] = PluginInfo(name: 'MtlNovelPt', language: PluginLanguage.ptBr);
+    _pluginInfo['MtlNovelPt'] = PluginInfo(
+      name: 'MtlNovelPt',
+      language: PluginLanguage.ptBr,
+    );
 
     _pluginServices['LightNovelBrasil'] = LightNovelBrasil();
-    _pluginInfo['LightNovelBrasil'] = PluginInfo(name: 'LightNovelBrasil', language: PluginLanguage.ptBr);
+    _pluginInfo['LightNovelBrasil'] = PluginInfo(
+      name: 'LightNovelBrasil',
+      language: PluginLanguage.ptBr,
+    );
 
     _pluginServices['BlogDoAmonNovels'] = BlogDoAmonNovels();
-    _pluginInfo['BlogDoAmonNovels'] = PluginInfo(name: 'BlogDoAmonNovels', language: PluginLanguage.ptBr);
+    _pluginInfo['BlogDoAmonNovels'] = PluginInfo(
+      name: 'BlogDoAmonNovels',
+      language: PluginLanguage.ptBr,
+    );
 
-    // Inglês
     _pluginServices['NovelsOnline'] = NovelsOnline();
-    _pluginInfo['NovelsOnline'] = PluginInfo(name: 'NovelsOnline', language: PluginLanguage.en);
+    _pluginInfo['NovelsOnline'] = PluginInfo(
+      name: 'NovelsOnline',
+      language: PluginLanguage.en,
+    );
 
     _pluginServices['RoyalRoad'] = RoyalRoad();
-    _pluginInfo['RoyalRoad'] = PluginInfo(name: 'RoyalRoad', language: PluginLanguage.en);
+    _pluginInfo['RoyalRoad'] = PluginInfo(
+      name: 'RoyalRoad',
+      language: PluginLanguage.en,
+    );
 
     _pluginServices['Webnovel'] = Webnovel();
-    _pluginInfo['Webnovel'] = PluginInfo(name: 'Webnovel', language: PluginLanguage.en);
+    _pluginInfo['Webnovel'] = PluginInfo(
+      name: 'Webnovel',
+      language: PluginLanguage.en,
+    );
 
     _pluginServices['ReaperScans'] = ReaperScans();
-    _pluginInfo['ReaperScans'] = PluginInfo(name: 'ReaperScans', language: PluginLanguage.en);
+    _pluginInfo['ReaperScans'] = PluginInfo(
+      name: 'ReaperScans',
+      language: PluginLanguage.en,
+    );
 
     _pluginServices['NovelBin'] = NovelBin();
-    _pluginInfo['NovelBin'] = PluginInfo(name: 'NovelBin', language: PluginLanguage.en);
+    _pluginInfo['NovelBin'] = PluginInfo(
+      name: 'NovelBin',
+      language: PluginLanguage.en,
+    );
 
-    // Espanhol
     _pluginServices['SkyNovels'] = SkyNovels();
-    _pluginInfo['SkyNovels'] = PluginInfo(name: 'SkyNovels', language: PluginLanguage.es);
+    _pluginInfo['SkyNovels'] = PluginInfo(
+      name: 'SkyNovels',
+      language: PluginLanguage.es,
+    );
 
     _pluginServices['NovelasLigera'] = NovelasLigera();
-    _pluginInfo['NovelasLigera'] = PluginInfo(name: 'NovelasLigera', language: PluginLanguage.es);
+    _pluginInfo['NovelasLigera'] = PluginInfo(
+      name: 'NovelasLigera',
+      language: PluginLanguage.es,
+    );
 
-    // Japonês
     _pluginServices['Kakuyomu'] = Kakuyomu();
-    _pluginInfo['Kakuyomu']  = PluginInfo(name: 'Kakuyomu', language: PluginLanguage.ja);
-
+    _pluginInfo['Kakuyomu'] = PluginInfo(
+      name: 'Kakuyomu',
+      language: PluginLanguage.ja,
+    );
+    _pluginServices['Syosetu'] = Syosetu();
+    _pluginInfo['Syosetu'] = PluginInfo(
+      name: 'Syosetu',
+      language: PluginLanguage.ja,
+    );
   }
 
   ThemeMode get themeMode => _themeMode;
