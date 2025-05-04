@@ -10,7 +10,9 @@ class NovelBin implements PluginService {
 
   @override
   String get name => 'NovelBin';
-
+  @override
+  String get lang =>  'en';
+  @override
   String get version => '1.0.0';
 
   final String baseURL = 'https://novelbin.me/';

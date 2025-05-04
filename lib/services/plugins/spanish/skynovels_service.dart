@@ -10,9 +10,10 @@ import 'package:http/http.dart' as http;
 class SkyNovels implements PluginService {
   @override
   String get name => 'SkyNovels';
-
+  @override
+  String get lang =>  'es';
   String get id => 'SkyNovels';
-
+  @override
   String get version => '1.0.0';
 
   @override

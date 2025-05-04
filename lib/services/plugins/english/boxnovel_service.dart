@@ -11,6 +11,8 @@ import 'dart:io';
 class BoxNovel implements PluginService {
   @override
   String get name => 'BoxNovel';
+  @override
+  String get lang =>  'en';
 
   @override
   Map<String, dynamic> get filters => {
@@ -102,6 +104,7 @@ class BoxNovel implements PluginService {
   final String id = 'BoxNovel';
   final String nameService = 'BoxNovel';
   final String site = 'https://novgo.co/';
+  @override
   final String version = '1.0.13';
   final String icon = 'src/en/webnovel/icon.png';
   final Map<String, String> headers = {

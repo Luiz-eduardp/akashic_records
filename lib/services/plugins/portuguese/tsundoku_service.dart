@@ -8,7 +8,8 @@ import 'package:akashic_records/models/plugin_service.dart';
 class Tsundoku implements PluginService {
   @override
   String get name => 'Tsundoku';
-
+  @override
+  String get lang =>  'pt-BR';
   @override
   Map<String, dynamic> get filters => {
     'order': {
@@ -89,6 +90,7 @@ class Tsundoku implements PluginService {
   final String nameService = 'Tsundoku Traduções';
   final String icon = 'src/pt-br/tsundoku/icon.png';
   final String site = 'https://tsundoku.com.br';
+  @override
   final String version = '1.0.1';
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
@@ -346,7 +348,7 @@ class Tsundoku implements PluginService {
 
   @override
   Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+    return Future.value([]);
+
   }
 }

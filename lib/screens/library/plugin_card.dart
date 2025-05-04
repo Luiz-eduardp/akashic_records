@@ -15,6 +15,7 @@ class PluginCard extends StatelessWidget {
     final appState = Provider.of<AppState>(context);
     final pluginService = appState.pluginServices[pluginName];
     final pluginVersion = pluginService?.version ?? 'Unknown'.translate;
+    final pluginlang = pluginService?.lang ?? 'Unknown'.translate;
 
     return Card(
       margin: const EdgeInsets.all(8.0),
@@ -44,13 +45,26 @@ class PluginCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      pluginName,
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          pluginName,
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        SizedBox(width: 4.0),
+
+                        Text(
+                          pluginlang,
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4.0),
                     Text(
@@ -60,7 +74,6 @@ class PluginCard extends StatelessWidget {
                         color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
-                    const SizedBox(height: 4.0),
                   ],
                 ),
               ),

@@ -18,13 +18,15 @@ class MyHttpOverrides extends HttpOverrides {
 class NovelasLigera implements PluginService {
   @override
   String get name => 'NovelasLigera';
-
+  @override
+  String get lang =>  'es';
   @override
   Map<String, dynamic> get filters => {};
 
   final String id = 'novelasligera';
   final String nameService = 'novelasligera';
   final String baseURL = 'https://novelasligera.com/';
+  @override
   final String version = '1.0.0';
   final String icon = 'src/es/novelasligera/icon.png';
   final String site = 'https://novelasligera.com/';
@@ -261,7 +263,6 @@ class NovelasLigera implements PluginService {
 
   @override
   Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+    return Future.value([]);
   }
 }
