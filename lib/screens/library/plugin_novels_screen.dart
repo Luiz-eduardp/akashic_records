@@ -107,28 +107,54 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     });
 
     try {
+      List<Novel> localResults = [];
+      List<Novel> pluginResults = [];
+
       if (term.isNotEmpty) {
+        // 1. Pesquisa Local (nas novels carregadas)
+        localResults = _novels
+            .where((novel) =>
+                novel.title.toLowerCase().contains(term.toLowerCase()) == true)
+            .toList();
+
+        // 2. Pesquisa no Plugin
         final appState = Provider.of<AppState>(context, listen: false);
         final plugin = appState.pluginServices[widget.pluginName];
 
         if (plugin != null) {
-          final searchResults = await plugin.searchNovels(term, 1);
-          for (final novel in searchResults) {
+          pluginResults = await plugin.searchNovels(term, 1);
+          for (final novel in pluginResults) {
             novel.pluginId = widget.pluginName;
           }
-          setState(() {
-            _filteredNovels = searchResults;
-          });
         } else {
           setState(() {
             _errorMessage = 'Plugin não encontrado.'.translate;
           });
         }
       } else {
+        // Se o termo de pesquisa estiver vazio, restaura a lista original
         setState(() {
           _filteredNovels = List.from(_novels);
         });
+        return; // Retorna para evitar processamento desnecessário
       }
+
+      // 3. Combinar e Exibir Resultados
+      // Remover duplicatas priorizando os resultados do plugin
+      final combinedResults = <Novel>[];
+      combinedResults.addAll(pluginResults);
+
+      for (final localNovel in localResults) {
+        if (!combinedResults.any((pluginNovel) =>
+            pluginNovel.pluginId == localNovel.pluginId &&
+            pluginNovel.id == localNovel.id)) {
+          combinedResults.add(localNovel);
+        }
+      }
+
+      setState(() {
+        _filteredNovels = combinedResults;
+      });
     } catch (e) {
       setState(() {
         _errorMessage = 'Erro ao pesquisar novels: ${e.toString()}'.translate;
@@ -259,9 +285,9 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     if (_isLoading && _filteredNovels.isEmpty) {
       return _isListView
           ? ListView.builder(
-            itemCount: 5,
-            itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
-          )
+              itemCount: 5,
+              itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
+            )
           : NovelGridSkeletonWidget(itemCount: 4);
     } else {
       if (_filteredNovels.isEmpty && !_isLoading && _errorMessage == null) {
