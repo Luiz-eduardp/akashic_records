@@ -19,7 +19,7 @@ class NovelasLigera implements PluginService {
   @override
   String get name => 'NovelasLigera';
   @override
-  String get lang =>  'es';
+  String get lang => 'es';
   @override
   Map<String, dynamic> get filters => {};
 
@@ -79,6 +79,47 @@ class NovelasLigera implements PluginService {
         final novelCover =
             element.querySelector('a > img')?.attributes['data-lazy-src'];
         final novelUrl = element.querySelector('a')?.attributes['href'];
+
+        if (novelUrl == null) continue;
+
+        final novel = Novel(
+          id: _shrinkURL(novelUrl),
+          title: novelName,
+          coverImageUrl: novelCover ?? defaultCover,
+          pluginId: name,
+          author: '',
+          description: '',
+          genres: [],
+          chapters: [],
+          artist: '',
+          statusString: '',
+        );
+        novels.add(novel);
+      }
+    }
+
+    return novels;
+  }
+
+  Future<List<Novel>> _getNovelsFromCategory(String categoryURL) async {
+    final url = categoryURL;
+    final body = await _fetchApi(url);
+    final document = parse(body);
+
+    List<Novel> novels = [];
+
+    final novelElements = document.querySelectorAll('.pt-cv-content-item');
+
+    for (var element in novelElements) {
+      final novelName = element.querySelector('.pt-cv-title > a')?.text.trim();
+
+      if (novelName != null) {
+        final novelCover =
+            element
+                .querySelector('.pt-cv-ifield > a > img')
+                ?.attributes['data-lazy-src'];
+        final novelUrl =
+            element.querySelector('.pt-cv-title > a')?.attributes['href'];
 
         if (novelUrl == null) continue;
 
@@ -215,54 +256,64 @@ class NovelasLigera implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final url = '$baseURL?s=$searchTerm&post_type=wp-manga';
+    final url = '$baseURL?s=$searchTerm&post_type=novela';
     final body = await _fetchApi(url);
     final document = parse(body);
 
     List<Novel> novels = [];
-    final novelElements = document.querySelectorAll('.inside-article');
+
+    final novelElements = document.querySelectorAll('.pt-cv-content-item');
 
     for (var element in novelElements) {
-      final novelCover = element.querySelector('img')?.attributes['src'];
-      var novelUrl = element.querySelector('a')?.attributes['href'];
-      String? novelName;
+      final novelName = element.querySelector('.pt-cv-title > a')?.text.trim();
 
-      if (novelUrl != null) {
-        novelName = novelUrl
-            .replaceAll('-', ' ')
-            .replaceFirstMapped(
-              RegExp(r'^.'),
-              (match) => match.group(0)!.toUpperCase(),
-            );
+      if (novelName != null) {
+        final novelCover =
+            element
+                .querySelector('.pt-cv-ifield > a > img')
+                ?.attributes['data-lazy-src'];
+        final novelUrl =
+            element.querySelector('.pt-cv-title > a')?.attributes['href'];
+
+        if (novelName == null || novelUrl == null) continue;
+
+        final novel = Novel(
+          id: _shrinkURL(novelUrl),
+          title: novelName,
+          coverImageUrl: novelCover ?? defaultCover,
+          pluginId: name,
+          author: '',
+          description: '',
+          genres: [],
+          chapters: [],
+          artist: '',
+          statusString: '',
+        );
+
+        novels.add(novel);
       }
-
-      novelUrl = '$novelUrl/';
-
-      if (novelName == null || novelUrl == null) continue;
-
-      final novel = Novel(
-        id: _shrinkURL(novelUrl),
-        title: novelName,
-        coverImageUrl: novelCover ?? defaultCover,
-        pluginId: name,
-        author: '',
-        description: '',
-        genres: [],
-        chapters: [],
-        artist: '',
-        statusString: '',
-      );
-
-      novels.add(novel);
-    }
-    if (novels.length > 1) {
-      novels = [novels[1]];
     }
     return novels;
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    return Future.value([]);
+  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+    List<Novel> allNovels = [];
+
+    allNovels.addAll(
+      await _getNovelsFromCategory('https://novelasligera.com/novelas-chinas/'),
+    );
+    allNovels.addAll(
+      await _getNovelsFromCategory(
+        'https://novelasligera.com/novelas-coreanas/',
+      ),
+    );
+    allNovels.addAll(
+      await _getNovelsFromCategory(
+        'https://novelasligera.com/novelas-japonesas/',
+      ),
+    );
+
+    return allNovels;
   }
 }
