@@ -12,29 +12,20 @@ class PluginsScreen extends StatefulWidget {
 }
 
 class _PluginsScreenState extends State<PluginsScreen> {
-  final List<String> availablePluginsPtBr = [
-    'NovelMania',
-    'Tsundoku',
-    'CentralNovel',
-    'MtlNovelPt',
-    'LightNovelBrasil',
-    'BlogDoAmonNovels',
-  ];
-
-  final List<String> availablePluginsEn = [
-    'NovelsOnline',
-    'RoyalRoad',
-    'Webnovel',
-    'ReaperScans',
-    'NovelBin',
-  ];
-  final List<String> availablePluginsEspanish = ['SkyNovels', 'NovelasLigera'];
-
   @override
   Widget build(BuildContext context) {
-    Theme.of(context);
     final appState = Provider.of<AppState>(context);
+    Theme.of(context);
     final selectedPlugins = appState.selectedPlugins;
+
+    // Agrupar plugins por idioma
+    final pluginsByLanguage = <PluginLanguage, List<String>>{};
+    appState.pluginInfo.forEach((name, info) {
+      if (!pluginsByLanguage.containsKey(info.language)) {
+        pluginsByLanguage[info.language] = [];
+      }
+      pluginsByLanguage[info.language]!.add(name);
+    });
 
     return Scaffold(
       appBar: AppBar(title: Text('Plugins'.translate), centerTitle: true),
@@ -44,29 +35,15 @@ class _PluginsScreenState extends State<PluginsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPluginSection(
-                context,
-                'Português (Brasil)'.translate,
-                availablePluginsPtBr,
-                selectedPlugins,
-                appState,
-              ),
-              const SizedBox(height: 16),
-              _buildPluginSection(
-                context,
-                'Inglês'.translate,
-                availablePluginsEn,
-                selectedPlugins,
-                appState,
-              ),
-              const SizedBox(height: 16),
-              _buildPluginSection(
-                context,
-                'Espanhol'.translate,
-                availablePluginsEspanish,
-                selectedPlugins,
-                appState,
-              ),
+              for (final language in PluginLanguage.values)
+                if (pluginsByLanguage.containsKey(language))
+                  _buildPluginSection(
+                    context,
+                    _getLanguageName(language),
+                    pluginsByLanguage[language]!,
+                    selectedPlugins,
+                    appState,
+                  ),
               const SizedBox(height: 16),
               _buildRequestPluginSection(context),
             ],
@@ -74,6 +51,21 @@ class _PluginsScreenState extends State<PluginsScreen> {
         ),
       ),
     );
+  }
+
+  String _getLanguageName(PluginLanguage language) {
+    switch (language) {
+      case PluginLanguage.ptBr:
+        return 'Português (Brasil)'.translate;
+      case PluginLanguage.en:
+        return 'Inglês'.translate;
+      case PluginLanguage.es:
+        return 'Espanhol'.translate;
+      case PluginLanguage.ja:
+        return 'Japonês'.translate;
+    
+      }
+
   }
 
   Widget _buildPluginSection(
@@ -92,40 +84,34 @@ class _PluginsScreenState extends State<PluginsScreen> {
           color: theme.colorScheme.onSurface,
         ),
       ),
-      children:
-          plugins.map((plugin) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 4.0,
-                horizontal: 16.0,
-              ),
-              child: CheckboxListTile(
-                title: Text(
-                  plugin,
-                  style: TextStyle(color: theme.colorScheme.onSurface),
-                ),
-                value: selectedPlugins.contains(plugin),
-                onChanged: (bool? newValue) {
-                  if (newValue != null) {
-                    final updatedPlugins = Set<String>.from(selectedPlugins);
-                    if (newValue) {
-                      updatedPlugins.add(plugin);
-                    } else {
-                      updatedPlugins.remove(plugin);
-                    }
-                    appState.setSelectedPlugins(updatedPlugins);
-                  }
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-                activeColor: theme.colorScheme.primary,
-                contentPadding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                side: BorderSide(color: theme.colorScheme.outlineVariant),
-              ),
-            );
-          }).toList(),
+      children: plugins.map((plugin) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+          child: CheckboxListTile(
+            title: Text(
+              plugin,
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
+            value: selectedPlugins.contains(plugin),
+            onChanged: (bool? newValue) {
+              if (newValue != null) {
+                final updatedPlugins = Set<String>.from(selectedPlugins);
+                if (newValue) {
+                  updatedPlugins.add(plugin);
+                } else {
+                  updatedPlugins.remove(plugin);
+                }
+                appState.setSelectedPlugins(updatedPlugins);
+              }
+            },
+            controlAffinity: ListTileControlAffinity.leading,
+            activeColor: theme.colorScheme.primary,
+            contentPadding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+            side: BorderSide(color: theme.colorScheme.outlineVariant),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -143,10 +129,8 @@ class _PluginsScreenState extends State<PluginsScreen> {
         ),
         const SizedBox(height: 8),
         InkWell(
-          onTap:
-              () => launchURL(
-                'https://github.com/AkashicRecordsApp/akashic_records/issues/new/choose',
-              ),
+          onTap: () => launchURL(
+              'https://github.com/AkashicRecordsApp/akashic_records/issues/new/choose'),
           child: Text(
             'Peça para adicionarmos um novo plugin!'.translate,
             style: TextStyle(
@@ -157,8 +141,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Clique no link acima para abrir uma solicitação no GitHub.'
-              .translate,
+          'Clique no link acima para abrir uma solicitação no GitHub.'.translate,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
