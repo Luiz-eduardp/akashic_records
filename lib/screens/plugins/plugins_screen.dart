@@ -62,7 +62,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
       case PluginLanguage.es:
         return 'Espanhol'.translate;
       case PluginLanguage.ja:
-        return 'Japonês'.translate;
+        return 'Japones'.translate;
     
       }
 
