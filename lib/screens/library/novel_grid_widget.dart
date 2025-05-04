@@ -20,6 +20,7 @@ class NovelGridWidget extends StatelessWidget {
     required this.scrollController,
     required this.onNovelTap,
     required this.onNovelLongPress,
+    required bool isListView,
   });
 
   @override
