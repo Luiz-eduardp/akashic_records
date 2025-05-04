@@ -8,9 +8,10 @@ import 'package:akashic_records/models/plugin_service.dart';
 class BlogDoAmonNovels implements PluginService {
   @override
   String get name => 'BlogDoAmonNovels';
-
+  @override
+  String get lang =>  'pt-BR';
   String get id => 'BlogDoAmonNovels';
-
+@override
   String get version => '1.0.0';
 
   @override
@@ -281,7 +282,6 @@ class BlogDoAmonNovels implements PluginService {
 
   @override
   Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+    return Future.value([]);
   }
 }

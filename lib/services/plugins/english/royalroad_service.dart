@@ -8,7 +8,9 @@ import 'package:akashic_records/models/plugin_service.dart';
 class RoyalRoad implements PluginService {
   @override
   String get name => 'RoyalRoad';
-
+  @override
+  String get lang =>  'en';
+  @override
   String get version => '2.2.3';
 
   String get id => 'royalroad';

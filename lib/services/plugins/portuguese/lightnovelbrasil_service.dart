@@ -8,7 +8,8 @@ import 'package:akashic_records/models/plugin_service.dart';
 class LightNovelBrasil implements PluginService {
   @override
   String get name => 'LightNovelBrasil';
-
+  @override
+  String get lang =>  'pt-BR';
   @override
   Map<String, dynamic> get filters => {
     'genre[]': {
@@ -98,6 +99,7 @@ class LightNovelBrasil implements PluginService {
   final String nameService = 'Light Novel Brasil';
   final String baseURL = 'https://lightnovelbrasil.com/';
   final String imageURL = 'multisrc/lightnovelwp/lightnovelbrasil/icon.png';
+  @override
   final String version = '1.1.8';
   final bool reverseChapters = true;
   final String seriesPath = "/series/";
@@ -371,7 +373,7 @@ class LightNovelBrasil implements PluginService {
 
   @override
   Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+    return Future.value([]);
+
   }
 }

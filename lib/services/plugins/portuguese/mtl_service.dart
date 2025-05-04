@@ -9,7 +9,8 @@ import 'dart:convert';
 class MtlNovelPt implements PluginService {
   @override
   String get name => 'MtlNovelPt';
-
+  @override
+  String get lang =>  'pt-BR';
   @override
   Map<String, dynamic> get filters => {
     'order': {
@@ -48,6 +49,7 @@ class MtlNovelPt implements PluginService {
   final String nameService = 'MtlNovelPt';
   final String site = 'https://pt.mtlnovels.com/';
   final String mainUrl = 'https://www.mtlnovels.com/';
+  @override
   final String version = '1.1.3';
 
   Future<http.Response> safeFetch(

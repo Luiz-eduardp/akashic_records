@@ -17,7 +17,8 @@ class MyHttpOverrides extends HttpOverrides {
 class CentralNovel implements PluginService {
   @override
   String get name => 'CentralNovel';
-
+  @override
+  String get lang =>  'pt-BR';
   @override
   Map<String, dynamic> get filters => {};
 
@@ -26,6 +27,7 @@ class CentralNovel implements PluginService {
   final String baseURL = 'https://centralnovel.com';
   final String imageURL =
       'https://centralnovel.com/wp-content/uploads/2021/06/CENTRAL-NOVEL-LOGO-DARK-.png';
+      @override
   final String version = '1.0.1';
 
   static const String defaultCover =

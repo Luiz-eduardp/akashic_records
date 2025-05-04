@@ -17,7 +17,8 @@ class MyHttpOverrides extends HttpOverrides {
 class NovelMania implements PluginService {
   @override
   String get name => 'NovelMania';
-
+  @override
+  String get lang =>  'pt-BR';
   @override
   Map<String, dynamic> get filters => {
     'genres': {
@@ -100,6 +101,7 @@ class NovelMania implements PluginService {
   final String nameService = 'NovelMania';
   final String icon = 'src/pt-br/novelmania/icon.png';
   final String site = 'https://novelmania.com.br';
+  @override
   final String version = '1.0.0';
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
@@ -359,7 +361,7 @@ class NovelMania implements PluginService {
 
   @override
   Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+    return Future.value([]);
+
   }
 }

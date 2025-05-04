@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 abstract class PluginService {
   String get name;
+  String get version;
+  String get lang;
   Map<String, dynamic> get filters;
   Future<List<Novel>> popularNovels(int page, {Map<String, dynamic> filters});
   Future<Novel> parseNovel(String novelPath);

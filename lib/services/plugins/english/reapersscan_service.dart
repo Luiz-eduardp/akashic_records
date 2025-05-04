@@ -9,12 +9,14 @@ import 'package:http/http.dart' as http;
 class ReaperScans implements PluginService {
   @override
   String get name => 'ReaperScans';
-
+  @override
+  String get lang =>  'en';
   @override
   Map<String, dynamic> get filters => {};
 
   final String id = 'ReaperScans';
   final String nameService = 'ReaperScans';
+  @override
   final String version = '1.0.0';
   final String icon = 'src/en/reaperscans/icon.png';
   final String site = 'https://reaperscans.com';

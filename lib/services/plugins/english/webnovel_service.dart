@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 class Webnovel implements PluginService {
   @override
   String get name => 'Webnovel';
-
+  @override
+  String get lang =>  'en';
   @override
   Map<String, dynamic> get filters => {
     'sort': {
@@ -99,6 +100,7 @@ class Webnovel implements PluginService {
   final String nameService = 'Webnovel';
   final String site = 'https://www.webnovel.com';
   final String icon = 'src/en/webnovel/icon.png';
+  @override
   final String version = '1.0.3';
 
   final Map<String, String> _headers = {
@@ -516,7 +518,7 @@ class Webnovel implements PluginService {
   
   @override
   Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    // TODO: implement getAllNovels
-    throw UnimplementedError();
+        return Future.value([]);
+
   }
 }

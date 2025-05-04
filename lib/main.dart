@@ -17,7 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs;
   Locale initialLocale;
-  const List<String> supportedLanguageCodes = ['en', 'pt', 'es'];
+  const List<String> supportedLanguageCodes = ['en', 'pt', 'es','ja'];
 
   try {
     prefs = await SharedPreferences.getInstance();
@@ -37,7 +37,7 @@ void main() async {
   try {
     await I18n.initialize(
       defaultLocale: initialLocale,
-      supportLocales: const [Locale('en'), Locale('pt'), Locale('es')],
+      supportLocales: const [Locale('en'), Locale('pt'), Locale('es'),Locale('ja')],
     );
     debugPrint(
       "I18n Initialized successfully for locale: ${initialLocale.languageCode}",

@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 class NovelsOnline implements PluginService {
   @override
   String get name => 'NovelsOnline';
-
+  @override
+  String get lang =>  'en';
   @override
   Map<String, dynamic> get filters => {
     'sort': {
@@ -69,6 +70,7 @@ class NovelsOnline implements PluginService {
   final String nameService = 'NovelsOnline';
   final String site = 'https://novelsonline.org';
   final String icon = 'src/en/novelsonline/icon.png';
+  @override
   final String version = '1.0.0';
 
   Future<http.Response> safeFetch(
