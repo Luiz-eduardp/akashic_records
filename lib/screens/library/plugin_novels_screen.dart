@@ -22,16 +22,17 @@ class PluginNovelsScreen extends StatefulWidget {
 }
 
 class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
-  List<Novel> _novels = [];
+  final List<Novel> _novels = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   String? _errorMessage;
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _filteredNovels = [];
   bool _isListView = false;
   final ScrollController _scrollController = ScrollController();
-  int _currentPage = 0;
-  final int _novelsPerPage = 20;
+  int _currentPagePopular = 1;
   bool _isInitialLoad = true;
+  final Set<String> _loadedNovelKeys = {};
 
   @override
   void initState() {
@@ -64,6 +65,10 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       _isLoading = true;
       _isInitialLoad = true;
       _errorMessage = null;
+      _loadedNovelKeys.clear();
+      _novels.clear();
+      _filteredNovels.clear();
+      _currentPagePopular = 1;
     });
 
     try {
@@ -71,16 +76,27 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       final plugin = appState.pluginServices[widget.pluginName];
 
       if (plugin != null) {
-        final popularNovels = await plugin.popularNovels(1);
-        final allNovels = await plugin.getAllNovels();
-        final combinedNovels = [...popularNovels, ...allNovels];
-
-        for (final novel in combinedNovels) {
+        List<Novel> popularNovels = await plugin.popularNovels(
+          _currentPagePopular,
+        );
+        for (final novel in popularNovels) {
           novel.pluginId = widget.pluginName;
+          if (!_loadedNovelKeys.contains(novel.id)) {
+            _novels.add(novel);
+            _loadedNovelKeys.add(novel.id);
+          }
+        }
+
+        List<Novel> allNovels = await plugin.getAllNovels();
+        for (final novel in allNovels) {
+          novel.pluginId = widget.pluginName;
+          if (!_loadedNovelKeys.contains(novel.id)) {
+            _novels.add(novel);
+            _loadedNovelKeys.add(novel.id);
+          }
         }
 
         setState(() {
-          _novels = combinedNovels;
           _filteredNovels = List.from(_novels);
         });
       } else {
@@ -111,13 +127,15 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       List<Novel> pluginResults = [];
 
       if (term.isNotEmpty) {
-        // 1. Pesquisa Local (nas novels carregadas)
-        localResults = _novels
-            .where((novel) =>
-                novel.title.toLowerCase().contains(term.toLowerCase()) == true)
-            .toList();
+        localResults =
+            _novels
+                .where(
+                  (novel) =>
+                      novel.title.toLowerCase().contains(term.toLowerCase()) ==
+                      true,
+                )
+                .toList();
 
-        // 2. Pesquisa no Plugin
         final appState = Provider.of<AppState>(context, listen: false);
         final plugin = appState.pluginServices[widget.pluginName];
 
@@ -132,22 +150,21 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
           });
         }
       } else {
-        // Se o termo de pesquisa estiver vazio, restaura a lista original
         setState(() {
           _filteredNovels = List.from(_novels);
         });
-        return; // Retorna para evitar processamento desnecessário
+        return;
       }
 
-      // 3. Combinar e Exibir Resultados
-      // Remover duplicatas priorizando os resultados do plugin
       final combinedResults = <Novel>[];
       combinedResults.addAll(pluginResults);
 
       for (final localNovel in localResults) {
-        if (!combinedResults.any((pluginNovel) =>
-            pluginNovel.pluginId == localNovel.pluginId &&
-            pluginNovel.id == localNovel.id)) {
+        if (!combinedResults.any(
+          (pluginNovel) =>
+              pluginNovel.pluginId == localNovel.pluginId &&
+              pluginNovel.id == localNovel.id,
+        )) {
           combinedResults.add(localNovel);
         }
       }
@@ -184,29 +201,53 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     }
   }
 
-  void _loadMoreNovels() {
-    if (_isLoading || _filteredNovels.length >= _novels.length) {
-      return;
-    }
+  Future<void> _loadMoreNovels() async {
+    if (_isLoadingMore || _isLoading || _errorMessage != null) return;
 
     setState(() {
-      _isLoading = true;
+      _isLoadingMore = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 30), () {
-      final nextPage = _currentPage + 1;
-      final startIndex = _novelsPerPage * _currentPage;
-      final endIndex = (_novelsPerPage * (nextPage)).clamp(0, _novels.length);
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final plugin = appState.pluginServices[widget.pluginName];
 
-      final additionalNovels = _novels.sublist(startIndex, endIndex);
+      if (plugin != null) {
+        _currentPagePopular++;
+        List<Novel> popularNovels = await plugin.popularNovels(
+          _currentPagePopular,
+        );
+        for (final novel in popularNovels) {
+          novel.pluginId = widget.pluginName;
+          if (!_loadedNovelKeys.contains(novel.id)) {
+            _novels.add(novel);
+            _loadedNovelKeys.add(novel.id);
+          }
+        }
 
+        List<Novel> allNovels = await plugin.getAllNovels();
+        for (final novel in allNovels) {
+          novel.pluginId = widget.pluginName;
+          if (!_loadedNovelKeys.contains(novel.id)) {
+            _novels.add(novel);
+            _loadedNovelKeys.add(novel.id);
+          }
+        }
+
+        setState(() {
+          _filteredNovels = List.from(_novels);
+        });
+      }
+    } catch (e) {
       setState(() {
-        _filteredNovels = List<Novel>.from(_filteredNovels)
-          ..addAll(additionalNovels);
-        _currentPage = nextPage;
-        _isLoading = false;
+        _errorMessage =
+            'Erro ao carregar mais novels: ${e.toString()}'.translate;
       });
-    });
+    } finally {
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
   }
 
   @override
@@ -235,6 +276,13 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                 ),
                 Expanded(child: _buildNovelDisplay()),
                 if (_isLoading && !_isInitialLoad)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                if (_isLoadingMore)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: CircularProgressIndicator(
@@ -285,9 +333,9 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     if (_isLoading && _filteredNovels.isEmpty) {
       return _isListView
           ? ListView.builder(
-              itemCount: 5,
-              itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
-            )
+            itemCount: 5,
+            itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
+          )
           : NovelGridSkeletonWidget(itemCount: 4);
     } else {
       if (_filteredNovels.isEmpty && !_isLoading && _errorMessage == null) {
@@ -305,7 +353,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         scrollController: _scrollController,
         onNovelTap: _handleNovelTap,
         errorMessage: _errorMessage,
-        isLoading: _isLoading,
+        isLoading: _isLoading || _isLoadingMore,
         onNovelLongPress: (Novel NOVEL) {},
       );
     }
