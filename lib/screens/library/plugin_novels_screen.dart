@@ -24,7 +24,7 @@ class PluginNovelsScreen extends StatefulWidget {
 class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   final List<Novel> _novels = [];
   bool _isLoading = false;
-  final bool _isLoadingMore = false;
+  bool _isLoadingMore = false;
   String? _errorMessage;
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _filteredNovels = [];
@@ -64,10 +64,11 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   Future<void> _loadData({int? page}) async {
     setState(() {
       _isLoading = true;
+      _isInitialLoad = true;
       _errorMessage = null;
+      _loadedNovelKeys.clear();
       if (page == null || page == 1) {
         _novels.clear();
-        _loadedNovelKeys.clear();
       }
     });
 
@@ -205,7 +206,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     if (!(_isLoading || _errorMessage != null)) {
       setState(() {
         _currentPage++;
-        _loadData(page: _currentPage);
+        _loadMoreData(page: _currentPage);
       });
     }
   }
@@ -214,7 +215,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     if (!(_isLoading || _errorMessage != null) && _currentPage > 1) {
       setState(() {
         _currentPage--;
-        _loadData(page: _currentPage);
+        _loadMoreData(page: _currentPage);
       });
     }
   }
@@ -225,10 +226,52 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     });
   }
 
+  Future<void> _loadMoreData({int? page}) async {
+    setState(() {
+      _isLoadingMore = true;
+      _errorMessage = null;
+    });
+
+    int pageToLoad = page ?? _currentPage;
+
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final plugin = appState.pluginServices[widget.pluginName];
+
+      if (plugin != null) {
+        List<Novel> newNovels = await plugin.popularNovels(pageToLoad);
+        setState(() {
+          for (final novel in newNovels) {
+            novel.pluginId = widget.pluginName;
+            if (!_loadedNovelKeys.contains(novel.id)) {
+              _novels.add(novel);
+              _loadedNovelKeys.add(novel.id);
+            }
+          }
+          _isLoadingMore = false;
+          _updateFilteredNovels();
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Plugin não encontrado.'.translate;
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage =
+            'Erro ao carregar mais novels: ${e.toString()}'.translate;
+        _isLoadingMore = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     Provider.of<AppState>(context);
+
+    int totalPages = (_filteredNovels.length / _itemsPerPage).ceil();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
@@ -250,15 +293,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                   ),
                 ),
                 Expanded(child: _buildNovelDisplay()),
-                _buildPaginationButtons(),
-                if (_isLoading && !_isInitialLoad)
-                  if (_isLoadingMore)
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
+                _buildPaginationButtons(totalPages),
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -270,6 +305,13 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
               ],
             ),
             if (_isInitialLoad) _buildInitialLoadingOverlay(theme),
+            if (_isLoading)
+              Positioned.fill(
+                child: Container(
+                  color: theme.colorScheme.background.withOpacity(0.5),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
           ],
         ),
       ),
@@ -291,7 +333,6 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              CircularProgressIndicator(color: Colors.white),
             ],
           ),
         ),
@@ -331,29 +372,39 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     }
   }
 
-  Widget _buildPaginationButtons() {
+  Widget _buildPaginationButtons(int totalPages) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _currentPage > 1 ? _goToPreviousPage : null,
+            icon: const Icon(Icons.arrow_back_ios_new),
+            onPressed:
+                _currentPage > 1 && !_isLoadingMore ? _goToPreviousPage : null,
             disabledColor: Colors.grey,
+            tooltip: 'Página anterior'.translate,
           ),
           Text(
-            'P'
-            '$_currentPage',
+            'Página'.translate +
+                ' ' +
+                ' ' +
+                '$_currentPage' +
+                ' ' +
+                'de'.translate +
+                ' ' +
+                '$totalPages',
+            style: const TextStyle(fontSize: 16),
           ),
           IconButton(
-            icon: const Icon(Icons.arrow_forward),
+            icon: const Icon(Icons.arrow_forward_ios),
             onPressed:
-                (_isLoading || _errorMessage != null) ||
-                        ((_novels.length) < _itemsPerPage)
+                (_isLoading || _isLoadingMore || _errorMessage != null) ||
+                        (_currentPage * _itemsPerPage >= _filteredNovels.length)
                     ? null
                     : _goToNextPage,
             disabledColor: Colors.grey,
+            tooltip: 'Próxima página'.translate,
           ),
         ],
       ),

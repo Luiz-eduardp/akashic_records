@@ -185,6 +185,10 @@
     "Lista de Capítulos": "章リスト",
     "Populares":"人気",
     "Versão":"バージョン",
+    "Próxima página": "「次のページ」",
+    "Página anterior": "「前のページ」",
+    "Página": "「ページ」",
+    "de": "「開始」",
     "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.":"プラグインが選択されていません。設定からプラグインを追加してください。",
     "O primeiro carregamento pode demorar um pouco devido à quantidade de informações":"最初の読み込みは、情報の量のために少し時間がかかることがあります。"
   }
