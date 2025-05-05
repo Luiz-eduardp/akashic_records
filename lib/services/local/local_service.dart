@@ -16,7 +16,7 @@ class Dispositivo implements PluginService {
   String get name => 'Dispositivo';
 
   @override
-  String get lang => 'pt-BR';
+  String get lang => 'Local';
 
   @override
   Map<String, dynamic> get filters => {};
