@@ -17,7 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs;
   Locale initialLocale;
-  const List<String> supportedLanguageCodes = ['en', 'pt', 'es','ja'];
+  const List<String> supportedLanguageCodes = ['en', 'pt', 'es', 'ja'];
 
   try {
     prefs = await SharedPreferences.getInstance();
@@ -37,7 +37,12 @@ void main() async {
   try {
     await I18n.initialize(
       defaultLocale: initialLocale,
-      supportLocales: const [Locale('en'), Locale('pt'), Locale('es'),Locale('ja')],
+      supportLocales: const [
+        Locale('en'),
+        Locale('pt'),
+        Locale('es'),
+        Locale('ja'),
+      ],
     );
     debugPrint(
       "I18n Initialized successfully for locale: ${initialLocale.languageCode}",
@@ -164,22 +169,23 @@ class _MyAppState extends State<MyApp> {
 
   bool _isUpdateAvailable(String currentVersion, String latestVersion) {
     try {
-      final currentParts =
-          currentVersion.split('+').first.split('.').map(int.parse).toList();
-      final latestParts =
-          latestVersion.split('+').first.split('.').map(int.parse).toList();
+      List<int> currentParts =
+          currentVersion.split('.').map(int.parse).toList();
+      List<int> latestParts = latestVersion.split('.').map(int.parse).toList();
 
-      int maxLength =
-          currentParts.length > latestParts.length
-              ? currentParts.length
-              : latestParts.length;
+      while (currentParts.length < latestParts.length) {
+        currentParts.add(0);
+      }
+      while (latestParts.length < currentParts.length) {
+        latestParts.add(0);
+      }
 
-      for (int i = 0; i < maxLength; i++) {
-        int currentPart = (i < currentParts.length) ? currentParts[i] : 0;
-        int latestPart = (i < latestParts.length) ? latestParts[i] : 0;
-
-        if (latestPart > currentPart) return true;
-        if (latestPart < currentPart) return false;
+      for (int i = 0; i < currentParts.length; i++) {
+        if (latestParts[i] > currentParts[i]) {
+          return true;
+        } else if (latestParts[i] < currentParts[i]) {
+          return false;
+        }
       }
       return false;
     } catch (e) {
