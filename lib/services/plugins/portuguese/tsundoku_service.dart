@@ -90,7 +90,7 @@ class Tsundoku implements PluginService {
   final String nameService = 'Tsundoku Traduções';
   final String site = 'https://tsundoku.com.br';
   @override
-  final String version = '1.0.3';
+  final String version = '1.0.7';
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
@@ -164,7 +164,8 @@ class Tsundoku implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
   }) async {
     return _fetchNovels(pageNo, filters: filters);
   }

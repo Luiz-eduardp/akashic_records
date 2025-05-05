@@ -14,7 +14,7 @@ class SkyNovels implements PluginService {
   String get lang => 'es';
   String get id => 'SkyNovels';
   @override
-  String get version => '1.0.4';
+  String get version => '1.0.5';
 
   @override
   Map<String, dynamic> get filters => {};
@@ -71,7 +71,8 @@ class SkyNovels implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
   }) async {
     return _fetchNovels(pageNo, filters: filters);
   }

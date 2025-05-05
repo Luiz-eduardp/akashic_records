@@ -51,7 +51,7 @@ class Kakuyomu implements PluginService {
   final String icon = 'src/jp/kakuyomu/icon.png';
   final String site = 'https://kakuyomu.jp';
   @override
-  final String version = '1.0.2';
+  final String version = '1.0.3';
   final String baseURL = 'https://kakuyomu.jp';
   final String defaultCover = 'https://placehold.co/400x500.png?text=Kakuyomu';
 
@@ -75,7 +75,8 @@ class Kakuyomu implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
   }) async {
     String genre = filters?['genre']?['value'] ?? 'all';
     String period = filters?['period']?['value'] ?? 'entire';

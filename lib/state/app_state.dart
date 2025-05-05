@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
+import 'package:akashic_records/services/local/local_service.dart';
 import 'package:akashic_records/services/plugins/english/projectgutenberg_service.dart';
 import 'package:akashic_records/services/plugins/japanese/kakuyomu_service.dart';
 import 'package:akashic_records/services/plugins/japanese/syosetu_service.dart';
@@ -27,7 +28,7 @@ import 'package:akashic_records/models/favorite_list.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
-enum PluginLanguage { ptBr, en, es, ja }
+enum PluginLanguage { Local, ptBr, en, es, ja }
 
 class PluginInfo {
   final String name;
@@ -310,17 +311,25 @@ class AppState with ChangeNotifier {
   ];
   List<FavoriteList> _favoriteLists = [];
   int _novelCount = 0;
+  List<Novel> _localNovels = [];
 
   final Map<String, PluginService> _pluginServices = {};
   final Map<String, PluginInfo> _pluginInfo = {};
   final _uuid = const Uuid();
   static const String _novelCachePrefix = 'novel_cache_';
 
-  final List<CustomPlugin> _defaultPlugins = [
-    
-  ];
+  final List<CustomPlugin> _defaultPlugins = [];
+
+  late Box<CustomPlugin> _customPluginsBox;
+  late Box<CachedNovel> _novelCacheBox;
+  late Box<FavoriteListHive> _favoriteListsBox;
 
   AppState() {
+    _pluginServices['Dispositivo'] = Dispositivo();
+    _pluginInfo['Dispositivo'] = PluginInfo(
+      name: 'Dispositivo',
+      language: PluginLanguage.Local,
+    );
     _pluginServices['NovelMania'] = NovelMania();
     _pluginInfo['NovelMania'] = PluginInfo(
       name: 'NovelMania',
@@ -427,8 +436,11 @@ class AppState with ChangeNotifier {
   Map<String, PluginService> get pluginServices => _pluginServices;
   List<FavoriteList> get favoriteLists => _favoriteLists;
   int get novelCount => _novelCount;
+  List<Novel> get localNovels => _localNovels;
 
   get pluginInfo => _pluginInfo;
+
+  get novelCacheBox => null;
 
   @override
   void dispose() {
@@ -698,9 +710,11 @@ class AppState with ChangeNotifier {
 
   Future<void> saveNovelCache(Novel novel) async {
     try {
-      final box = Hive.box<CachedNovel>('novelCache');
       final cachedNovel = CachedNovel.fromNovel(novel);
-      await box.put(getNovelCacheKey(novel.pluginId, novel.id), cachedNovel);
+      await _novelCacheBox.put(
+        getNovelCacheKey(novel.pluginId, novel.id),
+        cachedNovel,
+      );
       debugPrint("Saved cache for ${novel.pluginId}/${novel.id} in Hive");
     } catch (e) {
       debugPrint(
@@ -711,8 +725,9 @@ class AppState with ChangeNotifier {
 
   Future<Novel?> getNovelFromCache(String pluginId, String novelId) async {
     try {
-      final box = Hive.box<CachedNovel>('novelCache');
-      final cachedNovel = box.get(getNovelCacheKey(pluginId, novelId));
+      final cachedNovel = _novelCacheBox.get(
+        getNovelCacheKey(pluginId, novelId),
+      );
       if (cachedNovel != null) {
         debugPrint("Retrieved cache for $pluginId/$novelId from Hive");
         return cachedNovel.toNovel();
@@ -727,8 +742,7 @@ class AppState with ChangeNotifier {
 
   Future<void> removeNovelCache(String pluginId, String novelId) async {
     try {
-      final box = Hive.box<CachedNovel>('novelCache');
-      await box.delete(getNovelCacheKey(pluginId, novelId));
+      await _novelCacheBox.delete(getNovelCacheKey(pluginId, novelId));
       debugPrint("Removed cache for $pluginId/$novelId from Hive");
     } catch (e) {
       debugPrint(
@@ -748,37 +762,35 @@ class AppState with ChangeNotifier {
     Hive.registerAdapter(CustomPluginAdapter());
     Hive.registerAdapter(CachedNovelAdapter());
     Hive.registerAdapter(FavoriteListHiveAdapter());
-    await Hive.openBox<CustomPlugin>('customPlugins');
-    await Hive.openBox<CachedNovel>('novelCache');
-    await Hive.openBox<FavoriteListHive>('favoriteLists');
+
+    _customPluginsBox = await Hive.openBox<CustomPlugin>('customPlugins');
+    _novelCacheBox = await Hive.openBox<CachedNovel>('novelCache');
+    _favoriteListsBox = await Hive.openBox<FavoriteListHive>('favoriteLists');
+
     debugPrint("Hive initialized.");
   }
 
   Future<void> _insertCustomPluginToHive(CustomPlugin plugin) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.put(plugin.name, plugin);
+    await _customPluginsBox.put(plugin.name, plugin);
     debugPrint("Custom plugin '${plugin.name}' inserted into Hive.");
   }
 
   Future<void> _updateCustomPluginInHive(CustomPlugin plugin) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.put(plugin.name, plugin);
+    await _customPluginsBox.put(plugin.name, plugin);
     debugPrint("Custom plugin '${plugin.name}' updated in Hive.");
   }
 
   Future<void> _deleteCustomPluginFromHive(CustomPlugin plugin) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.delete(plugin.name);
+    await _customPluginsBox.delete(plugin.name);
     debugPrint("Custom plugin '${plugin.name}' deleted from Hive.");
   }
 
   Future<void> _syncCustomPluginsToHive(List<CustomPlugin> plugins) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.clear();
+    await _customPluginsBox.clear();
     final Map<String, CustomPlugin> pluginMap = {
       for (var plugin in plugins) plugin.name: plugin,
     };
-    await box.putAll(pluginMap);
+    await _customPluginsBox.putAll(pluginMap);
     debugPrint("Custom plugins synced to Hive.");
   }
 
@@ -820,6 +832,7 @@ class AppState with ChangeNotifier {
       _scriptUrls = prefs.getStringList('scriptUrls') ?? [_scriptUrls.first];
 
       _favoriteLists = await _getFavoriteListsFromHive();
+      _localNovels = await _getLocalNovelsFromHive();
 
       await _createDefaultFavoriteListIfNeeded();
     } catch (e) {
@@ -831,6 +844,8 @@ class AppState with ChangeNotifier {
       _customPlugins = List.from(_defaultPlugins);
       _favoriteLists = [];
       _scriptUrls = ['https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/'];
+      _localNovels = [];
+
       try {
         prefs = await SharedPreferences.getInstance();
         await _createDefaultFavoriteListIfNeeded();
@@ -843,13 +858,31 @@ class AppState with ChangeNotifier {
   }
 
   Future<List<FavoriteList>> _getFavoriteListsFromHive() async {
-    final box = Hive.box<FavoriteListHive>('favoriteLists');
-    return box.values.map((hiveList) => hiveList.toFavoriteList()).toList();
+    return _favoriteListsBox.values
+        .map((hiveList) => hiveList.toFavoriteList())
+        .toList();
   }
 
   Future<List<CustomPlugin>> _getCustomPluginsFromHive() async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    return box.values.toList();
+    return _customPluginsBox.values.toList();
+  }
+
+  Future<List<Novel>> _getLocalNovelsFromHive() async {
+    List<Novel> novels = [];
+    try {
+      for (var key in _novelCacheBox.keys) {
+        if (key.toString().startsWith('local_novel_')) {
+          CachedNovel? cachedNovel = _novelCacheBox.get(key);
+
+          if (cachedNovel != null) {
+            novels.add(cachedNovel.toNovel());
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Erro ao carregar novels locais do Hive: $e");
+    }
+    return novels;
   }
 
   Future<void> _createDefaultFavoriteListIfNeeded() async {
@@ -928,13 +961,12 @@ class AppState with ChangeNotifier {
 
   Future<void> _saveFavoriteLists() async {
     try {
-      final box = Hive.box<FavoriteListHive>('favoriteLists');
-      await box.clear();
+      await _favoriteListsBox.clear();
       final Map<String, FavoriteListHive> listMap = {
         for (var list in _favoriteLists)
           list.id: FavoriteListHive.fromFavoriteList(list),
       };
-      await box.putAll(listMap);
+      await _favoriteListsBox.putAll(listMap);
       debugPrint("Favorite lists saved to Hive.");
     } catch (e) {
       debugPrint("Erro ao salvar listas de favoritos no Hive: $e");
@@ -945,6 +977,26 @@ class AppState with ChangeNotifier {
   void updateNovelCount(int count) {
     _novelCount = count;
     notifyListeners();
+  }
+
+  Future<void> addLocalNovels(List<Novel> novels) async {
+    _localNovels.addAll(novels);
+
+    for (final novel in novels) {
+      await _saveLocalNovelToHive(novel);
+    }
+    notifyListeners();
+  }
+
+  Future<void> _saveLocalNovelToHive(Novel novel) async {
+    try {
+      final cachedNovel = CachedNovel.fromNovel(novel);
+      String key = 'local_novel_${novel.id}';
+      await _novelCacheBox.put(key, cachedNovel);
+      debugPrint("Saved local novel ${novel.title} to Hive with key: $key");
+    } catch (e) {
+      debugPrint("Error saving local novel ${novel.title} to Hive: $e");
+    }
   }
 }
 

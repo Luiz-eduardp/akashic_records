@@ -13,7 +13,7 @@ class NovelBin implements PluginService {
   @override
   String get lang => 'en';
   @override
-  String get version => '1.0.0';
+  String get version => '1.0.7';
 
   final String baseURL = 'https://novelbin.me/';
   final String catalogURL = 'https://novelbin.me/sort/novelbin-popular';
@@ -76,6 +76,7 @@ class NovelBin implements PluginService {
     int page, {
     bool showLatestNovels = false,
     Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     final url = catalogURL + '?page=$page';
     final body = await _fetchApi(url);

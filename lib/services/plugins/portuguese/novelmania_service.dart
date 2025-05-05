@@ -101,7 +101,7 @@ class NovelMania implements PluginService {
   final String nameService = 'NovelMania';
   final String site = 'https://novelmania.com.br';
   @override
-  final String version = '1.0.4';
+  final String version = '1.0.8';
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
@@ -117,7 +117,8 @@ class NovelMania implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
   }) async {
     return _fetchNovels(pageNo, filters: filters);
   }
