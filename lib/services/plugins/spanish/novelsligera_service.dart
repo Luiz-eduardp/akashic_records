@@ -27,7 +27,7 @@ class NovelasLigera implements PluginService {
   final String nameService = 'novelasligera';
   final String baseURL = 'https://novelasligera.com/';
   @override
-  final String version = '1.0.0';
+  final String version = '1.0.3';
   final String icon = 'src/es/novelasligera/icon.png';
   final String site = 'https://novelasligera.com/';
 

@@ -25,18 +25,8 @@ class ProjectGutenberg implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    List<Novel> allNovels = await recentNovels(1);
-
-    int startIndex = (pageNo - 1) * 10;
-    int endIndex = startIndex + 10;
-
-    if (startIndex >= allNovels.length) {
-      return [];
-    }
-
-    endIndex = endIndex > allNovels.length ? allNovels.length : endIndex;
-
-    return allNovels.sublist(startIndex, endIndex);
+    List<Novel> novels = await recentNovels(pageNo, filters: filters);
+    return novels;
   }
 
   @override
@@ -45,33 +35,76 @@ class ProjectGutenberg implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final url = '$baseURL/book/?search=$searchTerm&page=$pageNo';
-    return _fetchNovels(url);
+    final Uri uri = Uri.parse('$baseURL/book/').replace(
+      queryParameters: {'search': searchTerm, 'page': pageNo.toString()},
+    );
+
+    final String url = uri.toString();
+
+    print('Search URL: $url');
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      print('Response Status Code: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> results = data['results'];
+        print('Response Data: ${response.body}');
+        List<Novel> novels =
+            results.map((item) {
+              String author = "Unknown";
+              if (item['agents'] != null && item['agents'].isNotEmpty) {
+                author = item['agents'][0]['person'] ?? "Unknown";
+              }
+              String? coverUrl;
+
+              if (item['resources'] != null) {
+                try {
+                  coverUrl =
+                      item['resources'].firstWhere(
+                        (resource) => resource['type'] == 'image/jpeg',
+                      )['uri'];
+                } catch (e) {
+                  coverUrl = null;
+                }
+              }
+
+              return Novel(
+                id: item['id'].toString(),
+                title: item['title'],
+                coverImageUrl:
+                    coverUrl ??
+                    'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
+                author: author,
+                description: item['description'] ?? 'No description available.',
+                genres: (item['subjects'] as List<dynamic>).cast<String>(),
+                chapters: [],
+                artist: '',
+                statusString: NovelStatus.Completa.toString(),
+                pluginId: name,
+                downloads: item['downloads'] ?? 0,
+              );
+            }).toList();
+
+        return novels;
+      } else {
+        throw Exception('Failed to load novels from $url');
+      }
+    } catch (e) {
+      print('Error during search: $e');
+      rethrow;
+    }
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
-    return Future.value([]);
-    // int page = 1;
-    // bool hasNextPage = true;
-    // String url = '$baseURL/book/';
-
-    // while (hasNextPage) {
-    //   try {
-    //     final pageUrl = '$url?page=$page';
-    //     final novels = await _fetchNovels(pageUrl);
-    //     if (novels.isEmpty) {
-    //       hasNextPage = false;
-    //     } else {
-    //       allNovels.addAll(novels);
-    //       page++;
-    //     }
-    //   } catch (e) {
-    //     print('Erro ao carregar novels da página $page: $e');
-    //     hasNextPage = false;
-    //   }
-    // }
-    // return allNovels;
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    final url = '$baseURL/book/?page=$pageNo';
+    return _fetchNovels(url);
   }
 
   Future<List<Novel>> recentNovels(
@@ -111,7 +144,9 @@ class ProjectGutenberg implements PluginService {
             return Novel(
               id: item['id'].toString(),
               title: item['title'],
-              coverImageUrl: coverUrl ?? 'https://via.placeholder.com/150',
+              coverImageUrl:
+                  coverUrl ??
+                  'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
               author: author,
               description: item['description'] ?? 'No description available.',
               genres: (item['subjects'] as List<dynamic>).cast<String>(),
@@ -157,7 +192,9 @@ class ProjectGutenberg implements PluginService {
       Novel novel = Novel(
         id: item['id'].toString(),
         title: item['title'],
-        coverImageUrl: coverUrl ?? 'https://via.placeholder.com/150',
+        coverImageUrl:
+            coverUrl ??
+            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
         author: author,
         description: item['description'] ?? 'No description available.',
         genres: (item['subjects'] as List<dynamic>).cast<String>(),
@@ -165,6 +202,7 @@ class ProjectGutenberg implements PluginService {
         artist: '',
         statusString: NovelStatus.Completa.toString(),
         pluginId: name,
+        downloads: item['downloads'] ?? 0,
       );
 
       if (item['resources'] != null) {
@@ -173,7 +211,6 @@ class ProjectGutenberg implements PluginService {
             (resource) => resource['type'] == 'text/html',
           );
           final chapterContent = await parseChapter(htmlResource['uri']);
-          print("Chapter content: $chapterContent");
           novel.chapters.add(
             Chapter(
               id: htmlResource['uri'],
