@@ -317,14 +317,7 @@ class AppState with ChangeNotifier {
   static const String _novelCachePrefix = 'novel_cache_';
 
   final List<CustomPlugin> _defaultPlugins = [
-    CustomPlugin(
-      name: 'Focus Mode',
-      use: 'Duplo toque no texto para ativar e desativar o modo de foco',
-      code:
-          '''(() => { function loadScript(src, callback) { const script = document.createElement("script"); script.src = src; script.onload = callback; document.head.appendChild(script); } function createStyle() { const style = document.createElement("style"); style.innerHTML = ` .focus-overlay { position: fixed; top: -10px; left: -2px; right: -2px; height: var(--focus-area-height, 30%); background: rgba(0, 0, 0, 0.5); pointer-events: none; z-index: 9999; filter: blur(1px); transition: opacity 0.3s ease; } .focus-overlay-bottom { position: fixed; bottom: -10px; left: -2px; right: -2px; height: var(--focus-area-height, 30%); background: rgba(0, 0, 0, 0.5); pointer-events: none; z-index: 9999; filter: blur(1px); transition: opacity 0.3s ease; } .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 15px; border-radius: 5px; font-size: 14px; z-index: 9999; display: none; } `; document.head.appendChild(style); } function createFocusOverlays() { const focusOverlayTop = document.createElement("div"); focusOverlayTop.className = "focus-overlay"; const focusOverlayBottom = document.createElement("div"); focusOverlayBottom.className = "focus-overlay-bottom"; return { focusOverlayTop, focusOverlayBottom }; } function createToast() { const toast = document.createElement("div"); toast.className = "toast"; document.body.appendChild(toast); return toast; } let staticFocusMode = false; const focusAreaHeight = 30; const { focusOverlayTop, focusOverlayBottom } = createFocusOverlays(); const toast = createToast(); function toggleStaticFocusMode() { staticFocusMode = !staticFocusMode; if (staticFocusMode) { document.documentElement.style.setProperty( "--focus-area-height", `30%` ); document.body.appendChild(focusOverlayTop); document.body.appendChild(focusOverlayBottom); showToast("Focus Mode Activated"); adjustOverlayOpacity(); } else { if (focusOverlayTop.parentNode) { focusOverlayTop.parentNode.removeChild(focusOverlayTop); } if (focusOverlayBottom.parentNode) { focusOverlayBottom.parentNode.removeChild(focusOverlayBottom); } showToast("Focus Mode Disabled"); } } function adjustOverlayOpacity() { const scrollTop = window.scrollY || document.documentElement.scrollTop; const windowHeight = window.innerHeight; const docHeight = document.documentElement.scrollHeight; const scrollPosition = scrollTop + windowHeight; const topOffset = Math.min(scrollTop / 100, 1); const distanceFromBottom = docHeight - scrollPosition; const bottomOffset = Math.max(distanceFromBottom / 100); focusOverlayTop.style.opacity = topOffset.toString(); focusOverlayBottom.style.opacity = bottomOffset.toString(); } function showToast(message) { toast.textContent = message; toast.style.display = "block"; setTimeout(() => { toast.style.display = "none"; }, 1000); } function handleTripleClick(event) { if (event.detail === 3) { toggleStaticFocusMode(); } } function handleScroll() { if (staticFocusMode) { adjustOverlayOpacity(); } } createStyle(); document.addEventListener("click", handleTripleClick); window.addEventListener("scroll", handleScroll); toggleStaticFocusMode(); })();''',
-      enabled: true,
-      priority: 1,
-    ),
+    
   ];
 
   AppState() {
@@ -460,6 +453,20 @@ class AppState with ChangeNotifier {
   }
 
   void setSelectedPlugins(Set<String> newPlugins) {
+    final pluginsToRemove = _selectedPlugins.difference(
+      _pluginServices.keys.toSet(),
+    );
+
+    if (pluginsToRemove.isNotEmpty) {
+      final mutableSelectedPlugins = Set<String>.from(_selectedPlugins);
+      mutableSelectedPlugins.removeAll(pluginsToRemove);
+      _selectedPlugins = mutableSelectedPlugins;
+
+      debugPrint(
+        "Removed plugins from selectedPlugins that are not in _pluginServices: $pluginsToRemove",
+      );
+    }
+
     _selectedPlugins = newPlugins;
     _saveSelectedPlugins();
     notifyListeners();
@@ -790,6 +797,17 @@ class AppState with ChangeNotifier {
       final plugins = prefs.getStringList('selectedPlugins');
       _selectedPlugins =
           plugins?.isNotEmpty == true ? Set<String>.from(plugins!) : {};
+
+      final invalidPlugins = _selectedPlugins.difference(
+        _pluginServices.keys.toSet(),
+      );
+      if (invalidPlugins.isNotEmpty) {
+        debugPrint(
+          "Removing invalid plugins from selectedPlugins: $invalidPlugins",
+        );
+        _selectedPlugins.removeAll(invalidPlugins);
+        await _saveSelectedPlugins(prefs);
+      }
 
       final readerSettingsMap = <String, dynamic>{};
       prefs.getKeys().where((key) => key.startsWith('reader_')).forEach((key) {
