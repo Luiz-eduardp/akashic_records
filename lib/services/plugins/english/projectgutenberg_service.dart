@@ -25,8 +25,7 @@ class ProjectGutenberg implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    List<Novel> novels = await recentNovels(pageNo, filters: filters);
-    return novels;
+    return recentNovels(pageNo, filters: filters);
   }
 
   @override
@@ -103,15 +102,17 @@ class ProjectGutenberg implements PluginService {
     BuildContext? context,
     int pageNo = 1,
   }) async {
-    final url = '$baseURL/book/?page=$pageNo';
+    String url = '$baseURL/book/?page=$pageNo';
     return _fetchNovels(url);
   }
 
+  @override
+    // ignore: override_on_non_overriding_member
   Future<List<Novel>> recentNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final url = '$baseURL/book/?page=$pageNo';
+    String url = '$baseURL/book/?page=$pageNo';
     return _fetchNovels(url);
   }
 
