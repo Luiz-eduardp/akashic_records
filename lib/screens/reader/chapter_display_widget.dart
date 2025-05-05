@@ -1,21 +1,24 @@
+import 'dart:async';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as htmlParser;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:html/dom.dart' as dom;
-import 'dart:async';
 
 class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
+  final String chapterId;
   final ReaderSettings readerSettings;
 
   const ChapterDisplay({
     super.key,
     required this.chapterContent,
     required this.readerSettings,
+    required this.chapterId,
   });
 
   @override
@@ -29,6 +32,8 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   bool _isLoading = true;
   final Completer<WebViewController> _controllerCompleter =
       Completer<WebViewController>();
+  double _scrollPosition = 0.0;
+  String get scrollPositionKey => 'scrollPosition_${widget.chapterId}';
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
@@ -43,7 +48,20 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       widget.chapterContent,
       widget.readerSettings,
     );
+    _loadScrollPosition();
     _initializeWebViewController();
+  }
+
+  Future<void> _loadScrollPosition() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _scrollPosition = prefs.getDouble(scrollPositionKey) ?? 0.0;
+    });
+  }
+
+  Future<void> _saveScrollPosition(double position) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(scrollPositionKey, position);
   }
 
   Future<void> _initializeWebViewController() async {
@@ -63,6 +81,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
               },
               onPageFinished: (String url) async {
                 await _injectJavaScript();
+                _restoreScrollPosition();
                 if (mounted) {
                   setState(() {
                     _isLoading = false;
@@ -90,36 +109,49 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   Future<void> _injectJavaScript() async {
     if (_webViewController == null) return;
     await _webViewController!.runJavaScript('''
-      document.addEventListener('touchstart', function(event) {
-        if (event.touches.length > 1) {
-          event.preventDefault();
+        function getScrollPosition() {
+          return document.documentElement.scrollTop || document.body.scrollTop;
         }
-      }, { passive: false });
 
-      document.addEventListener('touchmove', function(event) {
-        if (event.touches.length > 1) {
-          event.preventDefault();
+        function saveScrollPosition() {
+          const scrollPosition = getScrollPosition();
+          console.log("saving scroll position: " + scrollPosition);
+          return scrollPosition;
         }
-      }, { passive: false });
 
-      document.addEventListener('touchend', function(event) {
-        if (event.touches.length > 1) {
+        window.getScrollPosition = getScrollPosition;
+        window.saveScrollPosition = saveScrollPosition;
+
+        document.addEventListener('touchstart', function(event) {
+          if (event.touches.length > 1) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(event) {
+          if (event.touches.length > 1) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function(event) {
+          if (event.touches.length > 1) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+
+        document.addEventListener('gesturestart', function(event) {
           event.preventDefault();
-        }
-      }, { passive: false });
+        });
 
-      document.addEventListener('gesturestart', function(event) {
-        event.preventDefault();
-      });
+        document.addEventListener('gesturechange', function(event) {
+          event.preventDefault();
+        });
 
-      document.addEventListener('gesturechange', function(event) {
-        event.preventDefault();
-      });
-
-      document.addEventListener('gestureend', function(event) {
-        event.preventDefault();
-      });
-    ''');
+        document.addEventListener('gestureend', function(event) {
+          event.preventDefault();
+        });
+      ''');
     _injectCustomJavaScript(widget.readerSettings.customJs);
 
     final appState = Provider.of<AppState>(context, listen: false);
@@ -130,6 +162,14 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
     for (final plugin in enabledPlugins) {
       _injectCustomJavaScript(plugin.code);
+    }
+  }
+
+  Future<void> _restoreScrollPosition() async {
+    if (_scrollPosition > 0 && _webViewController != null) {
+      await _webViewController!.runJavaScript(
+        'window.scrollTo(0, $_scrollPosition);',
+      );
     }
   }
 
@@ -361,6 +401,13 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
   @override
   void dispose() {
+    _webViewController
+        ?.runJavaScriptReturningResult('window.saveScrollPosition();')
+        .then((value) {
+          if (value is num) {
+            _saveScrollPosition(value.toDouble());
+          }
+        });
     _webViewController?.clearCache();
     _webViewController = null;
     super.dispose();
