@@ -354,6 +354,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   child: ChapterDisplay(
                     chapterContent: currentChapter?.content,
                     readerSettings: appState.readerSettings,
+                    chapterId: currentChapter!.id,
                   ),
                 ),
                 ChapterNavigation(

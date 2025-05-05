@@ -1,15 +1,16 @@
 import 'dart:async';
-import 'package:html/parser.dart' show parse;
-import 'package:http/http.dart' as http;
+
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' show parse;
 
 class Webnovel implements PluginService {
   @override
   String get name => 'Webnovel';
   @override
-  String get lang =>  'en';
+  String get lang => 'en';
   @override
   Map<String, dynamic> get filters => {
     'sort': {
@@ -515,10 +516,37 @@ class Webnovel implements PluginService {
       return [];
     }
   }
-  
-  @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-        return Future.value([]);
 
+  @override
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    try {
+      String url = '$site/stories/novel?orderBy=1&pageIndex=$pageNo';
+      final response = await safeFetch(
+        url,
+        context: context,
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return parseNovels(response.body, true, false);
+      } else {
+        print(
+          'Failed to load popular novels. Status code: ${response.statusCode}',
+        );
+        return [];
+      }
+    } catch (e) {
+      print('Error in popularNovels: $e');
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load popular novels: $e')),
+        );
+      }
+      return [];
+    }
   }
 }
+
+enum FilterTypes { textInput, excludableCheckboxGroup, picker }

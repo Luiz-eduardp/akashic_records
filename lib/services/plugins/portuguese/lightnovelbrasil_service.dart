@@ -1,15 +1,24 @@
-import 'dart:async';
+import 'dart:io';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 class LightNovelBrasil implements PluginService {
   @override
   String get name => 'LightNovelBrasil';
   @override
-  String get lang =>  'pt-BR';
+  String get lang => 'pt-BR';
   @override
   Map<String, dynamic> get filters => {
     'genre[]': {
@@ -98,9 +107,8 @@ class LightNovelBrasil implements PluginService {
   final String id = 'lightnovelbrasil';
   final String nameService = 'Light Novel Brasil';
   final String baseURL = 'https://lightnovelbrasil.com/';
-  final String imageURL = 'multisrc/lightnovelwp/lightnovelbrasil/icon.png';
   @override
-  final String version = '1.1.8';
+  final String version = '1.2.1';
   final bool reverseChapters = true;
   final String seriesPath = "/series/";
 
@@ -336,8 +344,7 @@ class LightNovelBrasil implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final String url =
-        '$baseURL/page/$pageNo/?s=${Uri.encodeComponent(searchTerm)}';
+    String url = '$baseURL/page/$pageNo/?s=${Uri.encodeComponent(searchTerm)}';
     final body = await _fetchApi(url);
     if (body.isEmpty) {
       return [];
@@ -372,8 +379,15 @@ class LightNovelBrasil implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    return Future.value([]);
-
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    String url = '$baseURL$seriesPath?page=$pageNo';
+    final body = await _fetchApi(url);
+    if (body.isEmpty) {
+      return [];
+    }
+    return await _parseList(body);
   }
 }

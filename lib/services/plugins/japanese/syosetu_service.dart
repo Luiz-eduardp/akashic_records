@@ -75,7 +75,7 @@ class Syosetu implements PluginService {
   final String site = 'https://yomou.syosetu.com/';
   final String novelPrefix = 'https://ncode.syosetu.com';
   @override
-  final String version = '1.1.2';
+  final String version = '1.0.8';
   final Map<String, String> headers = {
     "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

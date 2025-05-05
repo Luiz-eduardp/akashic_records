@@ -51,7 +51,7 @@ class Kakuyomu implements PluginService {
   final String icon = 'src/jp/kakuyomu/icon.png';
   final String site = 'https://kakuyomu.jp';
   @override
-  final String version = '1.0.0';
+  final String version = '1.0.2';
   final String baseURL = 'https://kakuyomu.jp';
   final String defaultCover = 'https://placehold.co/400x500.png?text=Kakuyomu';
 

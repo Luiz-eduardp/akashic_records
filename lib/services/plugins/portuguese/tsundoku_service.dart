@@ -9,7 +9,7 @@ class Tsundoku implements PluginService {
   @override
   String get name => 'Tsundoku';
   @override
-  String get lang =>  'pt-BR';
+  String get lang => 'pt-BR';
   @override
   Map<String, dynamic> get filters => {
     'order': {
@@ -88,10 +88,9 @@ class Tsundoku implements PluginService {
 
   final String id = 'tsundoku.com.br';
   final String nameService = 'Tsundoku Traduções';
-  final String icon = 'src/pt-br/tsundoku/icon.png';
   final String site = 'https://tsundoku.com.br';
   @override
-  final String version = '1.0.1';
+  final String version = '1.0.3';
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
@@ -167,25 +166,7 @@ class Tsundoku implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    String url = '$site/manga/?type=novel';
-    if (pageNo > 1) {
-      url += '&page=$pageNo';
-    }
-
-    if (filters != null) {
-      if (filters['genre'] != null && filters['genre']['value'] is List) {
-        for (var value in filters['genre']['value']) {
-          url += '&genre[]=$value';
-        }
-      }
-      if (filters['order'] != null && filters['order']['value'].isNotEmpty) {
-        url += '&order=${filters['order']['value']}';
-      }
-    }
-
-    final body = await _fetchApi(url);
-    final document = parse(body);
-    return _parseNovels(document);
+    return _fetchNovels(pageNo, filters: filters);
   }
 
   @override
@@ -336,19 +317,43 @@ class Tsundoku implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    String url = '$site/manga/?type=novel&title=$searchTerm';
+    return _fetchNovels(pageNo, searchTerm: searchTerm, filters: filters);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    return _fetchNovels(pageNo, searchTerm: '');
+  }
+
+  Future<List<Novel>> _fetchNovels(
+    int pageNo, {
+    String searchTerm = '',
+    Map<String, dynamic>? filters,
+  }) async {
+    String url = '$site/manga/?type=novel';
     if (pageNo > 1) {
       url += '&page=$pageNo';
+    }
+    if (searchTerm.isNotEmpty) {
+      url += '&s=$searchTerm';
+    }
+
+    if (filters != null) {
+      if (filters['genre'] != null && filters['genre']['value'] is List) {
+        for (var value in filters['genre']['value']) {
+          url += '&genre[]=$value';
+        }
+      }
+      if (filters['order'] != null && filters['order']['value'].isNotEmpty) {
+        url += '&order=${filters['order']['value']}';
+      }
     }
 
     final body = await _fetchApi(url);
     final document = parse(body);
     return _parseNovels(document);
-  }
-
-  @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    return Future.value([]);
-
   }
 }

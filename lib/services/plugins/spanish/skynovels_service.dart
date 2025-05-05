@@ -4,17 +4,17 @@ import 'dart:convert';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' show parse;
 
 class SkyNovels implements PluginService {
   @override
   String get name => 'SkyNovels';
   @override
-  String get lang =>  'es';
+  String get lang => 'es';
   String get id => 'SkyNovels';
   @override
-  String get version => '1.0.0';
+  String get version => '1.0.4';
 
   @override
   Map<String, dynamic> get filters => {};
@@ -73,85 +73,14 @@ class SkyNovels implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final url = '${apiURL}novels?&q&page=$pageNo';
-    final apiResult = await _fetchApi(url);
-
-    if (apiResult == null) {
-      print("apiResult is null, returning empty list");
-      return [];
-    }
-
-    if (apiResult is! Map || apiResult['novels'] is! List) {
-      print('Formato de resposta da API inesperado para popularNovels');
-      return [];
-    }
-
-    final novelList = apiResult['novels'] as List<dynamic>;
-    final novels = <Novel>[];
-
-    for (final novelData in novelList) {
-      if (novelData is! Map<String, dynamic>) {
-        print('Unexpected data type in novelList: ${novelData.runtimeType}');
-        continue;
-      }
-
-      try {
-        final title = novelData['nvl_title'] as String? ?? 'Untitled';
-        final cover =
-            novelData['image'] != null
-                ? '${apiURL}get-image/${novelData['image']}/novels/false'
-                : defaultCover;
-        final novelId = novelData['id'];
-        final novelName = novelData['nvl_name'];
-        final path =
-            novelId != null && novelName != null
-                ? 'novelas/$novelId/$novelName/'
-                : null;
-        if (path == null) {
-          print(
-            'Invalid novelId or novelName: novelId=$novelId, novelName=$novelName',
-          );
-          continue;
-        }
-        novels.add(
-          Novel(
-            id: path,
-            title: title,
-            coverImageUrl: cover,
-            description: novelData['nvl_content'] as String? ?? '',
-            genres:
-                (novelData['genres'] as List<dynamic>?)
-                    ?.map<String>((genre) {
-                      if (genre is Map<String, dynamic>) {
-                        return genre['genre_name'] as String? ?? '';
-                      }
-                      print(
-                        'Unexpected data type in genres: ${genre.runtimeType}',
-                      );
-                      return '';
-                    })
-                    .where((genre) => genre.isNotEmpty)
-                    .toList() ??
-                [],
-            chapters: [],
-            artist: '',
-            statusString: novelData['nvl_status'] as String? ?? '',
-            pluginId: id,
-            author: novelData['nvl_writer'] as String? ?? '',
-          ),
-        );
-      } catch (e) {
-        print('Erro ao processar dados do novel: $e, data: $novelData');
-      }
-    }
-
-    return novels;
+    return _fetchNovels(pageNo, filters: filters);
   }
 
   @override
   Future<Novel> parseNovel(String novelPath) async {
     final parts = novelPath.split('/');
-    final novelId = parts.length > 1 ? parts[1] : null;
+    final novelId = parts.length > 2 ? parts[1] : null;
+
     if (novelId == null) {
       print('Invalid novelPath: $novelPath');
       return _createDefaultNovel(novelPath, 'Invalid Novel Path');
@@ -344,17 +273,34 @@ class SkyNovels implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final encodedSearchTerm = Uri.encodeComponent(searchTerm);
-    final url = '${baseURL}novelas?page=$pageNo&titulo=$encodedSearchTerm';
+    final url = '${apiURL}novels?&q=$searchTerm&page=$pageNo';
+    return await _fetchNovels(pageNo, url: url, filters: filters);
+  }
+
+  @override
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    final url = '${apiURL}novels?&q&page=$pageNo';
+    return await _fetchNovels(pageNo, url: url, filters: filters);
+  }
+
+  Future<List<Novel>> _fetchNovels(
+    int pageNo, {
+    String? url,
+    Map<String, dynamic>? filters,
+  }) async {
+    url ??= '${apiURL}novels?&q&page=$pageNo';
     final apiResult = await _fetchApi(url);
 
     if (apiResult == null) {
-      print('searchNovels: apiResult is null');
+      print("apiResult is null, returning empty list");
       return [];
     }
 
     if (apiResult is! Map || apiResult['novels'] is! List) {
-      print('searchNovels: Formato de resposta da API inesperado.');
+      print('Formato de resposta da API inesperado para popularNovels');
       return [];
     }
 
@@ -363,9 +309,7 @@ class SkyNovels implements PluginService {
 
     for (final novelData in novelList) {
       if (novelData is! Map<String, dynamic>) {
-        print(
-          'searchNovels: Unexpected data type in novel list: ${novelData.runtimeType}',
-        );
+        print('Unexpected data type in novelList: ${novelData.runtimeType}');
         continue;
       }
 
@@ -400,7 +344,7 @@ class SkyNovels implements PluginService {
                         return genre['genre_name'] as String? ?? '';
                       }
                       print(
-                        'searchNovels: Unexpected data type in genres: ${genre.runtimeType}',
+                        'Unexpected data type in genres: ${genre.runtimeType}',
                       );
                       return '';
                     })
@@ -415,9 +359,7 @@ class SkyNovels implements PluginService {
           ),
         );
       } catch (e) {
-        print(
-          'searchNovels: Error processing novel data: $e, searchTerm: $searchTerm, url: $url',
-        );
+        print('Erro ao processar dados do novel: $e, data: $novelData');
       }
     }
 
@@ -437,94 +379,5 @@ class SkyNovels implements PluginService {
       pluginId: id,
       author: '',
     );
-  }
-
-  @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
-    List<Novel> allNovels = [];
-    int page = 1;
-    bool hasNextPage = true;
-
-    while (hasNextPage) {
-      final url = '${apiURL}novels?&q&page=$page';
-      final apiResult = await _fetchApi(url);
-
-      if (apiResult == null) {
-        print("apiResult is null, returning empty list");
-        hasNextPage = false;
-        continue;
-      }
-
-      if (apiResult is! Map || apiResult['novels'] is! List) {
-        print('Formato de resposta da API inesperado para popularNovels');
-        hasNextPage = false;
-        continue;
-      }
-
-      final novelList = apiResult['novels'] as List<dynamic>;
-
-      if (novelList.isEmpty) {
-        hasNextPage = false;
-      }
-
-      for (final novelData in novelList) {
-        if (novelData is! Map<String, dynamic>) {
-          print('Unexpected data type in novelList: ${novelData.runtimeType}');
-          continue;
-        }
-
-        try {
-          final title = novelData['nvl_title'] as String? ?? 'Untitled';
-          final cover =
-              novelData['image'] != null
-                  ? '${apiURL}get-image/${novelData['image']}/novels/false'
-                  : defaultCover;
-          final novelId = novelData['id'];
-          final novelName = novelData['nvl_name'];
-          final path =
-              novelId != null && novelName != null
-                  ? 'novelas/$novelId/$novelName/'
-                  : null;
-          if (path == null) {
-            print(
-              'Invalid novelId or novelName: novelId=$novelId, novelName=$novelName',
-            );
-            continue;
-          }
-          allNovels.add(
-            Novel(
-              id: path,
-              title: title,
-              coverImageUrl: cover,
-              description: novelData['nvl_content'] as String? ?? '',
-              genres:
-                  (novelData['genres'] as List<dynamic>?)
-                      ?.map<String>((genre) {
-                        if (genre is Map<String, dynamic>) {
-                          return genre['genre_name'] as String? ?? '';
-                        }
-                        print(
-                          'Unexpected data type in genres: ${genre.runtimeType}',
-                        );
-                        return '';
-                      })
-                      .where((genre) => genre.isNotEmpty)
-                      .toList() ??
-                  [],
-              chapters: [],
-              artist: '',
-              statusString: novelData['nvl_status'] as String? ?? '',
-              pluginId: id,
-              author: novelData['nvl_writer'] as String? ?? '',
-            ),
-          );
-        } catch (e) {
-          print('Erro ao processar dados do novel: $e, data: $novelData');
-        }
-      }
-      page++;
-    }
-
-    return allNovels;
   }
 }

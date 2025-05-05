@@ -10,7 +10,7 @@ class ReaperScans implements PluginService {
   @override
   String get name => 'ReaperScans';
   @override
-  String get lang =>  'en';
+  String get lang => 'en';
   @override
   Map<String, dynamic> get filters => {};
 
@@ -294,27 +294,11 @@ class ReaperScans implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
-    List<Novel> allNovels = [];
-    int page = 1;
-    bool hasNextPage = true;
-
-    while (hasNextPage) {
-      try {
-        List<Novel> novels = await query(page, '', context: context);
-        if (novels.isEmpty) {
-          hasNextPage = false;
-        } else {
-          allNovels.addAll(novels);
-          page++;
-        }
-      } catch (e) {
-        print('Erro ao carregar novels da página $page: $e');
-        hasNextPage = false;
-      }
-    }
-
-    return allNovels;
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    return query(pageNo, '', context: context);
   }
 }
 

@@ -18,17 +18,15 @@ class CentralNovel implements PluginService {
   @override
   String get name => 'CentralNovel';
   @override
-  String get lang =>  'pt-BR';
+  String get lang => 'pt-BR';
   @override
   Map<String, dynamic> get filters => {};
 
   final String id = 'CentralNovel';
   final String nameService = 'Central Novel';
   final String baseURL = 'https://centralnovel.com';
-  final String imageURL =
-      'https://centralnovel.com/wp-content/uploads/2021/06/CENTRAL-NOVEL-LOGO-DARK-.png';
-      @override
-  final String version = '1.0.1';
+  @override
+  final String version = '1.0.5';
 
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
@@ -210,27 +208,11 @@ class CentralNovel implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
-    List<Novel> allNovels = [];
-    int page = 1;
-    bool hasNextPage = true;
-    String url = 'https://centralnovel.com/series/';
-
-    while (hasNextPage) {
-      try {
-        final pageUrl = '$url?page=$page';
-        final novels = await _parseList(pageUrl);
-        if (novels.isEmpty) {
-          hasNextPage = false;
-        } else {
-          allNovels.addAll(novels);
-          page++;
-        }
-      } catch (e) {
-        print('Erro ao carregar novels da página $page: $e');
-        hasNextPage = false;
-      }
-    }
-    return allNovels;
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    final url = 'https://centralnovel.com/series/?page=$pageNo';
+    return await _parseList(url);
   }
 }

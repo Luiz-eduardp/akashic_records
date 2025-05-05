@@ -30,7 +30,8 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   List<Novel> _filteredNovels = [];
   bool _isListView = false;
   final ScrollController _scrollController = ScrollController();
-  int _currentPagePopular = 1;
+  int _currentPage = 1;
+  final int _itemsPerPage = 10;
   bool _isInitialLoad = true;
   final Set<String> _loadedNovelKeys = {};
 
@@ -60,25 +61,26 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     });
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({int? page}) async {
     setState(() {
       _isLoading = true;
       _isInitialLoad = true;
       _errorMessage = null;
       _loadedNovelKeys.clear();
-      _novels.clear();
-      _filteredNovels.clear();
-      _currentPagePopular = 1;
+      if (page == null || page == 1) {
+        _novels.clear();
+      }
     });
+
+    int pageToLoad = page ?? _currentPage;
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[widget.pluginName];
 
       if (plugin != null) {
-        List<Novel> popularNovels = await plugin.popularNovels(
-          _currentPagePopular,
-        );
+        List<Novel> popularNovels = await plugin.popularNovels(pageToLoad);
+
         for (final novel in popularNovels) {
           novel.pluginId = widget.pluginName;
           if (!_loadedNovelKeys.contains(novel.id)) {
@@ -87,18 +89,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
           }
         }
 
-        List<Novel> allNovels = await plugin.getAllNovels();
-        for (final novel in allNovels) {
-          novel.pluginId = widget.pluginName;
-          if (!_loadedNovelKeys.contains(novel.id)) {
-            _novels.add(novel);
-            _loadedNovelKeys.add(novel.id);
-          }
-        }
-
-        setState(() {
-          _filteredNovels = List.from(_novels);
-        });
+        _updateFilteredNovels();
       } else {
         setState(() {
           _errorMessage = 'Plugin não encontrado.'.translate;
@@ -194,57 +185,82 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     _searchTextController.add(term);
   }
 
-  void _scrollListener() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _loadMoreNovels();
+  void _scrollListener() {}
+
+  List<Novel> _getCurrentPageNovels() {
+    int startIndex = (_currentPage - 1) * _itemsPerPage;
+    int endIndex = startIndex + _itemsPerPage;
+
+    if (startIndex >= _filteredNovels.length) {
+      return [];
+    }
+
+    if (endIndex > _filteredNovels.length) {
+      endIndex = _filteredNovels.length;
+    }
+
+    return _filteredNovels.sublist(startIndex, endIndex);
+  }
+
+  void _goToNextPage() {
+    if (!(_isLoading || _errorMessage != null)) {
+      setState(() {
+        _currentPage++;
+        _loadMoreData(page: _currentPage);
+      });
     }
   }
 
-  Future<void> _loadMoreNovels() async {
-    if (_isLoadingMore || _isLoading || _errorMessage != null) return;
+  void _goToPreviousPage() {
+    if (!(_isLoading || _errorMessage != null) && _currentPage > 1) {
+      setState(() {
+        _currentPage--;
+        _loadMoreData(page: _currentPage);
+      });
+    }
+  }
 
+  void _updateFilteredNovels() {
+    setState(() {
+      _filteredNovels = List.from(_novels);
+    });
+  }
+
+  Future<void> _loadMoreData({int? page}) async {
     setState(() {
       _isLoadingMore = true;
+      _errorMessage = null;
     });
+
+    int pageToLoad = page ?? _currentPage;
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[widget.pluginName];
 
       if (plugin != null) {
-        _currentPagePopular++;
-        List<Novel> popularNovels = await plugin.popularNovels(
-          _currentPagePopular,
-        );
-        for (final novel in popularNovels) {
-          novel.pluginId = widget.pluginName;
-          if (!_loadedNovelKeys.contains(novel.id)) {
-            _novels.add(novel);
-            _loadedNovelKeys.add(novel.id);
-          }
-        }
-
-        List<Novel> allNovels = await plugin.getAllNovels();
-        for (final novel in allNovels) {
-          novel.pluginId = widget.pluginName;
-          if (!_loadedNovelKeys.contains(novel.id)) {
-            _novels.add(novel);
-            _loadedNovelKeys.add(novel.id);
-          }
-        }
-
+        List<Novel> newNovels = await plugin.popularNovels(pageToLoad);
         setState(() {
-          _filteredNovels = List.from(_novels);
+          for (final novel in newNovels) {
+            novel.pluginId = widget.pluginName;
+            if (!_loadedNovelKeys.contains(novel.id)) {
+              _novels.add(novel);
+              _loadedNovelKeys.add(novel.id);
+            }
+          }
+          _isLoadingMore = false;
+          _updateFilteredNovels();
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Plugin não encontrado.'.translate;
+          _isLoadingMore = false;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage =
             'Erro ao carregar mais novels: ${e.toString()}'.translate;
-      });
-    } finally {
-      setState(() {
         _isLoadingMore = false;
       });
     }
@@ -254,6 +270,8 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     Provider.of<AppState>(context);
+
+    int totalPages = (_filteredNovels.length / _itemsPerPage).ceil();
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
@@ -275,20 +293,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                   ),
                 ),
                 Expanded(child: _buildNovelDisplay()),
-                if (_isLoading && !_isInitialLoad)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                if (_isLoadingMore)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+                _buildPaginationButtons(totalPages),
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -300,6 +305,13 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
               ],
             ),
             if (_isInitialLoad) _buildInitialLoadingOverlay(theme),
+            if (_isLoading)
+              Positioned.fill(
+                child: Container(
+                  color: theme.colorScheme.background.withOpacity(0.5),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
           ],
         ),
       ),
@@ -321,7 +333,6 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              CircularProgressIndicator(color: Colors.white),
             ],
           ),
         ),
@@ -347,8 +358,10 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         );
       }
 
+      List<Novel> currentPageNovels = _getCurrentPageNovels();
+
       return NovelGridWidget(
-        novels: _filteredNovels,
+        novels: currentPageNovels,
         isListView: _isListView,
         scrollController: _scrollController,
         onNovelTap: _handleNovelTap,
@@ -357,5 +370,44 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         onNovelLongPress: (Novel NOVEL) {},
       );
     }
+  }
+
+  Widget _buildPaginationButtons(int totalPages) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new),
+            onPressed:
+                _currentPage > 1 && !_isLoadingMore ? _goToPreviousPage : null,
+            disabledColor: Colors.grey,
+            tooltip: 'Página anterior'.translate,
+          ),
+          Text(
+            'Página'.translate +
+                ' ' +
+                ' ' +
+                '$_currentPage' +
+                ' ' +
+                'de'.translate +
+                ' ' +
+                '$totalPages',
+            style: const TextStyle(fontSize: 16),
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_forward_ios),
+            onPressed:
+                (_isLoading || _isLoadingMore || _errorMessage != null) ||
+                        (_currentPage * _itemsPerPage >= _filteredNovels.length)
+                    ? null
+                    : _goToNextPage,
+            disabledColor: Colors.grey,
+            tooltip: 'Próxima página'.translate,
+          ),
+        ],
+      ),
+    );
   }
 }
