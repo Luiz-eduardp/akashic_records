@@ -108,7 +108,7 @@ class LightNovelBrasil implements PluginService {
   final String nameService = 'Light Novel Brasil';
   final String baseURL = 'https://lightnovelbrasil.com/';
   @override
-  final String version = '1.2.1';
+  final String version = '1.2.7';
   final bool reverseChapters = true;
   final String seriesPath = "/series/";
 
@@ -153,7 +153,8 @@ class LightNovelBrasil implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
   }) async {
     String url = createFilterUrl(filters, false, pageNo);
     final body = await _fetchApi(url);

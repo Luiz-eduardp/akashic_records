@@ -27,7 +27,7 @@ class NovelasLigera implements PluginService {
   final String nameService = 'novelasligera';
   final String baseURL = 'https://novelasligera.com/';
   @override
-  final String version = '1.0.3';
+  final String version = '1.0.4';
   final String icon = 'src/es/novelasligera/icon.png';
   final String site = 'https://novelasligera.com/';
 
@@ -58,7 +58,8 @@ class NovelasLigera implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
   }) async {
     final url = baseURL;
     final body = await _fetchApi(url);

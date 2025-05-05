@@ -52,7 +52,7 @@ class MtlNovelPt implements PluginService {
   final String site = 'https://pt.mtlnovels.com/';
   final String mainUrl = 'https://www.mtlnovels.com/';
   @override
-  final String version = '1.2.0';
+  final String version = '1.2.4';
 
   Future<http.Response> safeFetch(
     String url, {
@@ -75,6 +75,7 @@ class MtlNovelPt implements PluginService {
   Future<List<Novel>> popularNovels(
     int page, {
     Map<String, dynamic>? filters,
+      BuildContext? context,
   }) async {
     return _fetchNovels(page, filters: filters);
   }

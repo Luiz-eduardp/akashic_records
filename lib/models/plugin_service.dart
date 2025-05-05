@@ -6,7 +6,11 @@ abstract class PluginService {
   String get version;
   String get lang;
   Map<String, dynamic> get filters;
-  Future<List<Novel>> popularNovels(int page, {Map<String, dynamic> filters});
+  Future<List<Novel>> popularNovels(
+    int page, {
+    Map<String, dynamic> filters,
+    BuildContext? context,
+  });
   Future<Novel> parseNovel(String novelPath);
   Future<String> parseChapter(String chapterPath);
   Future<List<Novel>> searchNovels(

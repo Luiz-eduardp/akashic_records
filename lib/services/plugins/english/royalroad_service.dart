@@ -11,7 +11,7 @@ class RoyalRoad implements PluginService {
   @override
   String get lang => 'en';
   @override
-  String get version => '2.2.3';
+  String get version => '1.2.7';
 
   String get id => 'royalroad';
 
@@ -249,7 +249,8 @@ class RoyalRoad implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
     bool showLatestNovels = true,
   }) async {
     final params = <String, String>{'page': pageNo.toString()};

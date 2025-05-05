@@ -18,12 +18,13 @@ class ProjectGutenberg implements PluginService {
   final String nameService = 'Project Gutenberg';
   final String baseURL = 'https://gnikdroy.pythonanywhere.com/api';
   @override
-  final String version = '1.0.0';
+  final String version = '1.0.1';
 
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     return recentNovels(pageNo, filters: filters);
   }
@@ -106,8 +107,6 @@ class ProjectGutenberg implements PluginService {
     return _fetchNovels(url);
   }
 
-  @override
-    // ignore: override_on_non_overriding_member
   Future<List<Novel>> recentNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
