@@ -24,13 +24,14 @@ class PluginNovelsScreen extends StatefulWidget {
 class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   final List<Novel> _novels = [];
   bool _isLoading = false;
-  bool _isLoadingMore = false;
+  final bool _isLoadingMore = false;
   String? _errorMessage;
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _filteredNovels = [];
   bool _isListView = false;
   final ScrollController _scrollController = ScrollController();
-  int _currentPagePopular = 1;
+  int _currentPage = 1;
+  final int _itemsPerPage = 10;
   bool _isInitialLoad = true;
   final Set<String> _loadedNovelKeys = {};
 
@@ -60,25 +61,25 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     });
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({int? page}) async {
     setState(() {
       _isLoading = true;
-      _isInitialLoad = true;
       _errorMessage = null;
-      _loadedNovelKeys.clear();
-      _novels.clear();
-      _filteredNovels.clear();
-      _currentPagePopular = 1;
+      if (page == null || page == 1) {
+        _novels.clear();
+        _loadedNovelKeys.clear();
+      }
     });
+
+    int pageToLoad = page ?? _currentPage;
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
       final plugin = appState.pluginServices[widget.pluginName];
 
       if (plugin != null) {
-        List<Novel> popularNovels = await plugin.popularNovels(
-          _currentPagePopular,
-        );
+        List<Novel> popularNovels = await plugin.popularNovels(pageToLoad);
+
         for (final novel in popularNovels) {
           novel.pluginId = widget.pluginName;
           if (!_loadedNovelKeys.contains(novel.id)) {
@@ -87,18 +88,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
           }
         }
 
-        List<Novel> allNovels = await plugin.getAllNovels();
-        for (final novel in allNovels) {
-          novel.pluginId = widget.pluginName;
-          if (!_loadedNovelKeys.contains(novel.id)) {
-            _novels.add(novel);
-            _loadedNovelKeys.add(novel.id);
-          }
-        }
-
-        setState(() {
-          _filteredNovels = List.from(_novels);
-        });
+        _updateFilteredNovels();
       } else {
         setState(() {
           _errorMessage = 'Plugin não encontrado.'.translate;
@@ -194,60 +184,45 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     _searchTextController.add(term);
   }
 
-  void _scrollListener() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _loadMoreNovels();
+  void _scrollListener() {}
+
+  List<Novel> _getCurrentPageNovels() {
+    int startIndex = (_currentPage - 1) * _itemsPerPage;
+    int endIndex = startIndex + _itemsPerPage;
+
+    if (startIndex >= _filteredNovels.length) {
+      return [];
+    }
+
+    if (endIndex > _filteredNovels.length) {
+      endIndex = _filteredNovels.length;
+    }
+
+    return _filteredNovels.sublist(startIndex, endIndex);
+  }
+
+  void _goToNextPage() {
+    if (!(_isLoading || _errorMessage != null)) {
+      setState(() {
+        _currentPage++;
+        _loadData(page: _currentPage);
+      });
     }
   }
 
-  Future<void> _loadMoreNovels() async {
-    if (_isLoadingMore || _isLoading || _errorMessage != null) return;
-
-    setState(() {
-      _isLoadingMore = true;
-    });
-
-    try {
-      final appState = Provider.of<AppState>(context, listen: false);
-      final plugin = appState.pluginServices[widget.pluginName];
-
-      if (plugin != null) {
-        _currentPagePopular++;
-        List<Novel> popularNovels = await plugin.popularNovels(
-          _currentPagePopular,
-        );
-        for (final novel in popularNovels) {
-          novel.pluginId = widget.pluginName;
-          if (!_loadedNovelKeys.contains(novel.id)) {
-            _novels.add(novel);
-            _loadedNovelKeys.add(novel.id);
-          }
-        }
-
-        List<Novel> allNovels = await plugin.getAllNovels();
-        for (final novel in allNovels) {
-          novel.pluginId = widget.pluginName;
-          if (!_loadedNovelKeys.contains(novel.id)) {
-            _novels.add(novel);
-            _loadedNovelKeys.add(novel.id);
-          }
-        }
-
-        setState(() {
-          _filteredNovels = List.from(_novels);
-        });
-      }
-    } catch (e) {
+  void _goToPreviousPage() {
+    if (!(_isLoading || _errorMessage != null) && _currentPage > 1) {
       setState(() {
-        _errorMessage =
-            'Erro ao carregar mais novels: ${e.toString()}'.translate;
-      });
-    } finally {
-      setState(() {
-        _isLoadingMore = false;
+        _currentPage--;
+        _loadData(page: _currentPage);
       });
     }
+  }
+
+  void _updateFilteredNovels() {
+    setState(() {
+      _filteredNovels = List.from(_novels);
+    });
   }
 
   @override
@@ -275,20 +250,15 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                   ),
                 ),
                 Expanded(child: _buildNovelDisplay()),
+                _buildPaginationButtons(),
                 if (_isLoading && !_isInitialLoad)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
+                  if (_isLoadingMore)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
-                  ),
-                if (_isLoadingMore)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -347,8 +317,10 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         );
       }
 
+      List<Novel> currentPageNovels = _getCurrentPageNovels();
+
       return NovelGridWidget(
-        novels: _filteredNovels,
+        novels: currentPageNovels,
         isListView: _isListView,
         scrollController: _scrollController,
         onNovelTap: _handleNovelTap,
@@ -357,5 +329,34 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         onNovelLongPress: (Novel NOVEL) {},
       );
     }
+  }
+
+  Widget _buildPaginationButtons() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _currentPage > 1 ? _goToPreviousPage : null,
+            disabledColor: Colors.grey,
+          ),
+          Text(
+            'P'
+            '$_currentPage',
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_forward),
+            onPressed:
+                (_isLoading || _errorMessage != null) ||
+                        ((_novels.length) < _itemsPerPage)
+                    ? null
+                    : _goToNextPage,
+            disabledColor: Colors.grey,
+          ),
+        ],
+      ),
+    );
   }
 }
