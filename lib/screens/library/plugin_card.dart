@@ -14,8 +14,8 @@ class PluginCard extends StatelessWidget {
     final theme = Theme.of(context);
     final appState = Provider.of<AppState>(context);
     final pluginService = appState.pluginServices[pluginName];
-    final pluginVersion = pluginService?.version ?? 'Unknown'.translate;
-    final pluginlang = pluginService?.lang ?? 'Unknown'.translate;
+    final pluginVersion = pluginService?.version ?? 'Desconhecido'.translate;
+    final pluginlang = pluginService?.lang ?? 'Desconhecido'.translate;
 
     return Card(
       margin: const EdgeInsets.all(8.0),
