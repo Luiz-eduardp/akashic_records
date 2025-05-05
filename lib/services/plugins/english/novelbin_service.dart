@@ -11,7 +11,7 @@ class NovelBin implements PluginService {
   @override
   String get name => 'NovelBin';
   @override
-  String get lang =>  'en';
+  String get lang => 'en';
   @override
   String get version => '1.0.0';
 
@@ -224,31 +224,14 @@ class NovelBin implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
-    final url = catalogURL;
-    List<Novel> allNovels = [];
-    int page = 1;
-    bool hasNextPage = true;
-
-    while (hasNextPage) {
-      try {
-        final pageUrl = '$url?page=$page';
-        final data = await _fetchApi(pageUrl);
-        final dom.Document $ = parse(data);
-        final novels = _parseBookResults($);
-        if (novels.isEmpty) {
-          hasNextPage = false;
-        } else {
-          allNovels.addAll(novels);
-          page++;
-        }
-      } catch (e) {
-        print('Erro ao carregar novels da página $page: $e');
-        hasNextPage = false;
-      }
-    }
-
-    return allNovels;
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    final url = catalogURL + '?page=$pageNo';
+    final body = await _fetchApi(url);
+    final document = parse(body);
+    return _parseBookResults(document);
   }
 }
 

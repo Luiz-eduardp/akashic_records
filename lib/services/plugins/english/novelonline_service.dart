@@ -9,7 +9,7 @@ class NovelsOnline implements PluginService {
   @override
   String get name => 'NovelsOnline';
   @override
-  String get lang =>  'en';
+  String get lang => 'en';
   @override
   Map<String, dynamic> get filters => {
     'sort': {
@@ -284,7 +284,10 @@ class NovelsOnline implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) async {
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
     final letters = [
       '#',
       'A',
@@ -315,18 +318,26 @@ class NovelsOnline implements PluginService {
       'Z',
     ];
 
-    final novelsByLetter = await Future.wait(
-      letters.map((letter) => _getNovelsByLetter(letter, context: context)),
-    );
+    List<List<Novel>> allNovelsByLetter = [];
 
-    return novelsByLetter.expand((novels) => novels).toList();
+    for (String letter in letters) {
+      List<Novel> novelsForLetter = await _getNovelsByLetter(
+        letter,
+        context: context,
+        pageNo: pageNo,
+      );
+      allNovelsByLetter.add(novelsForLetter);
+    }
+
+    return allNovelsByLetter.expand((novels) => novels).toList();
   }
 
   Future<List<Novel>> _getNovelsByLetter(
     String letter, {
     BuildContext? context,
+    int pageNo = 1,
   }) async {
-    final url = '$site/novel-list?l=$letter';
+    final url = '$site/novel-list?l=$letter&page=$pageNo';
     try {
       final response = await safeFetch(url, context: context, headers: {});
       final data = response.body;
