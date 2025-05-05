@@ -25,6 +25,7 @@ class Novel {
     this.status = NovelStatus.Desconhecido,
     String? artist,
     String? statusString,
+    downloads,
   });
 
   int get numberOfChapters => shouldShowNumberOfChapters ? chapters.length : 0;

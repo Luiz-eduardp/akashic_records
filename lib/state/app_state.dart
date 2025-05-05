@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
+import 'package:akashic_records/services/plugins/english/projectgutenberg_service.dart';
 import 'package:akashic_records/services/plugins/japanese/kakuyomu_service.dart';
 import 'package:akashic_records/services/plugins/japanese/syosetu_service.dart';
 import 'package:akashic_records/services/plugins/spanish/novelsligera_service.dart';
@@ -372,6 +373,12 @@ class AppState with ChangeNotifier {
     _pluginServices['RoyalRoad'] = RoyalRoad();
     _pluginInfo['RoyalRoad'] = PluginInfo(
       name: 'RoyalRoad',
+      language: PluginLanguage.en,
+    );
+
+    _pluginServices['ProjectGutenberg'] = ProjectGutenberg();
+    _pluginInfo['ProjectGutenberg'] = PluginInfo(
+      name: 'ProjectGutenberg',
       language: PluginLanguage.en,
     );
 
