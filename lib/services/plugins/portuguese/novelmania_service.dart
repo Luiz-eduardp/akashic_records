@@ -18,7 +18,7 @@ class NovelMania implements PluginService {
   @override
   String get name => 'NovelMania';
   @override
-  String get lang =>  'pt-BR';
+  String get lang => 'pt-BR';
   @override
   Map<String, dynamic> get filters => {
     'genres': {
@@ -99,10 +99,9 @@ class NovelMania implements PluginService {
 
   final String id = 'novelmania.com.br';
   final String nameService = 'NovelMania';
-  final String icon = 'src/pt-br/novelmania/icon.png';
   final String site = 'https://novelmania.com.br';
   @override
-  final String version = '1.0.0';
+  final String version = '1.0.4';
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
@@ -120,67 +119,7 @@ class NovelMania implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final queryParameters = {
-      'titulo': '',
-      'categoria': filters?['genres']?['value'] ?? '',
-      'nacionalidade': filters?['type']?['value'] ?? '',
-      'status': filters?['status']?['value'] ?? '',
-      'ordem': '2',
-      'commit': 'Pesquisar+novel',
-      'page[page]': pageNo.toString(),
-    };
-
-    final uri = Uri.https('novelmania.com.br', '/novels', queryParameters);
-
-    try {
-      final body = await _fetchApi(uri.toString());
-      final document = parse(body);
-
-      final novelElements = document.querySelectorAll(
-        'div.top-novels.dark.col-6 > div.row.mb-2',
-      );
-
-      List<Novel> novels = [];
-
-      for (var element in novelElements) {
-        try {
-          final name = element.querySelector('a.novel-title > h5')?.text ?? '';
-          final cover =
-              element
-                  .querySelector(
-                    'a > div.card.c-size-1.border > img.card-image',
-                  )
-                  ?.attributes['src'];
-          final path =
-              element.querySelector('a.novel-title')?.attributes['href'] ?? '';
-          if (name.isNotEmpty && path.isNotEmpty) {
-            if (cover != null) {
-              novels.add(
-                Novel(
-                  id: path,
-                  title: name,
-                  coverImageUrl: cover,
-                  author: '',
-                  description: '',
-                  genres: [],
-                  chapters: [],
-                  artist: '',
-                  statusString: '',
-                  pluginId: name,
-                ),
-              );
-            }
-          }
-        } catch (e) {
-          print('Error parsing novel element: $e');
-        }
-      }
-
-      return novels;
-    } catch (e) {
-      print('Error fetching or parsing popular novels: $e');
-      return [];
-    }
+    return _fetchNovels(pageNo, filters: filters);
   }
 
   @override
@@ -292,6 +231,14 @@ class NovelMania implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
+    return _fetchNovels(pageNo, searchTerm: searchTerm, filters: filters);
+  }
+
+  Future<List<Novel>> _fetchNovels(
+    int pageNo, {
+    String searchTerm = '',
+    Map<String, dynamic>? filters,
+  }) async {
     final queryParameters = {
       'titulo': searchTerm,
       'categoria': filters?['genres']?['value'] ?? '',
@@ -360,8 +307,10 @@ class NovelMania implements PluginService {
   }
 
   @override
-  Future<List<Novel>> getAllNovels({BuildContext? context}) {
-    return Future.value([]);
-
+  Future<List<Novel>> getAllNovels({
+    BuildContext? context,
+    int pageNo = 1,
+  }) async {
+    return _fetchNovels(pageNo, searchTerm: '');
   }
 }
