@@ -9,7 +9,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:epubx/epubx.dart' as epubx;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 
 class Dispositivo implements PluginService {
@@ -68,15 +67,17 @@ class Dispositivo implements PluginService {
 
       final title = epubBook.Title ?? 'Untitled';
       final author = epubBook.Author ?? 'Unknown Author';
-      Uint8List? coverImage = epubBook.CoverImage as Uint8List?;
 
       String? coverImageUrl;
-
-      if (coverImage != null) {
-        List<int> imageBytes = coverImage;
+      if (epubBook.CoverImage != null) {
+        List<int> imageBytes = epubBook.CoverImage as List<int>;
         String base64Image = base64Encode(imageBytes);
         coverImageUrl = 'data:image/png;base64,$base64Image';
       }
+
+      String description =
+          epubBook.Schema?.Package?.Metadata?.Description ??
+          'No description available.';
 
       final novel = Novel(
         id: filePath,
@@ -85,9 +86,7 @@ class Dispositivo implements PluginService {
             coverImageUrl ??
             'https://placehold.co/400x500.png?text=Cover%20Scrap%20Failed',
         author: author,
-        description:
-            epubBook.Schema?.Package?.Metadata?.Description ??
-            'No description available.',
+        description: description,
         genres: [],
         chapters: [],
         artist: '',
