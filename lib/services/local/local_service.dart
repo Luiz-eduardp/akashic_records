@@ -24,7 +24,7 @@ class Dispositivo implements PluginService {
   final String id = 'Dispositivo';
   final String nameService = 'Dispositivo';
   @override
-  final String version = '1.1.0';
+  final String version = '1.1.3';
 
   static const String defaultCover =
       'https://placehold.co/400x500.png?text=Cover%20Scrap%20Failed';
