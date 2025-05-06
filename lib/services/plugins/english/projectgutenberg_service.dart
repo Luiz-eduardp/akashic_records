@@ -18,15 +18,15 @@ class ProjectGutenberg implements PluginService {
   final String nameService = 'Project Gutenberg';
   final String baseURL = 'https://gnikdroy.pythonanywhere.com/api';
   @override
-  final String version = '1.0.0';
+  final String version = '1.0.1';
 
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
     Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
-    List<Novel> novels = await recentNovels(pageNo, filters: filters);
-    return novels;
+    return recentNovels(pageNo, filters: filters);
   }
 
   @override
@@ -103,7 +103,7 @@ class ProjectGutenberg implements PluginService {
     BuildContext? context,
     int pageNo = 1,
   }) async {
-    final url = '$baseURL/book/?page=$pageNo';
+    String url = '$baseURL/book/?page=$pageNo';
     return _fetchNovels(url);
   }
 
@@ -111,7 +111,7 @@ class ProjectGutenberg implements PluginService {
     int pageNo, {
     Map<String, dynamic>? filters,
   }) async {
-    final url = '$baseURL/book/?page=$pageNo';
+    String url = '$baseURL/book/?page=$pageNo';
     return _fetchNovels(url);
   }
 

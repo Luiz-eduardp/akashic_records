@@ -12,7 +12,7 @@ class BlogDoAmonNovels implements PluginService {
   String get lang =>  'pt-BR';
   String get id => 'BlogDoAmonNovels';
 @override
-  String get version => '1.0.0';
+  String get version => '1.0.5';
 
   @override
   Map<String, dynamic> get filters => {};
@@ -101,7 +101,8 @@ class BlogDoAmonNovels implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,
+    Map<String, dynamic>? filters,  
+      BuildContext? context,
   }) async {
     if (pageNo > 1) {
       return [];

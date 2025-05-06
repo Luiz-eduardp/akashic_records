@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
+import 'package:akashic_records/services/local/local_service.dart';
 import 'package:akashic_records/services/plugins/english/projectgutenberg_service.dart';
 import 'package:akashic_records/services/plugins/japanese/kakuyomu_service.dart';
 import 'package:akashic_records/services/plugins/japanese/syosetu_service.dart';
@@ -27,7 +29,7 @@ import 'package:akashic_records/models/favorite_list.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
-enum PluginLanguage { ptBr, en, es, ja }
+enum PluginLanguage { Local, ptBr, en, es, ja }
 
 class PluginInfo {
   final String name;
@@ -310,24 +312,25 @@ class AppState with ChangeNotifier {
   ];
   List<FavoriteList> _favoriteLists = [];
   int _novelCount = 0;
+  List<Novel> _localNovels = [];
 
   final Map<String, PluginService> _pluginServices = {};
   final Map<String, PluginInfo> _pluginInfo = {};
   final _uuid = const Uuid();
   static const String _novelCachePrefix = 'novel_cache_';
 
-  final List<CustomPlugin> _defaultPlugins = [
-    CustomPlugin(
-      name: 'Focus Mode',
-      use: 'Duplo toque no texto para ativar e desativar o modo de foco',
-      code:
-          '''(() => { function loadScript(src, callback) { const script = document.createElement("script"); script.src = src; script.onload = callback; document.head.appendChild(script); } function createStyle() { const style = document.createElement("style"); style.innerHTML = ` .focus-overlay { position: fixed; top: -10px; left: -2px; right: -2px; height: var(--focus-area-height, 30%); background: rgba(0, 0, 0, 0.5); pointer-events: none; z-index: 9999; filter: blur(1px); transition: opacity 0.3s ease; } .focus-overlay-bottom { position: fixed; bottom: -10px; left: -2px; right: -2px; height: var(--focus-area-height, 30%); background: rgba(0, 0, 0, 0.5); pointer-events: none; z-index: 9999; filter: blur(1px); transition: opacity 0.3s ease; } .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.7); color: white; padding: 8px 15px; border-radius: 5px; font-size: 14px; z-index: 9999; display: none; } `; document.head.appendChild(style); } function createFocusOverlays() { const focusOverlayTop = document.createElement("div"); focusOverlayTop.className = "focus-overlay"; const focusOverlayBottom = document.createElement("div"); focusOverlayBottom.className = "focus-overlay-bottom"; return { focusOverlayTop, focusOverlayBottom }; } function createToast() { const toast = document.createElement("div"); toast.className = "toast"; document.body.appendChild(toast); return toast; } let staticFocusMode = false; const focusAreaHeight = 30; const { focusOverlayTop, focusOverlayBottom } = createFocusOverlays(); const toast = createToast(); function toggleStaticFocusMode() { staticFocusMode = !staticFocusMode; if (staticFocusMode) { document.documentElement.style.setProperty( "--focus-area-height", `30%` ); document.body.appendChild(focusOverlayTop); document.body.appendChild(focusOverlayBottom); showToast("Focus Mode Activated"); adjustOverlayOpacity(); } else { if (focusOverlayTop.parentNode) { focusOverlayTop.parentNode.removeChild(focusOverlayTop); } if (focusOverlayBottom.parentNode) { focusOverlayBottom.parentNode.removeChild(focusOverlayBottom); } showToast("Focus Mode Disabled"); } } function adjustOverlayOpacity() { const scrollTop = window.scrollY || document.documentElement.scrollTop; const windowHeight = window.innerHeight; const docHeight = document.documentElement.scrollHeight; const scrollPosition = scrollTop + windowHeight; const topOffset = Math.min(scrollTop / 100, 1); const distanceFromBottom = docHeight - scrollPosition; const bottomOffset = Math.max(distanceFromBottom / 100); focusOverlayTop.style.opacity = topOffset.toString(); focusOverlayBottom.style.opacity = bottomOffset.toString(); } function showToast(message) { toast.textContent = message; toast.style.display = "block"; setTimeout(() => { toast.style.display = "none"; }, 1000); } function handleTripleClick(event) { if (event.detail === 3) { toggleStaticFocusMode(); } } function handleScroll() { if (staticFocusMode) { adjustOverlayOpacity(); } } createStyle(); document.addEventListener("click", handleTripleClick); window.addEventListener("scroll", handleScroll); toggleStaticFocusMode(); })();''',
-      enabled: true,
-      priority: 1,
-    ),
-  ];
+  final List<CustomPlugin> _defaultPlugins = [];
+
+  late Box<CustomPlugin> _customPluginsBox;
+  late Box<CachedNovel> _novelCacheBox;
+  late Box<FavoriteListHive> _favoriteListsBox;
 
   AppState() {
+    _pluginServices['Dispositivo'] = Dispositivo();
+    _pluginInfo['Dispositivo'] = PluginInfo(
+      name: 'Dispositivo',
+      language: PluginLanguage.Local,
+    );
     _pluginServices['NovelMania'] = NovelMania();
     _pluginInfo['NovelMania'] = PluginInfo(
       name: 'NovelMania',
@@ -434,8 +437,11 @@ class AppState with ChangeNotifier {
   Map<String, PluginService> get pluginServices => _pluginServices;
   List<FavoriteList> get favoriteLists => _favoriteLists;
   int get novelCount => _novelCount;
+  List<Novel> get localNovels => _localNovels;
 
   get pluginInfo => _pluginInfo;
+
+  get novelCacheBox => null;
 
   @override
   void dispose() {
@@ -460,6 +466,20 @@ class AppState with ChangeNotifier {
   }
 
   void setSelectedPlugins(Set<String> newPlugins) {
+    final pluginsToRemove = _selectedPlugins.difference(
+      _pluginServices.keys.toSet(),
+    );
+
+    if (pluginsToRemove.isNotEmpty) {
+      final mutableSelectedPlugins = Set<String>.from(_selectedPlugins);
+      mutableSelectedPlugins.removeAll(pluginsToRemove);
+      _selectedPlugins = mutableSelectedPlugins;
+
+      debugPrint(
+        "Removed plugins from selectedPlugins that are not in _pluginServices: $pluginsToRemove",
+      );
+    }
+
     _selectedPlugins = newPlugins;
     _saveSelectedPlugins();
     notifyListeners();
@@ -691,9 +711,11 @@ class AppState with ChangeNotifier {
 
   Future<void> saveNovelCache(Novel novel) async {
     try {
-      final box = Hive.box<CachedNovel>('novelCache');
       final cachedNovel = CachedNovel.fromNovel(novel);
-      await box.put(getNovelCacheKey(novel.pluginId, novel.id), cachedNovel);
+      await _novelCacheBox.put(
+        getNovelCacheKey(novel.pluginId, novel.id),
+        cachedNovel,
+      );
       debugPrint("Saved cache for ${novel.pluginId}/${novel.id} in Hive");
     } catch (e) {
       debugPrint(
@@ -704,8 +726,9 @@ class AppState with ChangeNotifier {
 
   Future<Novel?> getNovelFromCache(String pluginId, String novelId) async {
     try {
-      final box = Hive.box<CachedNovel>('novelCache');
-      final cachedNovel = box.get(getNovelCacheKey(pluginId, novelId));
+      final cachedNovel = _novelCacheBox.get(
+        getNovelCacheKey(pluginId, novelId),
+      );
       if (cachedNovel != null) {
         debugPrint("Retrieved cache for $pluginId/$novelId from Hive");
         return cachedNovel.toNovel();
@@ -720,8 +743,7 @@ class AppState with ChangeNotifier {
 
   Future<void> removeNovelCache(String pluginId, String novelId) async {
     try {
-      final box = Hive.box<CachedNovel>('novelCache');
-      await box.delete(getNovelCacheKey(pluginId, novelId));
+      await _novelCacheBox.delete(getNovelCacheKey(pluginId, novelId));
       debugPrint("Removed cache for $pluginId/$novelId from Hive");
     } catch (e) {
       debugPrint(
@@ -741,37 +763,37 @@ class AppState with ChangeNotifier {
     Hive.registerAdapter(CustomPluginAdapter());
     Hive.registerAdapter(CachedNovelAdapter());
     Hive.registerAdapter(FavoriteListHiveAdapter());
-    await Hive.openBox<CustomPlugin>('customPlugins');
-    await Hive.openBox<CachedNovel>('novelCache');
-    await Hive.openBox<FavoriteListHive>('favoriteLists');
+
+    _customPluginsBox = await Hive.openBox<CustomPlugin>('customPlugins');
+    _novelCacheBox = await Hive.openBox<CachedNovel>('novelCache');
+    _favoriteListsBox = await Hive.openBox<FavoriteListHive>(
+      'favoriteListsBox',
+    );
+
     debugPrint("Hive initialized.");
   }
 
   Future<void> _insertCustomPluginToHive(CustomPlugin plugin) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.put(plugin.name, plugin);
+    await _customPluginsBox.put(plugin.name, plugin);
     debugPrint("Custom plugin '${plugin.name}' inserted into Hive.");
   }
 
   Future<void> _updateCustomPluginInHive(CustomPlugin plugin) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.put(plugin.name, plugin);
+    await _customPluginsBox.put(plugin.name, plugin);
     debugPrint("Custom plugin '${plugin.name}' updated in Hive.");
   }
 
   Future<void> _deleteCustomPluginFromHive(CustomPlugin plugin) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.delete(plugin.name);
+    await _customPluginsBox.delete(plugin.name);
     debugPrint("Custom plugin '${plugin.name}' deleted from Hive.");
   }
 
   Future<void> _syncCustomPluginsToHive(List<CustomPlugin> plugins) async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    await box.clear();
+    await _customPluginsBox.clear();
     final Map<String, CustomPlugin> pluginMap = {
       for (var plugin in plugins) plugin.name: plugin,
     };
-    await box.putAll(pluginMap);
+    await _customPluginsBox.putAll(pluginMap);
     debugPrint("Custom plugins synced to Hive.");
   }
 
@@ -791,6 +813,17 @@ class AppState with ChangeNotifier {
       _selectedPlugins =
           plugins?.isNotEmpty == true ? Set<String>.from(plugins!) : {};
 
+      final invalidPlugins = _selectedPlugins.difference(
+        _pluginServices.keys.toSet(),
+      );
+      if (invalidPlugins.isNotEmpty) {
+        debugPrint(
+          "Removing invalid plugins from selectedPlugins: $invalidPlugins",
+        );
+        _selectedPlugins.removeAll(invalidPlugins);
+        await _saveSelectedPlugins(prefs);
+      }
+
       final readerSettingsMap = <String, dynamic>{};
       prefs.getKeys().where((key) => key.startsWith('reader_')).forEach((key) {
         readerSettingsMap[key.substring(7)] = prefs.get(key);
@@ -802,6 +835,7 @@ class AppState with ChangeNotifier {
       _scriptUrls = prefs.getStringList('scriptUrls') ?? [_scriptUrls.first];
 
       _favoriteLists = await _getFavoriteListsFromHive();
+      _localNovels = await _getLocalNovelsFromHive();
 
       await _createDefaultFavoriteListIfNeeded();
     } catch (e) {
@@ -813,6 +847,8 @@ class AppState with ChangeNotifier {
       _customPlugins = List.from(_defaultPlugins);
       _favoriteLists = [];
       _scriptUrls = ['https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/'];
+      _localNovels = [];
+
       try {
         prefs = await SharedPreferences.getInstance();
         await _createDefaultFavoriteListIfNeeded();
@@ -825,13 +861,46 @@ class AppState with ChangeNotifier {
   }
 
   Future<List<FavoriteList>> _getFavoriteListsFromHive() async {
-    final box = Hive.box<FavoriteListHive>('favoriteLists');
-    return box.values.map((hiveList) => hiveList.toFavoriteList()).toList();
+    return _favoriteListsBox.values
+        .map((hiveList) => hiveList.toFavoriteList())
+        .toList();
   }
 
   Future<List<CustomPlugin>> _getCustomPluginsFromHive() async {
-    final box = Hive.box<CustomPlugin>('customPlugins');
-    return box.values.toList();
+    return _customPluginsBox.values.toList();
+  }
+
+  Future<List<Novel>> _getLocalNovelsFromHive() async {
+    List<Novel> novels = [];
+    try {
+      debugPrint("Iniciando o carregamento de novels locais do Hive...");
+      for (var key in _novelCacheBox.keys) {
+        if (key.toString().startsWith('local_novel_')) {
+          CachedNovel? cachedNovel = _novelCacheBox.get(key);
+
+          if (cachedNovel != null) {
+            final file = File(cachedNovel.id);
+            if (await file.exists()) {
+              debugPrint("Novel encontrada no Hive: ${cachedNovel.title}");
+              novels.add(cachedNovel.toNovel());
+            } else {
+              debugPrint(
+                "Arquivo não existe mais: ${cachedNovel.title}. Removendo do Hive.",
+              );
+              await _novelCacheBox.delete(key);
+            }
+          } else {
+            debugPrint("Erro: Novel cacheada nula para a chave: $key");
+          }
+        }
+      }
+      debugPrint(
+        "Carregamento de novels locais do Hive concluído. Total: ${novels.length}",
+      );
+    } catch (e) {
+      debugPrint("Erro ao carregar novels locais do Hive: $e");
+    }
+    return novels;
   }
 
   Future<void> _createDefaultFavoriteListIfNeeded() async {
@@ -910,13 +979,12 @@ class AppState with ChangeNotifier {
 
   Future<void> _saveFavoriteLists() async {
     try {
-      final box = Hive.box<FavoriteListHive>('favoriteLists');
-      await box.clear();
+      await _favoriteListsBox.clear();
       final Map<String, FavoriteListHive> listMap = {
         for (var list in _favoriteLists)
           list.id: FavoriteListHive.fromFavoriteList(list),
       };
-      await box.putAll(listMap);
+      await _favoriteListsBox.putAll(listMap);
       debugPrint("Favorite lists saved to Hive.");
     } catch (e) {
       debugPrint("Erro ao salvar listas de favoritos no Hive: $e");
@@ -927,6 +995,26 @@ class AppState with ChangeNotifier {
   void updateNovelCount(int count) {
     _novelCount = count;
     notifyListeners();
+  }
+
+  Future<void> addLocalNovels(List<Novel> novels) async {
+    _localNovels.addAll(novels);
+
+    for (final novel in novels) {
+      await _saveLocalNovelToHive(novel);
+    }
+    notifyListeners();
+  }
+
+  Future<void> _saveLocalNovelToHive(Novel novel) async {
+    try {
+      final cachedNovel = CachedNovel.fromNovel(novel);
+      String key = 'local_novel_${novel.id}';
+      await _novelCacheBox.put(key, cachedNovel);
+      debugPrint("Saved local novel ${novel.title} to Hive with key: $key");
+    } catch (e) {
+      debugPrint("Error saving local novel ${novel.title} to Hive: $e");
+    }
   }
 }
 

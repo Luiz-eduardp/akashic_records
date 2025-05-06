@@ -58,7 +58,11 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "Lista '$listName' criada e novel adicionada.".translate,
+              'Lista'.translate +
+                  ' ' +
+                  listName +
+                  ' ' +
+                  'criada e novel adicionada'.translate,
             ),
             duration: const Duration(seconds: 2),
           ),
@@ -73,7 +77,8 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _newListErrorText = "Erro desconhecido ao criar lista: $e".translate;
+          _newListErrorText =
+              'Erro desconhecido ao criar lista:'.translate + e.toString();
         });
       }
     }
@@ -95,7 +100,7 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Erro ao atualizar lista '${list.name}'".translate),
+            content: Text('Erro ao atualizar lista'.translate + list.name),
             duration: const Duration(seconds: 2),
           ),
         );
