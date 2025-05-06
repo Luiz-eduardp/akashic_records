@@ -162,9 +162,6 @@
   "Nenhuma lista criada. Toque no botão '+' para adicionar sua primeira lista.": "No lists created. Tap the '+' button to add your first list.",
   "novels": "novels",
   "Excluir Lista": "Delete List",
-  "Lista '$listName' criada e novel adicionada.": "List '$listName' created and novel added.",
-  "Erro desconhecido ao criar lista: $e": "Unknown error creating list: $e",
-  "Erro ao atualizar lista '${list.name}'": "Error updating list '${list.name}'",
   "Adicionar/Remover das Listas": "Add/Remove from Lists",
   "Nenhuma lista criada ainda.": "No lists created yet.",
   "Criar nova lista e adicionar novel": "Create new list and add novel",
@@ -193,6 +190,10 @@
   "Erro ao importar": "Import error",
   "Plugin Dispositivo não encontrado": "Device plugin not found",
   "Sucesso ao importar": "Import success",
+  "Lista": "List",
+  "criada e novel adicionada": "created and novel added",
+  "Erro desconhecido ao criar lista:": "Unknown error creating list:",
+  "Erro ao atualizar lista": "Error updating list",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "No plugins selected. Go to settings to add plugins",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "The first load may take a while due to the amount of information"
 }

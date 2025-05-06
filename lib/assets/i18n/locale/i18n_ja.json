@@ -162,9 +162,6 @@
   "Nenhuma lista criada. Toque no botão '+' para adicionar sua primeira lista.": "リストは作成されていません。最初のリストを追加するには、「+」ボタンをタップしてください。",
   "novels": "小説",
   "Excluir Lista": "リストを削除",
-  "Lista '$listName' criada e novel adicionada.": "リスト「$listName」を作成し、小説を追加しました。",
-  "Erro desconhecido ao criar lista: $e": "リストの作成中に不明なエラーが発生しました：$e",
-  "Erro ao atualizar lista '${list.name}'": "リスト「${list.name}」の更新エラー",
   "Adicionar/Remover das Listas": "リストに追加/削除",
   "Nenhuma lista criada ainda.": "まだリストは作成されていません。",
   "Criar nova lista e adicionar novel": "新しいリストを作成して小説を追加",
@@ -193,6 +190,10 @@
   "Erro ao importar": "「インポートエラー」",
   "Plugin Dispositivo não encontrado": "「デバイスプラグインが見つかりません",
   "Sucesso ao importar": "",
+  "Lista": "「リスト」",
+  "criada e novel adicionada": "「作成および小説を追加しました」",
+  "Erro desconhecido ao criar lista:": "「リスト作成中に不明なエラーが発生しました:」",
+  "Erro ao atualizar lista": "「リスト更新中にエラーが発生しました」",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "プラグインが選択されていません。設定からプラグインを追加してください。",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "最初の読み込みは、情報の量のために少し時間がかかることがあります。"
 }
