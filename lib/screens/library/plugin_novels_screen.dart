@@ -122,10 +122,14 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       List<Novel> pluginResults = [];
 
       if (term.isNotEmpty) {
-        localResults = _novels
-            .where((novel) =>
-                novel.title.toLowerCase().contains(term.toLowerCase()) == true)
-            .toList();
+        localResults =
+            _novels
+                .where(
+                  (novel) =>
+                      novel.title.toLowerCase().contains(term.toLowerCase()) ==
+                      true,
+                )
+                .toList();
 
         final appState = Provider.of<AppState>(context, listen: false);
         final plugin = appState.pluginServices[widget.pluginName];
@@ -151,9 +155,11 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       combinedResults.addAll(pluginResults);
 
       for (final localNovel in localResults) {
-        if (!combinedResults.any((pluginNovel) =>
-            pluginNovel.pluginId == localNovel.pluginId &&
-            pluginNovel.id == localNovel.id)) {
+        if (!combinedResults.any(
+          (pluginNovel) =>
+              pluginNovel.pluginId == localNovel.pluginId &&
+              pluginNovel.id == localNovel.id,
+        )) {
           combinedResults.add(localNovel);
         }
       }
@@ -267,51 +273,6 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     }
   }
 
-  Future<void> _deleteNovel(Novel novel) async {
-    if (widget.pluginName != 'Dispositivo') return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final appState = Provider.of<AppState>(context, listen: false);
-      final dispositivoPlugin =
-          appState.pluginServices[widget.pluginName] as Dispositivo;
-
-      if (dispositivoPlugin != null) {
-        await dispositivoPlugin.deleteNovel(novel.id);
-
-        // Atualizar a lista local
-        setState(() {
-          _novels.remove(novel);
-          _filteredNovels.remove(novel);
-        });
-
-        // Atualizar AppState
-        appState.localNovels.removeWhere((n) => n.id == novel.id);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Novel deletada com sucesso.'.translate),
-          ),
-        );
-      } else {
-        setState(() {
-          _errorMessage = 'Plugin Dispositivo não encontrado'.translate;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Erro ao deletar novel: ${e.toString()}'.translate;
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -399,9 +360,9 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     if (_isLoading && _filteredNovels.isEmpty) {
       return _isListView
           ? ListView.builder(
-              itemCount: 5,
-              itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
-            )
+            itemCount: 5,
+            itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
+          )
           : NovelGridSkeletonWidget(itemCount: 4);
     } else {
       if (_filteredNovels.isEmpty && !_isLoading && _errorMessage == null) {
@@ -422,36 +383,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         onNovelTap: _handleNovelTap,
         errorMessage: _errorMessage,
         isLoading: _isLoading || _isLoadingMore,
-        onNovelLongPress: (Novel novel) {
-          if (widget.pluginName == 'Dispositivo') {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text("Deletar Novel?".translate),
-                  content: Text(
-                    "Você tem certeza que deseja deletar '${novel.title}'?".translate,
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      child: Text("Cancelar".translate),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    TextButton(
-                      child: Text("Deletar".translate),
-                      onPressed: () {
-                        _deleteNovel(novel);
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-          }
-        },
+        onNovelLongPress: (Novel NOVEL) {},
       );
     }
   }
