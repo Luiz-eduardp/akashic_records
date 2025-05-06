@@ -194,6 +194,10 @@
   "criada e novel adicionada": "criada e novel adicionada",
   "Erro desconhecido ao criar lista:": "Erro desconhecido ao criar lista:",
   "Erro ao atualizar lista": "Erro ao atualizar lista",
+  "Deletar Novel?": "Deletar Novel?",
+  "Você tem certeza que deseja deletar": "Você tem certeza que deseja deletar",
+  "Novel deletada com sucesso.": "Novel deletada com sucesso.",
+  "Erro ao deletar novel: ": "Erro ao deletar novel: ",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "O primeiro carregamento pode demorar um pouco devido à quantidade de informações"
 }

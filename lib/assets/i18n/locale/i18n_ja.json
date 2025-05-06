@@ -194,6 +194,10 @@
   "criada e novel adicionada": "「作成および小説を追加しました」",
   "Erro desconhecido ao criar lista:": "「リスト作成中に不明なエラーが発生しました:」",
   "Erro ao atualizar lista": "「リスト更新中にエラーが発生しました」",
+  "Deletar Novel?": "「小説を削除しますか？」",
+  "Você tem certeza que deseja deletar": "「本当に削除しますか？」",
+  "Novel deletada com sucesso.": "「小説は正常に削除されました。」",
+  "Erro ao deletar novel: ": "「小説の削除中にエラーが発生しました：」",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "プラグインが選択されていません。設定からプラグインを追加してください。",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "最初の読み込みは、情報の量のために少し時間がかかることがあります。"
 }
