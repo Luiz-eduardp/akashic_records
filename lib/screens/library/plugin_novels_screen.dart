@@ -81,10 +81,16 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       final plugin = appState.pluginServices[widget.pluginName];
 
       if (plugin != null) {
-        List<Novel> popularNovels = await plugin.popularNovels(
-          pageToLoad,
-          context: context,
-        );
+        List<Novel> popularNovels = [];
+
+        if (widget.pluginName == 'Dispositivo') {
+          popularNovels.addAll(appState.localNovels);
+        } else {
+          popularNovels = await plugin.popularNovels(
+            pageToLoad,
+            context: context,
+          );
+        }
 
         for (final novel in popularNovels) {
           novel.pluginId = widget.pluginName;
@@ -122,10 +128,14 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       List<Novel> pluginResults = [];
 
       if (term.isNotEmpty) {
-        localResults = _novels
-            .where((novel) =>
-                novel.title.toLowerCase().contains(term.toLowerCase()) == true)
-            .toList();
+        localResults =
+            _novels
+                .where(
+                  (novel) =>
+                      novel.title.toLowerCase().contains(term.toLowerCase()) ==
+                      true,
+                )
+                .toList();
 
         final appState = Provider.of<AppState>(context, listen: false);
         final plugin = appState.pluginServices[widget.pluginName];
@@ -151,9 +161,11 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       combinedResults.addAll(pluginResults);
 
       for (final localNovel in localResults) {
-        if (!combinedResults.any((pluginNovel) =>
-            pluginNovel.pluginId == localNovel.pluginId &&
-            pluginNovel.id == localNovel.id)) {
+        if (!combinedResults.any(
+          (pluginNovel) =>
+              pluginNovel.pluginId == localNovel.pluginId &&
+              pluginNovel.id == localNovel.id,
+        )) {
           combinedResults.add(localNovel);
         }
       }
@@ -267,7 +279,10 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     }
   }
 
-  Future<void> _deleteNovel(Novel novel) async {
+  Future<void> _deleteNovel(
+    Novel novel, {
+    required BuildContext context,
+  }) async {
     if (widget.pluginName != 'Dispositivo') return;
 
     setState(() {
@@ -280,21 +295,16 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
           appState.pluginServices[widget.pluginName] as Dispositivo;
 
       if (dispositivoPlugin != null) {
-        await dispositivoPlugin.deleteNovel(novel.id);
+        await dispositivoPlugin.deleteNovel(novel.id, context: context);
+        appState.localNovels.removeWhere((n) => n.id == novel.id);
 
-        // Atualizar a lista local
         setState(() {
           _novels.remove(novel);
           _filteredNovels.remove(novel);
         });
 
-        // Atualizar AppState
-        appState.localNovels.removeWhere((n) => n.id == novel.id);
-
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Novel deletada com sucesso.'.translate),
-          ),
+          SnackBar(content: Text('Novel deletada com sucesso.'.translate)),
         );
       } else {
         setState(() {
@@ -399,9 +409,9 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     if (_isLoading && _filteredNovels.isEmpty) {
       return _isListView
           ? ListView.builder(
-              itemCount: 5,
-              itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
-            )
+            itemCount: 5,
+            itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
+          )
           : NovelGridSkeletonWidget(itemCount: 4);
     } else {
       if (_filteredNovels.isEmpty && !_isLoading && _errorMessage == null) {
@@ -430,7 +440,11 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                 return AlertDialog(
                   title: Text("Deletar Novel?".translate),
                   content: Text(
-                    "Você tem certeza que deseja deletar '${novel.title}'?".translate,
+                    'Você tem certeza que deseja deletar'.translate +
+                        ' ' +
+                        novel.title +
+                        ' ' +
+                        '?',
                   ),
                   actions: <Widget>[
                     TextButton(
@@ -442,7 +456,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                     TextButton(
                       child: Text("Deletar".translate),
                       onPressed: () {
-                        _deleteNovel(novel);
+                        _deleteNovel(novel, context: context);
                         Navigator.of(context).pop();
                       },
                     ),

@@ -223,18 +223,26 @@ class Dispositivo implements PluginService {
     }
   }
 
-  Future<void> deleteNovel(String novelId) async {
+  Future<void> deleteNovel(String novelId, {BuildContext? context}) async {
     try {
       final novelFile = File(novelId);
       if (await novelFile.exists()) {
         await novelFile.delete();
         debugPrint('Novel with ID $novelId deleted successfully.');
+
+        if (context != null) {
+          final appState = Provider.of<AppState>(context, listen: false);
+
+          await appState.removeNovelCache('Dispositivo', novelId);
+
+          appState.localNovels.removeWhere((novel) => novel.id == novelId);
+        }
       } else {
         debugPrint('Novel with ID $novelId not found.');
       }
     } catch (e) {
       debugPrint('Error deleting novel with ID $novelId: $e');
-      rethrow; // Re-throw the exception to be caught in the UI.
+      rethrow;
     }
   }
 }

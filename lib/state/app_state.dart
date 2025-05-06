@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/services/local/local_service.dart';
@@ -765,7 +766,9 @@ class AppState with ChangeNotifier {
 
     _customPluginsBox = await Hive.openBox<CustomPlugin>('customPlugins');
     _novelCacheBox = await Hive.openBox<CachedNovel>('novelCache');
-    _favoriteListsBox = await Hive.openBox<FavoriteListHive>('favoriteLists');
+    _favoriteListsBox = await Hive.openBox<FavoriteListHive>(
+      'favoriteListsBox',
+    );
 
     debugPrint("Hive initialized.");
   }
@@ -870,15 +873,30 @@ class AppState with ChangeNotifier {
   Future<List<Novel>> _getLocalNovelsFromHive() async {
     List<Novel> novels = [];
     try {
+      debugPrint("Iniciando o carregamento de novels locais do Hive...");
       for (var key in _novelCacheBox.keys) {
         if (key.toString().startsWith('local_novel_')) {
           CachedNovel? cachedNovel = _novelCacheBox.get(key);
 
           if (cachedNovel != null) {
-            novels.add(cachedNovel.toNovel());
+            final file = File(cachedNovel.id);
+            if (await file.exists()) {
+              debugPrint("Novel encontrada no Hive: ${cachedNovel.title}");
+              novels.add(cachedNovel.toNovel());
+            } else {
+              debugPrint(
+                "Arquivo não existe mais: ${cachedNovel.title}. Removendo do Hive.",
+              );
+              await _novelCacheBox.delete(key);
+            }
+          } else {
+            debugPrint("Erro: Novel cacheada nula para a chave: $key");
           }
         }
       }
+      debugPrint(
+        "Carregamento de novels locais do Hive concluído. Total: ${novels.length}",
+      );
     } catch (e) {
       debugPrint("Erro ao carregar novels locais do Hive: $e");
     }
