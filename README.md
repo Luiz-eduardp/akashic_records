@@ -79,28 +79,20 @@ An open-source, cross-platform novel reader built to offer a rich and customizab
 ## 🖼️ Screenshots
 
 <div align="center">
-    <img src="lib/src/screenshots/scs2.png" width="30%">
-    <img src="lib/src/screenshots/scs3.png" width="30%">
-    <br>
-    <img src="lib/src/screenshots/scs4.png" width="30%">
-    <img src="lib/src/screenshots/scs5.png" width="30%">
-    <img src="lib/src/screenshots/scs6.png" width="30%">
-    <br>
-    <img src="lib/src/screenshots/scs7.png" width="30%">
-    <img src="lib/src/screenshots/scs8.png" width="30%">
-    <img src="lib/src/screenshots/scs9.png" width="30%">
-    <br>
-    <img src="lib/src/screenshots/scs10.png" width="30%">
-    <img src="lib/src/screenshots/scs11.png" width="30%">
-    <img src="lib/src/screenshots/scs12.png" width="30%">
-    <br>
-    <img src="lib/src/screenshots/scs13.png" width="30%">
-    <img src="lib/src/screenshots/scs14.png" width="30%">
-    <img src="lib/src/screenshots/scs15.png" width="30%">
-    <br>
-    <img src="lib/src/screenshots/scs16.png" width="30%">
-    <img src="lib/src/screenshots/scs17.png" width="30%">
-    <img src="lib/src/screenshots/scs18.png" width="30%">
+    <img src="lib/src/screenshots/sc1.png" width="30%">
+    <img src="lib/src/screenshots/sc2.png" width="30%">
+    <img src="lib/src/screenshots/sc3.png" width="30%">
+    <img src="lib/src/screenshots/sc4.png" width="30%">
+    <img src="lib/src/screenshots/sc5.png" width="30%">
+    <img src="lib/src/screenshots/sc5.png" width="30%">
+    <img src="lib/src/screenshots/sc7.png" width="30%">
+    <img src="lib/src/screenshots/sc8.png" width="30%">
+    <img src="lib/src/screenshots/sc9.png" width="30%">
+    <img src="lib/src/screenshots/sc10.png" width="30%">
+    <img src="lib/src/screenshots/sc11.png" width="30%">
+    <img src="lib/src/screenshots/sc12.png" width="30%">
+    <img src="lib/src/screenshots/sc13.png" width="30%">
+    
 </div>
 
 ---
