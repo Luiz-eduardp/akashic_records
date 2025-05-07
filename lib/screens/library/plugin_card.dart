@@ -18,9 +18,10 @@ class PluginCard extends StatelessWidget {
     final pluginlang = pluginService?.lang ?? 'Desconhecido'.translate;
 
     return Card(
-      margin: const EdgeInsets.all(8.0),
-      elevation: 4.0,
-      color: theme.colorScheme.surface,
+      elevation: 2.0,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -30,15 +31,21 @@ class PluginCard extends StatelessWidget {
             ),
           );
         },
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.extension,
-                size: 48.0,
-                color: theme.colorScheme.primary,
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Icon(
+                  Icons.extension,
+                  size: 32.0,
+                  color: theme.colorScheme.primary,
+                ),
               ),
               const SizedBox(width: 16.0),
               Expanded(
@@ -49,35 +56,43 @@ class PluginCard extends StatelessWidget {
                       children: [
                         Text(
                           pluginName,
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold,
+                          style: theme.textTheme.titleLarge!.copyWith(
                             color: theme.colorScheme.onSurface,
                           ),
                         ),
-                        SizedBox(width: 4.0),
-
+                        SizedBox(width: 3.0),
                         Text(
                           pluginlang,
-                          style: TextStyle(
-                            fontSize: 14.0,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          style: theme.textTheme.bodyMedium!.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4.0),
-                    Text(
-                      'Versão'.translate + ' - ' + pluginVersion,
-                      style: TextStyle(
-                        fontSize: 14.0,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'Versão'.translate + ': ',
+                          style: theme.textTheme.bodyMedium!.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        Text(
+                          pluginVersion,
+                          style: theme.textTheme.bodyMedium!.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
         ),

@@ -12,19 +12,42 @@ class PluginsScreen extends StatefulWidget {
 }
 
 class _PluginsScreenState extends State<PluginsScreen> {
+  Map<PluginLanguage, List<String>> pluginsByLanguage = {};
+  final Map<PluginLanguage, bool> _languageExpanded = {};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final appState = Provider.of<AppState>(context, listen: false);
+    pluginsByLanguage = {};
+    appState.pluginInfo.forEach((name, info) {
+      if (!pluginsByLanguage.containsKey(info.language)) {
+        pluginsByLanguage[info.language] = [];
+        _languageExpanded[info.language] = false;
+      }
+      pluginsByLanguage[info.language]!.add(name);
+    });
+  }
+
+  void _toggleAll(PluginLanguage language, bool newValue) {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final plugins = pluginsByLanguage[language] ?? [];
+    final updatedPlugins = Set<String>.from(appState.selectedPlugins);
+
+    setState(() {
+      if (newValue) {
+        updatedPlugins.addAll(plugins);
+      } else {
+        updatedPlugins.removeAll(plugins);
+      }
+      appState.setSelectedPlugins(updatedPlugins);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     Theme.of(context);
-    final selectedPlugins = appState.selectedPlugins;
-
-    final pluginsByLanguage = <PluginLanguage, List<String>>{};
-    appState.pluginInfo.forEach((name, info) {
-      if (!pluginsByLanguage.containsKey(info.language)) {
-        pluginsByLanguage[info.language] = [];
-      }
-      pluginsByLanguage[info.language]!.add(name);
-    });
 
     return Scaffold(
       appBar: AppBar(title: Text('Plugins'.translate), centerTitle: true),
@@ -38,9 +61,9 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 if (pluginsByLanguage.containsKey(language))
                   _buildPluginSection(
                     context,
-                    _getLanguageName(language),
+                    language,
                     pluginsByLanguage[language]!,
-                    selectedPlugins,
+                    appState.selectedPlugins,
                     appState,
                   ),
               const SizedBox(height: 16),
@@ -61,7 +84,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
       case PluginLanguage.es:
         return 'Espanhol'.translate;
       case PluginLanguage.ja:
-        return 'Japones'.translate;
+        return 'Japonês'.translate;
 
       case PluginLanguage.Local:
         return 'Dispositivo'.translate;
@@ -70,92 +93,128 @@ class _PluginsScreenState extends State<PluginsScreen> {
 
   Widget _buildPluginSection(
     BuildContext context,
-    String title,
+    PluginLanguage language,
     List<String> plugins,
     Set<String> selectedPlugins,
     AppState appState,
   ) {
     final theme = Theme.of(context);
+    final languageName = _getLanguageName(language);
+
     return ExpansionTile(
       title: Text(
-        title,
+        languageName,
         style: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
           color: theme.colorScheme.onSurface,
         ),
       ),
-      children:
-          plugins.map((plugin) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 4.0,
-                horizontal: 16.0,
+      initiallyExpanded: _languageExpanded[language] ?? false,
+      onExpansionChanged: (expanded) {
+        setState(() {
+          _languageExpanded[language] = expanded;
+        });
+      },
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Selecionar Todos'.translate,
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
-              child: CheckboxListTile(
-                title: Text(
-                  plugin,
-                  style: TextStyle(color: theme.colorScheme.onSurface),
+              Switch(
+                value: plugins.every(
+                  (plugin) => selectedPlugins.contains(plugin),
                 ),
-                value: selectedPlugins.contains(plugin),
-                onChanged: (bool? newValue) {
-                  if (newValue != null) {
-                    final updatedPlugins = Set<String>.from(selectedPlugins);
-                    if (newValue) {
-                      updatedPlugins.add(plugin);
-                    } else {
-                      updatedPlugins.remove(plugin);
-                    }
-                    appState.setSelectedPlugins(updatedPlugins);
-                  }
-                },
-                controlAffinity: ListTileControlAffinity.leading,
+                onChanged: (newValue) => _toggleAll(language, newValue),
                 activeColor: theme.colorScheme.primary,
-                contentPadding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                side: BorderSide(color: theme.colorScheme.outlineVariant),
               ),
-            );
-          }).toList(),
+            ],
+          ),
+        ),
+        ...plugins.map((plugin) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 4.0,
+              horizontal: 16.0,
+            ),
+            child: CheckboxListTile(
+              title: Text(
+                plugin,
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
+              value: selectedPlugins.contains(plugin),
+              onChanged: (bool? newValue) {
+                if (newValue != null) {
+                  final updatedPlugins = Set<String>.from(selectedPlugins);
+                  if (newValue) {
+                    updatedPlugins.add(plugin);
+                  } else {
+                    updatedPlugins.remove(plugin);
+                  }
+                  appState.setSelectedPlugins(updatedPlugins);
+                }
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              activeColor: theme.colorScheme.primary,
+              contentPadding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+          );
+        }),
+      ],
     );
   }
 
   Widget _buildRequestPluginSection(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Não encontrou o que procurava?'.translate,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap:
-              () => launchURL(
-                'https://github.com/AkashicRecordsApp/akashic_records/issues/new/choose',
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: theme.colorScheme.surfaceVariant,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Não encontrou o que procurava?'.translate,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
               ),
-          child: Text(
-            'Peça para adicionarmos um novo plugin!'.translate,
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-              decoration: TextDecoration.underline,
             ),
-          ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap:
+                  () => launchURL(
+                    'https://github.com/AkashicRecordsApp/akashic_records/issues/new/choose',
+                  ),
+              child: Text(
+                'Peça para adicionarmos um novo plugin!'.translate,
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Clique no link acima para abrir uma solicitação no GitHub.'
+                  .translate,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Clique no link acima para abrir uma solicitação no GitHub.'
-              .translate,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

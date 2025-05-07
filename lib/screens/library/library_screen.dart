@@ -105,54 +105,80 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 onFilterPressed: null,
               ),
             ),
-            Expanded(
-              child:
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _errorMessage != null
-                      ? Center(child: Text(_errorMessage!))
-                      : appState.selectedPlugins.isEmpty
-                      ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.'
-                                  .translate,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: theme.colorScheme.onBackground,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, '/plugins');
-                              },
-                              child: Text('Plugins'.translate),
-                            ),
-                          ],
-                        ),
-                      )
-                      : _searchResults.isNotEmpty
-                      ? NovelGridWidget(
-                        novels: _searchResults,
-                        isListView: false,
-                        scrollController: ScrollController(),
-                        onNovelTap: _handleNovelTap,
-                        onNovelLongPress: (Novel novel) {},
-                        errorMessage: _errorMessage,
-                        isLoading: _isLoading,
-                      )
-                      : ListView.builder(
-                        itemCount: appState.selectedPlugins.length,
-                        itemBuilder: (context, index) {
-                          final pluginName = appState.selectedPlugins.elementAt(
-                            index,
-                          );
-                          return PluginCard(pluginName: pluginName);
-                        },
-                      ),
+            Expanded(child: _buildContent(appState, theme)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(AppState appState, ThemeData theme) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(child: Text(_errorMessage!));
+    }
+
+    if (appState.selectedPlugins.isEmpty) {
+      return _buildNoPluginsSelected(theme);
+    }
+
+    if (_searchResults.isNotEmpty) {
+      return NovelGridWidget(
+        novels: _searchResults,
+        isListView: false,
+        scrollController: ScrollController(),
+        onNovelTap: _handleNovelTap,
+        onNovelLongPress: (Novel novel) {},
+        errorMessage: _errorMessage,
+        isLoading: _isLoading,
+      );
+    }
+
+    return ListView.builder(
+      itemCount: appState.selectedPlugins.length,
+      itemBuilder: (context, index) {
+        final pluginName = appState.selectedPlugins.elementAt(index);
+        return PluginCard(pluginName: pluginName);
+      },
+    );
+  }
+
+  Widget _buildNoPluginsSelected(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.library_add,
+              size: 64,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.'
+                  .translate,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge!.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.tonal(
+              onPressed: () {
+                Navigator.pushNamed(context, '/plugins');
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Text('Ir para Plugins'.translate),
+              ),
             ),
           ],
         ),

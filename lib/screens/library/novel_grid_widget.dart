@@ -41,26 +41,29 @@ class NovelGridWidget extends StatelessWidget {
 
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-      child: GridView.builder(
-        key: const PageStorageKey<String>('novel_grid'),
-        controller: scrollController,
-        padding: const EdgeInsets.all(16.0),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 200,
-          crossAxisSpacing: 12.0,
-          mainAxisSpacing: 12.0,
-          childAspectRatio: 0.7,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: GridView.builder(
+          key: const PageStorageKey<String>('novel_grid'),
+          controller: scrollController,
+          padding: const EdgeInsets.all(8.0),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 200,
+            crossAxisSpacing: 8.0,
+            mainAxisSpacing: 8.0,
+            childAspectRatio: 0.7,
+          ),
+          itemCount: novels.length,
+          itemBuilder: (context, index) {
+            final novel = novels[index];
+            return NovelCard(
+              key: ValueKey(novel.id),
+              novel: novel,
+              onTap: () => onNovelTap(novel),
+              onLongPress: () => onNovelLongPress(novel),
+            );
+          },
         ),
-        itemCount: novels.length,
-        itemBuilder: (context, index) {
-          final novel = novels[index];
-          return NovelCard(
-            key: ValueKey(novel.id),
-            novel: novel,
-            onTap: () => onNovelTap(novel),
-            onLongPress: () => onNovelLongPress(novel),
-          );
-        },
       ),
     );
   }
@@ -89,11 +92,13 @@ class NovelGridWidget extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       errorMessage!,
-                      style: TextStyle(color: theme.colorScheme.error),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    OutlinedButton(
+                    FilledButton.tonal(
                       onPressed: () {},
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -103,7 +108,7 @@ class NovelGridWidget extends StatelessWidget {
                         child: Text(
                           'Tentar Novamente'.translate,
                           style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.primary,
+                            color: theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
                       ),
@@ -138,13 +143,13 @@ class NovelGridWidget extends StatelessWidget {
                     Icon(
                       Icons.search_off,
                       size: 60,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       "Nenhuma novel encontrada.".translate,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -160,7 +165,7 @@ class NovelGridWidget extends StatelessWidget {
                         child: Text(
                           'Plugins'.translate,
                           style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.inversePrimary,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         ),
                       ),
