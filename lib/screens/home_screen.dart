@@ -317,7 +317,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   : widget.error != null
                   ? Text(widget.error!)
                   : widget.notifications.isEmpty
-                  ? Text('Nenhuma notificação'.translate)
+                  ? Text('')
                   : RefreshIndicator(
                     onRefresh: _refreshNotifications,
                     child: ListView.builder(
