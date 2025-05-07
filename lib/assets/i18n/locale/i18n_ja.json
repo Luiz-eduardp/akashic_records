@@ -200,6 +200,8 @@
   "Erro ao deletar novel: ": "「小説の削除中にエラーが発生しました：」",
   "Estatísticas": "「統計」",
   "Selecionar Todos": "「すべて選択」",
+  "Notificações":"「通知」",
+  "Notificações atualizadas!": "「通知が更新されました！」,",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "プラグインが選択されていません。設定からプラグインを追加してください。",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "最初の読み込みは、情報の量のために少し時間がかかることがあります。"
 }
