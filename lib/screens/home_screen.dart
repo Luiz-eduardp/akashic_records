@@ -63,10 +63,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       animateChildDecoration: true,
       rtlOpening: false,
       disabledGestures: false,
-      childDecoration: const BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(16)),
+      childDecoration: BoxDecoration(
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
         boxShadow: <BoxShadow>[
-          BoxShadow(color: Colors.black12, blurRadius: 5.0),
+          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5.0),
         ],
       ),
       drawer: AppDrawer(advancedDrawerController: _advancedDrawerController),
@@ -74,16 +74,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         appBar: AppBar(
           title: Text(
             'Akashic Records'.translate,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
           ),
           backgroundColor: theme.colorScheme.surfaceContainerHighest,
-          iconTheme: IconThemeData(color: theme.colorScheme.onSurfaceVariant),
-          actionsIconTheme: IconThemeData(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          titleTextStyle: TextStyle(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontSize: 25,
-          ),
+          foregroundColor: theme.colorScheme.onSurface,
           centerTitle: true,
           leading: IconButton(
             onPressed: _handleMenuButtonPressed,
@@ -92,14 +88,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               builder: (context, child) {
                 return Icon(
                   _advancedDrawerController.value.visible
-                      ? Icons.clear
+                      ? Icons.close
                       : Icons.menu,
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: theme.colorScheme.onSurface,
                 );
               },
             ),
           ),
-          actions: [],
+          actions: const [],
+          elevation: 2,
         ),
         body: TabBarView(
           controller: _tabController,
@@ -112,62 +109,54 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildBottomNavigationBar(bool isTablet, ThemeData theme) {
-    return isTablet
-        ? Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Material(
-            elevation: 8.0,
-            borderRadius: BorderRadius.circular(24.0),
-            color: theme.colorScheme.surfaceContainerHighest,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: GNav(
-                gap: 8,
-                activeColor: theme.colorScheme.primary,
-                iconSize: 24,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                duration: const Duration(milliseconds: 400),
-                tabBackgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                color: theme.colorScheme.onSurfaceVariant,
-                tabs: [
-                  GButton(
-                    icon: Icons.library_books,
-                    text: 'Biblioteca'.translate,
-                  ),
-                  GButton(icon: Icons.favorite, text: 'Favoritos'.translate),
-                  GButton(icon: Icons.history, text: 'Histórico'.translate),
-                ],
-                selectedIndex: _selectedIndex,
-                onTabChange: _onItemTapped,
-              ),
-            ),
-          ),
-        )
-        : Container(
-          color: theme.colorScheme.surfaceContainerHighest,
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+    return Material(
+      color: theme.colorScheme.surfaceContainer,
+      elevation: 4,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
           child: GNav(
+            rippleColor: theme.colorScheme.primary.withOpacity(0.1),
+            hoverColor: theme.colorScheme.primary.withOpacity(0.1),
             gap: 8,
             activeColor: theme.colorScheme.primary,
             iconSize: 24,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            tabBackgroundColor: theme.colorScheme.primaryContainer,
             color: theme.colorScheme.onSurfaceVariant,
             tabs: [
-              GButton(icon: Icons.library_books, text: 'Biblioteca'.translate),
-              GButton(icon: Icons.favorite, text: 'Favoritos'.translate),
-              GButton(icon: Icons.history, text: 'Histórico'.translate),
+              GButton(
+                icon: Icons.library_books,
+                text: 'Biblioteca'.translate,
+                backgroundColor:
+                    _selectedIndex == 0
+                        ? theme.colorScheme.primaryContainer
+                        : null,
+              ),
+              GButton(
+                icon: Icons.favorite,
+                text: 'Favoritos'.translate,
+                backgroundColor:
+                    _selectedIndex == 1
+                        ? theme.colorScheme.primaryContainer
+                        : null,
+              ),
+              GButton(
+                icon: Icons.history,
+                text: 'Histórico'.translate,
+                backgroundColor:
+                    _selectedIndex == 2
+                        ? theme.colorScheme.primaryContainer
+                        : null,
+              ),
             ],
             selectedIndex: _selectedIndex,
             onTabChange: _onItemTapped,
+            curve: Curves.easeOutExpo,
           ),
-        );
+        ),
+      ),
+    );
   }
 }
