@@ -354,10 +354,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
             color: theme.colorScheme.onSurface,
           ),
         ),
-        subtitle: Text(
-          'Toque para ver detalhes',
-          style: TextStyle(color: Colors.grey[500]),
-        ),
         initiallyExpanded: _isExpandedList[index],
         onExpansionChanged: (bool expanded) {
           setState(() {
@@ -371,7 +367,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Detalhes: ${notification['details'] ?? 'Nenhum detalhe adicional.'}',
+                  '${notification['details'] ?? ' '}',
                   style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 16),
