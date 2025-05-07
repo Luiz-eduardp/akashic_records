@@ -131,238 +131,243 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final String firstParagraph = _paragraphs.isNotEmpty ? _paragraphs[0] : '';
     final bool hasMoreThanOneParagraph = _paragraphs.length > 1;
 
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Positioned.fill(
-                    child: ShaderMask(
-                      shaderCallback: (rect) {
-                        return LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7),
-                          ],
-                        ).createShader(
-                          Rect.fromLTRB(0, 0, rect.width, rect.height),
-                        );
-                      },
-                      blendMode: BlendMode.darken,
-                      child: CachedNetworkImage(
-                        imageUrl: widget.novel.coverImageUrl,
-                        fit: BoxFit.cover,
-                        errorWidget:
-                            (context, url, error) => Image.network(
-                              'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
-                              fit: BoxFit.cover,
-                            ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 16),
-                        FractionallySizedBox(
-                          widthFactor: 0.4,
-                          child: AspectRatio(
-                            aspectRatio: 0.7,
-                            child: Card(
-                              elevation: 8,
-                              clipBehavior: Clip.antiAlias,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: CachedNetworkImage(
-                                imageUrl: widget.novel.coverImageUrl,
-                                fit: BoxFit.cover,
-                                placeholder:
-                                    (context, url) =>
-                                        Container(color: Colors.grey.shade300),
-                                errorWidget:
-                                    (context, url, error) =>
-                                        const Center(child: Icon(Icons.error)),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          widget.novel.title,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            shadows: const [
-                              Shadow(
-                                blurRadius: 3,
-                                color: Colors.black87,
-                                offset: Offset(1, 1),
-                              ),
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        backgroundColor: colorScheme.surface,
+        color: colorScheme.primary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AspectRatio(
+                aspectRatio: 1,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    Positioned.fill(
+                      child: ShaderMask(
+                        shaderCallback: (rect) {
+                          return LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.7),
                             ],
-                          ),
+                          ).createShader(
+                            Rect.fromLTRB(0, 0, rect.width, rect.height),
+                          );
+                        },
+                        blendMode: BlendMode.darken,
+                        child: CachedNetworkImage(
+                          imageUrl: widget.novel.coverImageUrl,
+                          fit: BoxFit.cover,
+                          errorWidget:
+                              (context, url, error) => Image.network(
+                                'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
+                                fit: BoxFit.cover,
+                              ),
                         ),
-                        if (widget.novel.author != null &&
-                            widget.novel.author.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              widget.novel.author.startsWith('por')
-                                  ? widget.novel.author
-                                  : 'por ${widget.novel.author}',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: Colors.white70,
-                                shadows: const [
-                                  Shadow(
-                                    blurRadius: 2,
-                                    color: Colors.black54,
-                                    offset: Offset(1, 1),
-                                  ),
-                                ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 16),
+                          FractionallySizedBox(
+                            widthFactor: 0.4,
+                            child: AspectRatio(
+                              aspectRatio: 0.7,
+                              child: Card(
+                                elevation: 8,
+                                clipBehavior: Clip.antiAlias,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: CachedNetworkImage(
+                                  imageUrl: widget.novel.coverImageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder:
+                                      (context, url) => Container(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                  errorWidget:
+                                      (context, url, error) => const Center(
+                                        child: Icon(Icons.error),
+                                      ),
+                                ),
                               ),
                             ),
                           ),
-                        Text(
-                          widget.novel.status.name.toString().translate,
-                          style: theme.textTheme.titleSmall?.copyWith(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Resumo'.translate,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _isSynopsisHTML
-                      ? Html(
-                        data:
-                            _showFullSynopsis
-                                ? widget.novel.description
-                                : firstParagraph,
-                        style: {
-                          "body": Style(
-                            margin: Margins.zero,
-                            textAlign: TextAlign.justify,
-                            lineHeight: LineHeight.number(1.5),
-                            fontSize: FontSize(
-                              theme.textTheme.bodyMedium!.fontSize!,
+                          const SizedBox(height: 16),
+                          Text(
+                            widget.novel.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: const [
+                                Shadow(
+                                  blurRadius: 3,
+                                  color: Colors.black87,
+                                  offset: Offset(1, 1),
+                                ),
+                              ],
                             ),
-                            color: theme.textTheme.bodyMedium!.color,
                           ),
-                        },
-                      )
-                      : Text(
-                        _showFullSynopsis
-                            ? widget.novel.description
-                            : firstParagraph,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.justify,
-                        overflow: TextOverflow.fade,
+                          if (widget.novel.author != null &&
+                              widget.novel.author.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                widget.novel.author.startsWith('por')
+                                    ? widget.novel.author
+                                    : 'por ${widget.novel.author}',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: Colors.white70,
+                                  shadows: const [
+                                    Shadow(
+                                      blurRadius: 2,
+                                      color: Colors.black54,
+                                      offset: Offset(1, 1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          Text(
+                            widget.novel.status.name.toString().translate,
+                            style: theme.textTheme.titleSmall?.copyWith(),
+                          ),
+                        ],
                       ),
-                  if (hasMoreThanOneParagraph && !_isSynopsisHTML)
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: InkWell(
-                        onTap: () {
-                          if (mounted) {
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Resumo'.translate,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _isSynopsisHTML
+                        ? Html(
+                          data:
+                              _showFullSynopsis
+                                  ? widget.novel.description
+                                  : firstParagraph,
+                          style: {
+                            "body": Style(
+                              margin: Margins.zero,
+                              textAlign: TextAlign.justify,
+                              lineHeight: LineHeight.number(1.5),
+                              fontSize: FontSize(
+                                theme.textTheme.bodyMedium!.fontSize!,
+                              ),
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          },
+                        )
+                        : Text(
+                          _showFullSynopsis
+                              ? widget.novel.description
+                              : firstParagraph,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            height: 1.5,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.justify,
+                        ),
+                    if (hasMoreThanOneParagraph && !_isSynopsisHTML)
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: TextButton(
+                          onPressed: () {
                             setState(() {
                               _showFullSynopsis = !_showFullSynopsis;
                             });
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8.0,
-                            horizontal: 0,
-                          ),
+                          },
                           child: Text(
                             _showFullSynopsis
                                 ? 'Ver Menos'.translate
                                 : 'Ver Mais'.translate,
                             style: TextStyle(
-                              color: theme.colorScheme.secondary,
+                              color: colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  const SizedBox(height: 24),
-                  if (widget.onContinueReading != null)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: widget.onContinueReading,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.secondary,
-                          foregroundColor: theme.colorScheme.onSecondary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(height: 16),
+                    if (widget.onContinueReading != null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: widget.onContinueReading,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          child: Text('Continuar Leitura'.translate),
                         ),
-                        child: Text('Continuar Leitura'.translate),
+                      ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Capítulos:'.translate +
+                          ' ${widget.novel.numberOfChapters == 0 ? 0 : widget.novel.numberOfChapters.toString()}',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
                       ),
                     ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Capítulos:'.translate +
-                        ' ${widget.novel.numberOfChapters == 0 ? 0 : widget.novel.numberOfChapters.toString()}',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_isLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    ChapterListWidget(
-                      novelId: widget.novel.id,
-                      chapters: widget.novel.chapters,
-                      onChapterTap: widget.onChapterTap,
-                      lastReadChapterId: widget.lastReadChapterId,
-                      readChapterIds: _readChapterIds,
-                      onMarkAsRead: _markAsRead,
-                    ),
-                ],
+                    const SizedBox(height: 12),
+                    if (_isLoading)
+                      Center(
+                        child: CircularProgressIndicator(
+                          color: colorScheme.primary,
+                        ),
+                      )
+                    else
+                      ChapterListWidget(
+                        novelId: widget.novel.id,
+                        chapters: widget.novel.chapters,
+                        onChapterTap: widget.onChapterTap,
+                        lastReadChapterId: widget.lastReadChapterId,
+                        readChapterIds: _readChapterIds,
+                        onMarkAsRead: _markAsRead,
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
