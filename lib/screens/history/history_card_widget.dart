@@ -24,28 +24,28 @@ class HistoryCardWidget extends StatelessWidget {
     final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(lastRead);
 
     return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      elevation: 1,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 novelTitle,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
                   color: theme.colorScheme.onSurface,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 chapterTitle,
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -54,42 +54,38 @@ class HistoryCardWidget extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Icon(
                     Icons.history,
-                    size: 16,
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Text(
                     formattedDate,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                        0.7,
-                      ),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const Spacer(),
-                  Chip(
-                    label: Text(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
                       pluginId.isNotEmpty
                           ? pluginId
                           : 'Plugin desativado'.translate,
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.onSecondaryContainer,
                       ),
-                    ),
-                    backgroundColor: theme.colorScheme.secondaryContainer,
-                    visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
                     ),
                   ),
                 ],

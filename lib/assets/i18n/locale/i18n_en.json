@@ -198,6 +198,7 @@
   "Você tem certeza que deseja deletar": "Are you sure you want to delete",
   "Novel deletada com sucesso.": "Novel deleted successfully.",
   "Erro ao deletar novel: ": "Error deleting novel:",
+  "Estatísticas": "Statistics",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "No plugins selected. Go to settings to add plugins",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "The first load may take a while due to the amount of information"
 }
