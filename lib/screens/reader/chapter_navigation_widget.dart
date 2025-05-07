@@ -33,37 +33,39 @@ class ChapterNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Theme.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bool canGoPrevious = !isLoading && currentChapterIndex > 0;
     final bool canGoNext =
         !isLoading && currentChapterIndex < chapters.length - 1;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        NavigationButton(
-          onPressed: canGoPrevious ? onPreviousChapter : null,
-          icon: Icons.arrow_back_ios,
-          label: 'Anterior'.translate,
-          isEnabled: canGoPrevious,
-        ),
-        Builder(
-          builder:
-              (context) => IconButton(
-                icon: const Icon(Icons.list),
-                onPressed: () {
-                  Scaffold.of(context).openEndDrawer();
-                },
-                tooltip: 'Lista de Capítulos'.translate,
-              ),
-        ),
-        NavigationButton(
-          onPressed: canGoNext ? onNextChapter : null,
-          icon: Icons.arrow_forward_ios,
-          label: 'Próximo'.translate,
-          isEnabled: canGoNext,
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          NavigationButton(
+            onPressed: canGoPrevious ? onPreviousChapter : null,
+            icon: Icons.arrow_back_ios_new_rounded,
+            label: 'Anterior'.translate,
+            isEnabled: canGoPrevious,
+          ),
+          IconButton(
+            icon: const Icon(Icons.list_rounded),
+            onPressed: () {
+              Scaffold.of(context).openEndDrawer();
+            },
+            tooltip: 'Lista de Capítulos'.translate,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          NavigationButton(
+            onPressed: canGoNext ? onNextChapter : null,
+            icon: Icons.arrow_forward_ios_rounded,
+            label: 'Próximo'.translate,
+            isEnabled: canGoNext,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -85,30 +87,30 @@ class NavigationButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return TextButton.icon(
       onPressed: onPressed,
       icon: Icon(
         icon,
-        size: 16,
-        color:
-            isEnabled
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface.withOpacity(0.3),
+        size: 20,
+        color: isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
       ),
       label: Text(
         label,
         style: TextStyle(
-          color:
-              isEnabled
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.3),
+          color: isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
         ),
       ),
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        enabledMouseCursor:
-            isEnabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor:
+            isEnabled
+                ? colorScheme.primaryContainer.withOpacity(0.3)
+                : Colors.transparent,
+        disabledForegroundColor: colorScheme.onSurfaceVariant,
+        disabledIconColor: colorScheme.onSurfaceVariant,
       ),
     );
   }
