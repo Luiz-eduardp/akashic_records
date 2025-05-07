@@ -73,7 +73,7 @@
   "Português (Brasil)": "ポルトガル語（ブラジル）",
   "Inglês": "英語",
   "Espanhol": "スペイン語",
-  "Japones": "日本語",
+  "Japonês": "日本語",
   "Não encontrou o que procurava?": "お探しものが見つかりませんか？",
   "Peça para adicionarmos um novo plugin!": "新しいプラグインの追加をリクエストしてください！",
   "Clique no link acima para abrir uma solicitação no GitHub.": "上記のリンクをクリックして、GitHubでリクエストを開きます。",
@@ -199,6 +199,7 @@
   "Novel deletada com sucesso.": "「小説は正常に削除されました。」",
   "Erro ao deletar novel: ": "「小説の削除中にエラーが発生しました：」",
   "Estatísticas": "「統計」",
+  "Selecionar Todos": "「すべて選択」",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "プラグインが選択されていません。設定からプラグインを追加してください。",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "最初の読み込みは、情報の量のために少し時間がかかることがあります。"
 }

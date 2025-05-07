@@ -73,7 +73,7 @@
   "Português (Brasil)": "Português (Brasil)",
   "Inglês": "Inglês",
   "Espanhol": "Espanhol",
-  "Japones": "Japones",
+  "Japonês": "Japonês",
   "Não encontrou o que procurava?": "Não encontrou o que procurava?",
   "Peça para adicionarmos um novo plugin!": "Peça para adicionarmos um novo plugin!",
   "Clique no link acima para abrir uma solicitação no GitHub.": "Clique no link acima para abrir uma solicitação no GitHub.",
@@ -199,6 +199,7 @@
   "Novel deletada com sucesso.": "Novel deletada com sucesso.",
   "Erro ao deletar novel: ": "Erro ao deletar novel: ",
   "Estatísticas": "Estatísticas",
+  "Selecionar Todos": "Selecionar Todos",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "O primeiro carregamento pode demorar um pouco devido à quantidade de informações"
 }
