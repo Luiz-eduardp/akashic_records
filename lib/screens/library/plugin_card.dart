@@ -55,7 +55,9 @@ class PluginCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          pluginName,
+                          pluginName == 'Dispositivo'
+                              ? pluginName.translate
+                              : pluginName,
                           style: theme.textTheme.titleLarge!.copyWith(
                             color: theme.colorScheme.onSurface,
                           ),

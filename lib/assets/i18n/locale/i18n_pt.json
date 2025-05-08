@@ -187,6 +187,7 @@
   "Página": "Página",
   "de": "de",
   "Dispositivo": "Dispositivo",
+  "Local": "Local",
   "Erro ao importar": "Erro ao importar",
   "Plugin Dispositivo não encontrado": "Plugin Dispositivo não encontrado",
   "Sucesso ao importar": "Sucesso ao importar",
@@ -200,7 +201,7 @@
   "Erro ao deletar novel: ": "Erro ao deletar novel: ",
   "Estatísticas": "Estatísticas",
   "Selecionar Todos": "Selecionar Todos",
-  "Notificações":"Notificações",
+  "Notificações": "Notificações",
   "Notificações atualizadas!": "Notificações atualizadas!",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "O primeiro carregamento pode demorar um pouco devido à quantidade de informações"

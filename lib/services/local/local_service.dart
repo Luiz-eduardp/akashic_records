@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/state/app_state.dart';
@@ -20,7 +21,7 @@ class Dispositivo implements PluginService {
   String get name => 'Dispositivo';
 
   @override
-  String get lang => 'Local';
+  String get lang => 'Local'.translate;
 
   @override
   Map<String, dynamic> get filters => {};
