@@ -128,6 +128,35 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
     }
   }
 
+  Widget _buildCoverImage(String coverImageUrl) {
+    Widget imageWidget;
+    if (coverImageUrl.startsWith('data:image')) {
+      final imageData = coverImageUrl.split(',').last;
+      final bytes = base64Decode(imageData);
+      imageWidget = Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Image.network(
+            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
+            fit: BoxFit.cover,
+          );
+        },
+      );
+    } else {
+      imageWidget = CachedNetworkImage(
+        imageUrl: coverImageUrl,
+        fit: BoxFit.cover,
+        errorWidget:
+            (context, url, error) => Image.network(
+              'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
+              fit: BoxFit.cover,
+            ),
+      );
+    }
+    return imageWidget;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -165,15 +194,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                           );
                         },
                         blendMode: BlendMode.darken,
-                        child: CachedNetworkImage(
-                          imageUrl: widget.novel.coverImageUrl,
-                          fit: BoxFit.cover,
-                          errorWidget:
-                              (context, url, error) => Image.network(
-                                'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
-                                fit: BoxFit.cover,
-                              ),
-                        ),
+                        child: _buildCoverImage(widget.novel.coverImageUrl),
                       ),
                     ),
                     Padding(
@@ -193,17 +214,8 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: CachedNetworkImage(
-                                  imageUrl: widget.novel.coverImageUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder:
-                                      (context, url) => Container(
-                                        color: Colors.grey.shade300,
-                                      ),
-                                  errorWidget:
-                                      (context, url, error) => const Center(
-                                        child: Icon(Icons.error),
-                                      ),
+                                child: _buildCoverImage(
+                                  widget.novel.coverImageUrl,
                                 ),
                               ),
                             ),

@@ -71,6 +71,7 @@ dependencies:
   flutter_epub_viewer: ^1.2.1
   file_picker: ^10.1.2
   epubx: ^4.0.0
+  jsf: ^0.6.1
 
 
 dev_dependencies:
@@ -98,6 +99,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - lib/assets/i18n/locale/
+    - lib/assets/js/epubjs.js
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
