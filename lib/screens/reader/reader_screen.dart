@@ -80,7 +80,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     if (novel!.chapters.isNotEmpty) {
       currentChapter = novel!.chapters[currentChapterIndex];
-      await _loadChapterContent();
+      if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
+        await _loadChapterContent();
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
     } else {
       if (_mounted) {
         setState(() {
@@ -141,8 +147,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
         if (chapterIndex != -1) {
           currentChapterIndex = chapterIndex;
           currentChapter = loadedNovel.chapters[currentChapterIndex];
-          novel = loadedNovel;
-          await _loadChapterContent();
+
+          if (currentChapter!.content == null ||
+              currentChapter!.content!.isEmpty) {
+            novel = loadedNovel;
+            await _loadChapterContent();
+          } else {
+            novel = loadedNovel;
+            setState(() {
+              isLoading = false;
+            });
+          }
         } else {
           novel = loadedNovel;
           await _loadLastReadChapter();
@@ -242,7 +257,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
         currentChapterIndex--;
         currentChapter = novel!.chapters[currentChapterIndex];
       });
-      _loadChapterContent();
+      if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
+        _loadChapterContent();
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -253,7 +274,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
         currentChapterIndex++;
         currentChapter = novel!.chapters[currentChapterIndex];
       });
-      _loadChapterContent();
+      if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
+        _loadChapterContent();
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -270,7 +297,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
       currentChapterIndex = newIndex;
       currentChapter = novel!.chapters[currentChapterIndex];
     });
-    _loadChapterContent();
+
+    if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
+      _loadChapterContent();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
     Navigator.pop(context);
   }
 

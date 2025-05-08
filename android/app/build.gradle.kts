@@ -40,6 +40,14 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    packagingOptions {
+        pickFirst 'lib/x86/libjsf.so'   // Adjust architecture if needed
+        pickFirst 'lib/x86_64/libjsf.so' // Adjust architecture if needed
+        pickFirst 'lib/armeabi-v7a/libjsf.so' // Adjust architecture if needed
+        pickFirst 'lib/arm64-v8a/libjsf.so' // Adjust architecture if needed
+    }
+
 }
 
 flutter {
