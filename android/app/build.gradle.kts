@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.edu.akashic_records"
     compileSdk = flutter.compileSdkVersion
-        ndkVersion = "27.0.12077973"
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -41,13 +41,13 @@ android {
         }
     }
 
-    packagingOptions {
-        pickFirst 'lib/x86/libjsf.so'   
-        pickFirst 'lib/x86_64/libjsf.so' 
-        pickFirst 'lib/armeabi-v7a/libjsf.so'
-        pickFirst 'lib/arm64-v8a/libjsf.so' 
-    }
-
+    // REMOVE THIS ENTIRE BLOCK:
+    // packagingOptions {
+    //      exclude("lib/x86/libjsf.so")
+    //      exclude("lib/x86_64/libjsf.so")
+    //      exclude("lib/armeabi-v7a/libjsf.so")
+    //      exclude("lib/arm64-v8a/libjsf.so")
+    // }
 }
 
 flutter {
