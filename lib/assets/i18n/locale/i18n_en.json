@@ -14,7 +14,7 @@
   "Atualizar Aplicativo": "Update App",
   "Sobre": "About",
   "Erro ao carregar": "Error loading",
-  "Erro ao carregar novels: $e": "Error loading novels: $e",
+  "Erro ao carregar novels": "Error loading novels: $e",
   "Akashic Records": "Akashic Records",
   "Changelog da Versão": "Version Changelog",
   "Carregando dados do GitHub...": "Loading GitHub data...",
@@ -205,7 +205,8 @@
   "Notificações atualizadas!": "Notifications updated!",
   "Indonésio": "Indonesian",
   "Francês": "French",
-  "Árabe":" Arabic",
+  "Árabe":"Arabic",
+  "Tentar Novamente": "Try again",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "No plugins selected. Go to settings to add plugins",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "The first load may take a while due to the amount of information"
 }

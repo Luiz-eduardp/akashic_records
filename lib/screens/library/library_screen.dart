@@ -177,7 +177,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   horizontal: 16,
                   vertical: 8,
                 ),
-                child: Text('Ir para Plugins'.translate),
+                child: Text('Plugins'.translate),
               ),
             ),
           ],
