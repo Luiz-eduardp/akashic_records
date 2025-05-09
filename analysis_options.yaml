@@ -24,6 +24,7 @@ analyzer:
     implementation_imports: ignore
     non_constant_identifier_names: ignore
     depend_on_referenced_packages: ignore
+    empty_catches: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

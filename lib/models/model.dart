@@ -12,6 +12,8 @@ class Novel {
   late bool shouldShowNumberOfChapters;
   late NovelStatus status;
 
+  String statusString = '';
+
   Novel({
     required this.id,
     required this.title,
@@ -24,7 +26,7 @@ class Novel {
     this.shouldShowNumberOfChapters = true,
     this.status = NovelStatus.Desconhecido,
     String? artist,
-    String? statusString,
+    this.statusString = '',
     downloads,
   });
 

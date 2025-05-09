@@ -199,6 +199,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     enabledPlugins.sort((a, b) => a.priority.compareTo(b.priority));
 
     for (final plugin in enabledPlugins) {
+      if (plugin.name == 'Sunovels') {}
       _injectCustomJavaScript(plugin.code);
     }
   }
@@ -315,6 +316,17 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     final fontWeight =
         (readerSettings.fontWeight == FontWeight.bold ? 'bold' : 'normal');
 
+    bool isArabic = false;
+    for (final paragraph in paragraphs) {
+      if (RegExp(r'[\u0600-\u06FF]').hasMatch(paragraph)) {
+        isArabic = true;
+        break;
+      }
+    }
+
+    String directionAttribute = isArabic ? 'dir="rtl"' : '';
+    String textAlignStyle = isArabic ? 'text-align: right;' : '';
+
     return '''
       <!DOCTYPE html>
       <html>
@@ -342,6 +354,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             -moz-user-select: text; 
             -ms-user-select: text; 
             user-select: text; 
+            $textAlignStyle
           }
           h1 {
             font-size: ${readerSettings.fontSize + 6}px;
@@ -366,7 +379,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           ${readerSettings.customCss ?? ''}
         </style>
       </head>
-      <body>
+      <body $directionAttribute>
         <div class="reader-content">
             ${paragraphs.join("<br><br>")}
         </div>

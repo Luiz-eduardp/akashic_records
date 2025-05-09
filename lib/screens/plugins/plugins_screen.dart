@@ -88,6 +88,12 @@ class _PluginsScreenState extends State<PluginsScreen> {
 
       case PluginLanguage.Local:
         return 'Dispositivo'.translate;
+      case PluginLanguage.id:
+        return 'Indonésio'.translate;
+      case PluginLanguage.fr:
+        return 'Francês'.translate;
+      case PluginLanguage.ar:
+        return 'Árabe'.translate;
     }
   }
 

@@ -14,7 +14,7 @@
   "Atualizar Aplicativo": "Actualizar Aplicación",
   "Sobre": "Acerca de",
   "Erro ao carregar": "Error al cargar",
-  "Erro ao carregar novels: $e": "Error al cargar novelas: $e",
+  "Erro ao carregar novels": "Error al cargar novelas: $e",
   "Akashic Records": "Akashic Records",
   "Changelog da Versão": "Registro de Cambios de la Versión",
   "Carregando dados do GitHub...": "Cargando datos de GitHub...",
@@ -187,6 +187,7 @@
   "Página": "Página",
   "de": "desde",
   "Dispositivo": "Dispositivo",
+  "Local": "Local",
   "Erro ao importar": "Error de importación",
   "Plugin Dispositivo não encontrado": "Plugin del dispositivo no encontrado",
   "Sucesso ao importar": "Importación exitosa",
@@ -202,6 +203,10 @@
   "Selecionar Todos": "Seleccionar Todos",
   "Notificações":"Notificaciones",
   "Notificações atualizadas!": "¡Notificaciones actualizadas!",
+  "Indonésio": "Indonesio",
+  "Francês": "Francés",
+  "Árabe":" Árabe",
+  "Tentar Novamente": "Intentar de nuevo",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "No hay complementos seleccionados. Vaya a la configuración para agregar complementos",
   "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "La primera carga puede tardar un poco debido a la cantidad de información"
 }

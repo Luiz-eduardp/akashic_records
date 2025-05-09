@@ -3,7 +3,10 @@ import 'dart:io';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/services/local/local_service.dart';
+import 'package:akashic_records/services/plugins/arabic/sunovels_service.dart';
 import 'package:akashic_records/services/plugins/english/projectgutenberg_service.dart';
+import 'package:akashic_records/services/plugins/french/chireads_service.dart';
+import 'package:akashic_records/services/plugins/indonesean/indowebnovel_service.dart';
 import 'package:akashic_records/services/plugins/japanese/kakuyomu_service.dart';
 import 'package:akashic_records/services/plugins/japanese/syosetu_service.dart';
 import 'package:akashic_records/services/plugins/spanish/novelsligera_service.dart';
@@ -29,7 +32,7 @@ import 'package:akashic_records/models/favorite_list.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
-enum PluginLanguage { Local, ptBr, en, es, ja }
+enum PluginLanguage { Local, ptBr, en, es, ja, id, fr, ar }
 
 class PluginInfo {
   final String name;
@@ -424,6 +427,22 @@ class AppState with ChangeNotifier {
     _pluginInfo['Syosetu'] = PluginInfo(
       name: 'Syosetu',
       language: PluginLanguage.ja,
+    );
+
+    _pluginServices['IndoWebNovel'] = IndoWebNovel();
+    _pluginInfo['IndoWebNovel'] = PluginInfo(
+      name: 'IndoWebNovel',
+      language: PluginLanguage.id,
+    );
+    _pluginServices['Chireads'] = Chireads();
+    _pluginInfo['Chireads'] = PluginInfo(
+      name: 'Chireads',
+      language: PluginLanguage.fr,
+    );
+    _pluginServices['Sunovels'] = Sunovels();
+    _pluginInfo['Sunovels'] = PluginInfo(
+      name: 'Sunovels',
+      language: PluginLanguage.ar,
     );
   }
 
