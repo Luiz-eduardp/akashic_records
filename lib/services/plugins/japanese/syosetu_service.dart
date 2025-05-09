@@ -73,9 +73,9 @@ class Syosetu implements PluginService {
   final String id = 'Syosetu';
   final String icon = 'src/jp/syosetu/icon.png';
   final String site = 'https://yomou.syosetu.com/';
-  final String novelPrefix = 'https://ncode.syosetu.com';
+  final String novelPrefix = 'https://syosetu.com/';
   @override
-  final String version = '1.0.9';
+  final String version = '1.0.10';
   final Map<String, String> headers = {
     "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -86,7 +86,7 @@ class Syosetu implements PluginService {
   }
 
   static const String defaultCover =
-      'https://placehold.co/400x500.png?text=Sem+Capa';
+      'https://placehold.co/400x500.png?text=no+cover';
 
   Future<String> _fetchApi(String url, {Map<String, String>? headers}) async {
     final response = await http.get(Uri.parse(url), headers: headers);
@@ -108,8 +108,8 @@ class Syosetu implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     final String ranking = filters?['ranking']?['value'] ?? 'total';
     final String genre = filters?['genre']?['value'] ?? '';
@@ -159,9 +159,11 @@ class Syosetu implements PluginService {
     return novels;
   }
 
-  Future<List<Chapter>> parseChaptersFromPage(dom.Document document) async {
+  Future<List<Chapter>> _parseChaptersFromDocument(
+    dom.Document document,
+  ) async {
     List<Chapter> chapters = [];
-    document.querySelectorAll('.p-eplist__sublist').forEach((element) {
+    for (var element in document.querySelectorAll('.p-eplist__sublist')) {
       final anchor = element.querySelector('a');
       final href = anchor?.attributes['href'];
       final name = anchor?.text.trim() ?? '';
@@ -184,7 +186,7 @@ class Syosetu implements PluginService {
           ),
         );
       }
-    });
+    }
     return chapters;
   }
 
@@ -197,11 +199,7 @@ class Syosetu implements PluginService {
     String title =
         document.querySelector('.p-novel__title')?.text.trim() ?? 'Sem título';
     String author =
-        document
-            .querySelector('.p-novel__author')
-            ?.text
-            .replaceAll('作者：', '')
-            .trim() ??
+        document.querySelector('.p-novel__author a')?.text.trim() ??
         'Sem Autor';
     String description =
         document.querySelector('#novel_ex')?.innerHtml ?? 'Sem Descrição';
@@ -223,28 +221,19 @@ class Syosetu implements PluginService {
     }
 
     List<Chapter> chapters = [];
+    String? nextPageUrl = novelPath;
+    while (nextPageUrl != null) {
+      final pageUrl = _expandURL(nextPageUrl);
+      final pageBody = await _fetchApi(pageUrl, headers: headers);
+      final pageDocument = parse(pageBody);
+      chapters.addAll(await _parseChaptersFromDocument(pageDocument));
 
-    final chapterElements = document.querySelectorAll('.p-eplist__sublist');
-    for (var element in chapterElements) {
-      final anchor = element.querySelector('a');
-      final chapterUrl = anchor?.attributes['href'];
-      final chapterName = anchor?.text.trim() ?? '';
-      final chapterReleaseTime = element
-          .querySelector('.p-eplist__update')
-          ?.text
-          .trim()
-          .split(" ")[0]
-          .replaceAll('/', '-');
-
-      if (chapterUrl != null) {
-        final chapter = Chapter(
-          id: _shrinkURL(chapterUrl.replaceFirst(novelPrefix, '')),
-          title: chapterName,
-          content: '',
-          chapterNumber: chapters.length + 1,
-          releaseDate: chapterReleaseTime,
-        );
-        chapters.add(chapter);
+      final nextPageAnchor = pageDocument.querySelector(
+        '.c-pager__item--next a',
+      );
+      nextPageUrl = nextPageAnchor?.attributes['href'];
+      if (nextPageUrl != null) {
+        nextPageUrl = novelPath + nextPageUrl;
       }
     }
 
@@ -256,7 +245,7 @@ class Syosetu implements PluginService {
       genres: genres,
       artist: '',
       status: status,
-      statusString: '',
+      statusString: statusString,
       author: author,
       pluginId: name,
       chapters: chapters,
