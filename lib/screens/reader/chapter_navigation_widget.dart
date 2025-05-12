@@ -44,7 +44,8 @@ class ChapterNavigation extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          NavigationButton(
+          _buildNavigationButton(
+            context: context,
             onPressed: canGoPrevious ? onPreviousChapter : null,
             icon: Icons.arrow_back_ios_new_rounded,
             label: 'Anterior'.translate,
@@ -58,7 +59,8 @@ class ChapterNavigation extends StatelessWidget {
             tooltip: 'Lista de Capítulos'.translate,
             color: colorScheme.onSurfaceVariant,
           ),
-          NavigationButton(
+          _buildNavigationButton(
+            context: context,
             onPressed: canGoNext ? onNextChapter : null,
             icon: Icons.arrow_forward_ios_rounded,
             label: 'Próximo'.translate,
@@ -68,24 +70,14 @@ class ChapterNavigation extends StatelessWidget {
       ),
     );
   }
-}
 
-class NavigationButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final String label;
-  final bool isEnabled;
-
-  const NavigationButton({
-    super.key,
-    required this.onPressed,
-    required this.icon,
-    required this.label,
-    this.isEnabled = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildNavigationButton({
+    required BuildContext context,
+    required VoidCallback? onPressed,
+    required IconData icon,
+    required String label,
+    bool isEnabled = true,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

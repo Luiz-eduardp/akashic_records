@@ -235,7 +235,8 @@ class _MyAppState extends State<MyApp> {
         }
 
         Widget homeWidget;
-        if (!_hasShownInitialScreen) {
+        if (!_hasShownInitialScreen ||
+            Provider.of<AppState>(context, listen: false).showChangelog) {
           homeWidget = InitialLoadingScreen(
             updateAvailable: _updateAvailable,
             downloadUrl: _downloadUrl,
@@ -248,6 +249,10 @@ class _MyAppState extends State<MyApp> {
                     _hasShownInitialScreen = true;
                   });
                 }
+                Provider.of<AppState>(
+                  context,
+                  listen: false,
+                ).setShowChangelog(false);
               } catch (e) {
                 debugPrint("Error saving 'hasShownInitialScreen': $e");
               }
@@ -256,7 +261,6 @@ class _MyAppState extends State<MyApp> {
         } else {
           homeWidget = const HomeScreen();
         }
-
         return MaterialApp(
           locale: I18n.currentLocate,
           supportedLocales: I18n.supportedLocales,

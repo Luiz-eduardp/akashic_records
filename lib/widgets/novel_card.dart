@@ -1,7 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:convert';
+import 'package:shimmer/shimmer.dart';
 
 class NovelCard extends StatelessWidget {
   final Novel novel;
@@ -14,63 +16,6 @@ class NovelCard extends StatelessWidget {
     required this.onTap,
     required this.onLongPress,
   });
-
-  Widget _buildCoverImage(
-    BuildContext context,
-    String coverImageUrl,
-    BoxConstraints constraints,
-  ) {
-    Widget imageWidget;
-    final theme = Theme.of(context);
-
-    if (coverImageUrl.startsWith('data:image')) {
-      final imageData = coverImageUrl.split(',').last;
-      final bytes = base64Decode(imageData);
-      imageWidget = Image.memory(
-        bytes,
-        fit: BoxFit.cover,
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        errorBuilder: (context, error, stackTrace) {
-          return Image.network(
-            'https://placehold.co/400x600.png?text=Cover%20Not%20Found',
-            fit: BoxFit.cover,
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-          );
-        },
-      );
-    } else {
-      imageWidget = CachedNetworkImage(
-        imageUrl:
-            coverImageUrl.isNotEmpty
-                ? coverImageUrl
-                : 'https://placehold.co/400x600.png?text=Cover%20Not%20Found',
-        fit: BoxFit.cover,
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        placeholder:
-            (context, url) => Center(
-              child: SizedBox(
-                width: 30,
-                height: 30,
-                child: CircularProgressIndicator(
-                  color: theme.colorScheme.secondary,
-                  strokeWidth: 2,
-                ),
-              ),
-            ),
-        errorWidget:
-            (context, url, error) => Image.network(
-              'https://placehold.co/400x600.png?text=Cover%20Not%20Found',
-              fit: BoxFit.cover,
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-            ),
-      );
-    }
-    return imageWidget;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +84,61 @@ class NovelCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCoverImage(
+    BuildContext context,
+    String coverImageUrl,
+    BoxConstraints constraints,
+  ) {
+    Theme.of(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    if (coverImageUrl.startsWith('data:image')) {
+      final imageData = coverImageUrl.split(',').last;
+      final bytes = base64Decode(imageData);
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        width: constraints.maxWidth,
+        height: constraints.maxHeight,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildErrorImage(context, constraints);
+        },
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl:
+            coverImageUrl.isNotEmpty
+                ? coverImageUrl
+                : 'https://placehold.co/400x600.png?text=Cover%20Not%20Found',
+        fit: BoxFit.cover,
+        width: constraints.maxWidth,
+        height: constraints.maxHeight,
+        placeholder:
+            (context, url) => Shimmer.fromColors(
+              baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+              highlightColor:
+                  isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
+              child: Container(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                color: Colors.grey,
+              ),
+            ),
+        errorWidget:
+            (context, url, error) => _buildErrorImage(context, constraints),
+      );
+    }
+  }
+
+  Widget _buildErrorImage(BuildContext context, BoxConstraints constraints) {
+    return Image.network(
+      'https://placehold.co/400x600.png?text=Cover%20Not%20Found',
+      fit: BoxFit.cover,
+      width: constraints.maxWidth,
+      height: constraints.maxHeight,
     );
   }
 }

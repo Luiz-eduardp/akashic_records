@@ -22,42 +22,38 @@ class AppDrawer extends StatelessWidget {
             mainAxisSize: MainAxisSize.max,
             children: [
               const SizedBox(height: 35),
-              ListTile(
-                leading: const Icon(Icons.settings),
-                title: Text('Configurações'.translate),
+              _buildDrawerTile(
+                context: context,
+                icon: Icons.settings,
+                title: 'Configurações'.translate,
                 onTap: () {
                   Navigator.pushNamed(context, '/settings');
                   advancedDrawerController.hideDrawer();
                 },
-                splashColor: theme.splashColor,
-                hoverColor: theme.hoverColor,
               ),
-              ListTile(
-                leading: const Icon(Icons.extension),
-                title: Text('Plugins'.translate),
+              _buildDrawerTile(
+                context: context,
+                icon: Icons.extension,
+                title: 'Plugins'.translate,
                 onTap: () {
                   Navigator.pushNamed(context, '/plugins');
                   advancedDrawerController.hideDrawer();
                 },
-                splashColor: theme.splashColor,
-                hoverColor: theme.hoverColor,
               ),
-              ListTile(
-                leading: const Icon(Icons.discord),
-                title: Text("Discord"),
+              _buildDrawerTile(
+                context: context,
+                icon: Icons.discord,
+                title: "Discord",
                 onTap: () => launchURL('https://discord.gg/eSuc2znz5V'),
-                splashColor: theme.splashColor,
-                hoverColor: theme.hoverColor,
               ),
-              ListTile(
-                leading: const Icon(Icons.paid),
-                title: Text("Github Sponsor"),
+              _buildDrawerTile(
+                context: context,
+                icon: Icons.paid,
+                title: "Github Sponsor",
                 onTap:
                     () => launchURL(
                       'https://github.com/sponsors/AkashicRecordsApp',
                     ),
-                splashColor: theme.splashColor,
-                hoverColor: theme.hoverColor,
               ),
               const Spacer(),
               DefaultTextStyle(
@@ -72,6 +68,28 @@ class AppDrawer extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        onTap: onTap,
+        splashColor: theme.splashColor,
+        hoverColor: theme.hoverColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
         ),
       ),
     );

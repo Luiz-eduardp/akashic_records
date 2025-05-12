@@ -316,6 +316,7 @@ class AppState with ChangeNotifier {
   List<FavoriteList> _favoriteLists = [];
   int _novelCount = 0;
   List<Novel> _localNovels = [];
+  bool _showChangelog = false;
 
   final Map<String, PluginService> _pluginServices = {};
   final Map<String, PluginInfo> _pluginInfo = {};
@@ -457,6 +458,7 @@ class AppState with ChangeNotifier {
   List<FavoriteList> get favoriteLists => _favoriteLists;
   int get novelCount => _novelCount;
   List<Novel> get localNovels => _localNovels;
+  bool get showChangelog => _showChangelog;
 
   get pluginInfo => _pluginInfo;
 
@@ -771,6 +773,14 @@ class AppState with ChangeNotifier {
     }
   }
 
+  void setShowChangelog(bool value) {
+    if (_showChangelog != value) {
+      _showChangelog = value;
+      _saveShowChangelog(value);
+      notifyListeners();
+    }
+  }
+
   Future<void> initialize() async {
     await _initHive();
     await _loadSettings();
@@ -857,6 +867,8 @@ class AppState with ChangeNotifier {
       _localNovels = await _getLocalNovelsFromHive();
 
       await _createDefaultFavoriteListIfNeeded();
+
+      _showChangelog = prefs.getBool('showChangelog') ?? true;
     } catch (e) {
       debugPrint("Erro CRÍTICO ao carregar configurações: $e");
       _themeMode = ThemeMode.system;
@@ -867,6 +879,7 @@ class AppState with ChangeNotifier {
       _favoriteLists = [];
       _scriptUrls = ['https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/'];
       _localNovels = [];
+      _showChangelog = true;
 
       try {
         prefs = await SharedPreferences.getInstance();
@@ -1009,6 +1022,18 @@ class AppState with ChangeNotifier {
       debugPrint("Erro ao salvar listas de favoritos no Hive: $e");
     }
     notifyListeners();
+  }
+
+  Future<void> _saveShowChangelog(
+    bool value, [
+    SharedPreferences? prefsInstance,
+  ]) async {
+    try {
+      final prefs = prefsInstance ?? await SharedPreferences.getInstance();
+      await prefs.setBool('showChangelog', value);
+    } catch (e) {
+      debugPrint("Erro ao salvar o estado de 'showChangelog': $e");
+    }
   }
 
   void updateNovelCount(int count) {
