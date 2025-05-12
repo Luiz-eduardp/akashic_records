@@ -10,6 +10,7 @@ import 'package:akashic_records/widgets/app_drawer.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,16 +23,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late TabController _tabController;
   final _advancedDrawerController = AdvancedDrawerController();
-  List<Map<String, dynamic>> _notifications = [];
-  bool _isLoadingNotifications = false;
-  String? _notificationError;
+  late Future<List<Map<String, dynamic>>> _notificationsFuture;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabChange);
-    _loadNotifications();
+    _notificationsFuture = _loadNotifications();
   }
 
   @override
@@ -57,12 +56,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _advancedDrawerController.showDrawer();
   }
 
-  Future<void> _loadNotifications() async {
-    setState(() {
-      _isLoadingNotifications = true;
-      _notificationError = null;
-    });
-
+  Future<List<Map<String, dynamic>>> _loadNotifications() async {
     try {
       final response = await http.get(
         Uri.parse('https://api.npoint.io/a701fcdc92e490b3289c'),
@@ -73,17 +67,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         List<Map<String, dynamic>> loadedNotifications =
             data.map((item) => item as Map<String, dynamic>).toList();
 
-        _notifications = await _filterUnreadNotifications(loadedNotifications);
+        return await _filterUnreadNotifications(loadedNotifications);
       } else {
-        _notificationError =
-            'Falha ao carregar notificações: ${response.statusCode}';
+        throw Exception(
+          'Falha ao carregar notificações: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      _notificationError = 'Erro ao carregar notificações: $e';
-    } finally {
-      setState(() {
-        _isLoadingNotifications = false;
-      });
+      throw Exception('Erro ao carregar notificações: $e');
     }
   }
 
@@ -147,50 +138,55 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
           actions: [
-            IconButton(
-              icon: Stack(
-                children: [
-                  const Icon(Icons.notifications),
-                  if (_notifications.isNotEmpty)
-                    Positioned(
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(1),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 12,
-                          minHeight: 12,
-                        ),
-                        child: Text(
-                          '${_notifications.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _notificationsFuture,
+              builder: (context, snapshot) {
+                int notificationCount = 0;
+                if (snapshot.hasData) {
+                  notificationCount = snapshot.data!.length;
+                }
+                return IconButton(
+                  icon: Stack(
+                    children: [
+                      const Icon(Icons.notifications),
+                      if (notificationCount > 0)
+                        Positioned(
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(1),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 12,
+                              minHeight: 12,
+                            ),
+                            child: Text(
+                              '$notificationCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    ),
-                ],
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => NotificationScreen(
-                          notifications: _notifications,
-                          isLoading: _isLoadingNotifications,
-                          error: _notificationError,
-                          onNotificationRead: _onNotificationRead,
-                        ),
+                    ],
                   ),
-                ).then((_) {
-                  _loadNotifications();
-                });
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => NotificationScreen(
+                              notificationsFuture: _notificationsFuture,
+                              onNotificationRead: _onNotificationRead,
+                            ),
+                      ),
+                    );
+                  },
+                );
               },
             ),
           ],
@@ -260,24 +256,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _onNotificationRead(String notificationId) {
     setState(() {
-      _notifications.removeWhere(
-        (notification) => notification['id'] == notificationId,
-      );
+      _notificationsFuture = _notificationsFuture.then((notifications) {
+        notifications.removeWhere(
+          (notification) => notification['id'] == notificationId,
+        );
+        return notifications;
+      });
     });
   }
 }
 
 class NotificationScreen extends StatefulWidget {
-  final List<Map<String, dynamic>> notifications;
-  final bool isLoading;
-  final String? error;
+  final Future<List<Map<String, dynamic>>> notificationsFuture;
   final Function(String) onNotificationRead;
 
   const NotificationScreen({
     super.key,
-    required this.notifications,
-    required this.isLoading,
-    this.error,
+    required this.notificationsFuture,
     required this.onNotificationRead,
   });
 
@@ -291,10 +286,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-    _isExpandedList = List.generate(
-      widget.notifications.length,
-      (index) => false,
-    );
   }
 
   @override
@@ -311,27 +302,74 @@ class _NotificationScreenState extends State<NotificationScreen> {
         child: SizedBox(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
-          child:
-              widget.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : widget.error != null
-                  ? Text(widget.error!)
-                  : widget.notifications.isEmpty
-                  ? Text('')
-                  : RefreshIndicator(
-                    onRefresh: _refreshNotifications,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: widget.notificationsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
                     child: ListView.builder(
-                      itemCount: widget.notifications.length,
+                      itemCount: 5,
                       itemBuilder: (context, index) {
-                        final notification = widget.notifications[index];
-                        return _buildNotificationItem(
-                          notification,
-                          index,
-                          theme,
+                        return Card(
+                          margin: const EdgeInsets.all(8.0),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const ExpansionTile(
+                            title: SizedBox(
+                              height: 20,
+                              width: 150,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(color: Colors.white),
+                              ),
+                            ),
+                            children: <Widget>[
+                              Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: SizedBox(
+                                  height: 50,
+                                  width: double.infinity,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     ),
                   ),
+                );
+              } else if (snapshot.hasError) {
+                return Text('Erro: ${snapshot.error}');
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text('Sem notificações'.translate));
+              } else {
+                final notifications = snapshot.data!;
+                _isExpandedList = List.generate(
+                  notifications.length,
+                  (index) => false,
+                );
+                return RefreshIndicator(
+                  onRefresh: _refreshNotifications,
+                  child: ListView.builder(
+                    itemCount: notifications.length,
+                    itemBuilder: (context, index) {
+                      final notification = notifications[index];
+                      return _buildNotificationItem(notification, index, theme);
+                    },
+                  ),
+                );
+              }
+            },
+          ),
         ),
       ),
     );
@@ -456,6 +494,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Future<void> _refreshNotifications() async {
     await Future.delayed(const Duration(seconds: 1));
+
+    setState(() {
+      widget.notificationsFuture.then((notifications) {});
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Notificações atualizadas!'.translate)),
