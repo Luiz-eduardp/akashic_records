@@ -72,6 +72,8 @@ dependencies:
   file_picker: ^10.1.2
   epubx: ^4.0.0
   jsf: ^0.6.1
+  battery_plus: ^6.2.1
+  wakelock: ^0.4.0
 
 
 dev_dependencies:

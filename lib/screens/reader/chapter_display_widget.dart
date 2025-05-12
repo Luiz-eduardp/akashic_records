@@ -13,12 +13,14 @@ class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
   final String chapterId;
   final ReaderSettings readerSettings;
+  final ScrollController scrollController;
 
   const ChapterDisplay({
     super.key,
     required this.chapterContent,
     required this.readerSettings,
     required this.chapterId,
+    required this.scrollController,
   });
 
   @override
@@ -141,6 +143,16 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           ..loadHtmlString(await _htmlContentFuture);
     if (!_controllerCompleter.isCompleted) {
       _controllerCompleter.complete(_webViewController);
+    }
+    if (_webViewController != null) {
+      try {
+        await _webViewController!.runJavaScriptReturningResult('''
+        function sendScrollPosition() {
+          const scrollPosition = document.documentElement.scrollTop || document.body.scrollTop;
+          return scrollPosition
+        }
+        ''');
+      } catch (e) {}
     }
   }
 
