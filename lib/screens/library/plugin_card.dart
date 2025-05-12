@@ -4,19 +4,53 @@ import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 
-class PluginCard extends StatelessWidget {
+class PluginCard extends StatefulWidget {
   final String pluginName;
 
   const PluginCard({super.key, required this.pluginName});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final appState = Provider.of<AppState>(context);
-    final pluginService = appState.pluginServices[pluginName];
-    final pluginVersion = pluginService?.version ?? 'Desconhecido'.translate;
-    final pluginlang = pluginService?.lang ?? 'Desconhecido'.translate;
+  State<PluginCard> createState() => _PluginCardState();
+}
 
+class _PluginCardState extends State<PluginCard>
+    with AutomaticKeepAliveClientMixin {
+  String _pluginVersion = 'Desconhecido'.translate;
+  String _pluginLang = 'Desconhecido'.translate;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPluginInfo();
+  }
+
+  Future<void> _loadPluginInfo() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final pluginService = appState.pluginServices[widget.pluginName];
+
+    String version = 'Desconhecido'.translate;
+    String lang = 'Desconhecido'.translate;
+
+    if (pluginService != null) {
+      version = pluginService.version;
+      lang = pluginService.lang;
+    }
+
+    if (mounted) {
+      setState(() {
+        _pluginVersion = version;
+        _pluginLang = lang;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    final theme = Theme.of(context);
+    Provider.of<AppState>(context, listen: false);
+    bool isDispositivo = widget.pluginName == 'Dispositivo';
     return Card(
       elevation: 2.0,
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -27,7 +61,9 @@ class PluginCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PluginNovelsScreen(pluginName: pluginName),
+              builder:
+                  (context) =>
+                      PluginNovelsScreen(pluginName: widget.pluginName),
             ),
           );
         },
@@ -55,16 +91,16 @@ class PluginCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          pluginName == 'Dispositivo'
-                              ? pluginName.translate
-                              : pluginName,
+                          isDispositivo
+                              ? widget.pluginName.translate
+                              : widget.pluginName,
                           style: theme.textTheme.titleLarge!.copyWith(
                             color: theme.colorScheme.onSurface,
                           ),
                         ),
-                        SizedBox(width: 3.0),
+                        const SizedBox(width: 3.0),
                         Text(
-                          pluginlang,
+                          _pluginLang,
                           style: theme.textTheme.bodyMedium!.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -81,7 +117,7 @@ class PluginCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          pluginVersion,
+                          _pluginVersion,
                           style: theme.textTheme.bodyMedium!.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -101,4 +137,7 @@ class PluginCard extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
