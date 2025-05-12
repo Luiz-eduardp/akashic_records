@@ -29,13 +29,12 @@ class ChapterDisplay extends StatefulWidget {
 
 class _ChapterDisplayState extends State<ChapterDisplay>
     with AutomaticKeepAliveClientMixin {
-  late Future<String> _htmlContentFuture;
   WebViewController? _webViewController;
   bool _isLoading = true;
-  final Completer<WebViewController> _controllerCompleter =
-      Completer<WebViewController>();
   double _scrollPosition = 0.0;
   String get scrollPositionKey => 'scrollPosition_${widget.chapterId}';
+  late SharedPreferences _prefs;
+  late String _htmlContent;
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
@@ -46,11 +45,16 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   @override
   void initState() {
     super.initState();
-    _htmlContentFuture = _prepareHtmlContent(
+    _initializeAsyncState();
+  }
+
+  Future<void> _initializeAsyncState() async {
+    _prefs = await SharedPreferences.getInstance();
+    _htmlContent = await _prepareHtmlContent(
       widget.chapterContent,
       widget.readerSettings,
     );
-    _loadScrollPosition();
+    await _loadScrollPosition();
     _initializeWebViewController();
   }
 
@@ -59,12 +63,19 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.chapterContent != widget.chapterContent ||
         oldWidget.readerSettings != widget.readerSettings) {
-      _htmlContentFuture = _prepareHtmlContent(
-        widget.chapterContent,
-        widget.readerSettings,
-      );
-      _reloadWebView();
+      _updateHtmlContent();
     }
+  }
+
+  Future<void> _updateHtmlContent() async {
+    setState(() {
+      _isLoading = true;
+    });
+    _htmlContent = await _prepareHtmlContent(
+      widget.chapterContent,
+      widget.readerSettings,
+    );
+    _reloadWebView();
   }
 
   @override
@@ -76,15 +87,11 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   }
 
   Future<void> _loadScrollPosition() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _scrollPosition = prefs.getDouble(scrollPositionKey) ?? 0.0;
-    });
+    _scrollPosition = _prefs.getDouble(scrollPositionKey) ?? 0.0;
   }
 
   Future<void> _saveScrollPosition(double position) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(scrollPositionKey, position);
+    await _prefs.setDouble(scrollPositionKey, position);
   }
 
   Future<void> _saveScrollPositionBeforeDispose() async {
@@ -140,19 +147,19 @@ class _ChapterDisplayState extends State<ChapterDisplay>
               },
             ),
           )
-          ..loadHtmlString(await _htmlContentFuture);
-    if (!_controllerCompleter.isCompleted) {
-      _controllerCompleter.complete(_webViewController);
-    }
-    if (_webViewController != null) {
-      try {
-        await _webViewController!.runJavaScriptReturningResult('''
+          ..loadHtmlString(_htmlContent);
+
+    try {
+      await _webViewController!.runJavaScriptReturningResult('''
         function sendScrollPosition() {
           const scrollPosition = document.documentElement.scrollTop || document.body.scrollTop;
           return scrollPosition
         }
         ''');
-      } catch (e) {}
+    } catch (e) {
+      if (kDebugMode) {
+        print("error: $e");
+      }
     }
   }
 
@@ -211,7 +218,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     enabledPlugins.sort((a, b) => a.priority.compareTo(b.priority));
 
     for (final plugin in enabledPlugins) {
-      if (plugin.name == 'Sunovels') {}
       _injectCustomJavaScript(plugin.code);
     }
   }
@@ -250,7 +256,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       });
     }
     if (_webViewController != null) {
-      await _webViewController?.loadHtmlString(await _htmlContentFuture);
+      await _webViewController?.loadHtmlString(_htmlContent);
     }
     if (mounted) {
       setState(() {
@@ -259,13 +265,21 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     }
   }
 
+  final Map<String, String> _cleanedContentCache = {};
+
   Future<String> _prepareHtmlContent(
     String? content,
     ReaderSettings readerSettings,
   ) async {
+    final cacheKey = '$content${readerSettings.hashCode}';
+    if (_cleanedContentCache.containsKey(cacheKey)) {
+      return _cleanedContentCache[cacheKey]!;
+    }
     final cleanedContent = _cleanChapterContent(content);
     final paragraphs = _splitIntoParagraphs(cleanedContent);
-    return _buildHtmlContent(readerSettings, paragraphs);
+    final htmlContent = _buildHtmlContent(readerSettings, paragraphs);
+    _cleanedContentCache[cacheKey] = htmlContent;
+    return htmlContent;
   }
 
   String _cleanChapterContent(String? content) {
@@ -407,38 +421,19 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
     return Stack(
       children: [
-        FutureBuilder<String>(
-          future: _htmlContentFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              if (_webViewController == null) {
-                return const Center(child: Text("Erro ao carregar WebView."));
-              }
-
-              return Listener(
-                onPointerSignal: (pointerSignal) {
-                  if (pointerSignal is PointerScrollEvent) {}
-                },
-                child: RefreshIndicator(
-                  onRefresh: _reloadWebView,
-                  backgroundColor: theme.colorScheme.surface,
-                  color: theme.colorScheme.primary,
-                  child: WebViewWidget(controller: _webViewController!),
-                ),
-              );
-            } else {
-              return Container(
-                color: theme.colorScheme.surface.withOpacity(0.8),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colorScheme.primary,
-                    ),
-                  ),
-                ),
-              );
-            }
+        Listener(
+          onPointerSignal: (pointerSignal) {
+            if (pointerSignal is PointerScrollEvent) {}
           },
+          child: RefreshIndicator(
+            onRefresh: _reloadWebView,
+            backgroundColor: theme.colorScheme.surface,
+            color: theme.colorScheme.primary,
+            child:
+                _webViewController != null
+                    ? WebViewWidget(controller: _webViewController!)
+                    : const Center(child: Text("Erro ao carregar WebView.")),
+          ),
         ),
         if (_isLoading)
           Container(

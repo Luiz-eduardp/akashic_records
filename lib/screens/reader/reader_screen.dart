@@ -15,7 +15,7 @@ import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/screens/reader/chapter_list_widget.dart';
-import 'package:wakelock/wakelock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart' show Document;
 import 'package:flutter/services.dart';
@@ -52,13 +52,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
     super.initState();
     _enterFullScreen();
     _loadData();
-    Wakelock.enable();
+    WakelockPlus.enable();
   }
 
   @override
   void dispose() {
     _exitFullScreen();
-    Wakelock.disable();
+    WakelockPlus.disable();
     _scrollController.dispose();
     super.dispose();
   }
