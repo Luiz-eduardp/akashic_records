@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rxdart/rxdart.dart';
 
 class ChapterListWidget extends StatefulWidget {
   final List<Chapter> chapters;
@@ -27,26 +28,32 @@ class ChapterListWidget extends StatefulWidget {
   _ChapterListWidgetState createState() => _ChapterListWidgetState();
 }
 
-class _ChapterListWidgetState extends State<ChapterListWidget> {
+class _ChapterListWidgetState extends State<ChapterListWidget>
+    with AutomaticKeepAliveClientMixin {
   List<Chapter> _chapters = [];
-  List<Chapter> _displayedChapters = [];
+  final BehaviorSubject<List<Chapter>> _displayedChapters =
+      BehaviorSubject<List<Chapter>>.seeded([]);
   bool _isAscending = false;
   final TextEditingController _searchController = TextEditingController();
-
+  final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
-  int _firstItemIndex = 0;
-  final int _pageSize = 20;
+  final int _pageSize = 30;
   bool _isLoadingMore = false;
-  bool _mounted = false;
+  bool _allChaptersLoaded = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _mounted = true;
     _chapters = List.from(widget.chapters);
-    _sortChapters();
-    _loadInitialChapters();
+    _sortAndFilterChapters();
     _scrollController.addListener(_onScroll);
+
+    _searchController.addListener(_onSearchChanged);
+
+    _loadInitialChapters();
   }
 
   @override
@@ -54,51 +61,47 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     super.didUpdateWidget(oldWidget);
     if (widget.chapters != oldWidget.chapters ||
         widget.readChapterIds != oldWidget.readChapterIds) {
-      setState(() {
-        _chapters = List.from(widget.chapters);
-        _sortChapters();
-        _searchChapters();
-        _resetPagination();
-      });
+      _chapters = List.from(widget.chapters);
+      _sortAndFilterChapters();
     }
   }
 
   @override
   void dispose() {
-    _mounted = false;
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _displayedChapters.close();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
-  void _resetPagination() {
-    _firstItemIndex = 0;
-    _displayedChapters.clear();
-    _loadInitialChapters();
+  void _onSearchChanged() {
+    _sortAndFilterChapters();
   }
 
   void _loadInitialChapters() {
-    if (!_mounted) return;
+    _allChaptersLoaded = false;
+    _displayedChapters.add(_getChaptersForPage(0));
+  }
 
-    final endIndex = _pageSize.clamp(0, _chapters.length);
-    _displayedChapters = _chapters.sublist(0, endIndex);
-
-    if (mounted) {
-      setState(() {});
-    }
+  List<Chapter> _getChaptersForPage(int startIndex) {
+    final endIndex = (startIndex + _pageSize).clamp(0, _chapters.length);
+    return _chapters.sublist(startIndex, endIndex);
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent * 0.9 &&
-        !_isLoadingMore) {
+        !_isLoadingMore &&
+        !_allChaptersLoaded) {
       _loadMoreChapters();
     }
   }
 
   Future<void> _loadMoreChapters() async {
-    if (_isLoadingMore || !_mounted) return;
+    if (_isLoadingMore || _allChaptersLoaded) return;
 
     setState(() {
       _isLoadingMore = true;
@@ -106,26 +109,33 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
 
     await Future.delayed(const Duration(milliseconds: 200));
 
-    _firstItemIndex += _pageSize;
-    final int endIndex = (_firstItemIndex + _pageSize).clamp(
-      0,
-      _chapters.length,
-    );
-
-    if (_firstItemIndex < _chapters.length) {
-      setState(() {
-        _displayedChapters.addAll(_chapters.sublist(_firstItemIndex, endIndex));
-        _isLoadingMore = false;
-      });
+    final startIndex = _displayedChapters.value.length;
+    final newChapters = _getChaptersForPage(startIndex);
+    if (newChapters.isEmpty) {
+      _allChaptersLoaded = true;
     } else {
+      _displayedChapters.add([..._displayedChapters.value, ...newChapters]);
+    }
+
+    if (mounted) {
       setState(() {
         _isLoadingMore = false;
       });
     }
   }
 
-  void _sortChapters() {
-    _displayedChapters.sort((a, b) {
+  void _sortAndFilterChapters() {
+    final query = _searchController.text.toLowerCase();
+    List<Chapter> filteredChapters =
+        _chapters
+            .where(
+              (chapter) =>
+                  chapter.title.toLowerCase().contains(query) ||
+                  (chapter.chapterNumber?.toString().contains(query) ?? false),
+            )
+            .toList();
+
+    filteredChapters.sort((a, b) {
       final comparison =
           _isAscending
               ? (a.chapterNumber ?? double.infinity).compareTo(
@@ -136,32 +146,18 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               );
       return comparison;
     });
+
+    if (mounted) {
+      setState(() {
+        _displayedChapters.add(filteredChapters);
+      });
+    }
   }
 
   void _toggleSortOrder() {
     setState(() {
       _isAscending = !_isAscending;
-      _sortChapters();
-    });
-  }
-
-  void _searchChapters() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _displayedChapters = List.from(_chapters);
-      } else {
-        _displayedChapters =
-            _chapters
-                .where(
-                  (chapter) =>
-                      chapter.title.toLowerCase().contains(query) ||
-                      (chapter.chapterNumber?.toString().contains(query) ??
-                          false),
-                )
-                .toList();
-      }
-      _sortChapters();
+      _sortAndFilterChapters();
     });
   }
 
@@ -193,6 +189,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final screenHeight = MediaQuery.of(context).size.height;
     final listHeight = screenHeight * 0.8;
@@ -208,6 +205,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                 Expanded(
                   child: TextField(
                     controller: _searchController,
+                    focusNode: _searchFocusNode,
                     decoration: InputDecoration(
                       labelText: 'Pesquisar Capítulo'.translate,
                       prefixIcon: const Icon(Icons.search),
@@ -217,10 +215,9 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                         vertical: 12.0,
                       ),
                     ),
-                    onChanged: (_) => _searchChapters(),
                   ),
                 ),
-                SizedBox(width: 8.0),
+                const SizedBox(width: 8.0),
                 IconButton(
                   icon: Icon(
                     _isAscending ? Icons.arrow_downward : Icons.arrow_upward,
@@ -240,96 +237,121 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               behavior: ScrollConfiguration.of(
                 context,
               ).copyWith(scrollbars: false),
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _displayedChapters.length + (_isLoadingMore ? 1 : 0),
-                padding: EdgeInsets.zero,
-                itemBuilder: (context, index) {
-                  if (index < _displayedChapters.length) {
-                    final chapter = _displayedChapters[index];
-                    final isLastRead = chapter.id == widget.lastReadChapterId;
-                    final isRead = widget.readChapterIds.contains(chapter.id);
-                    final isUnread = !isRead;
+              child: StreamBuilder<List<Chapter>>(
+                stream: _displayedChapters.stream,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                    FontWeight fontWeight = FontWeight.normal;
-                    if (isUnread) {
-                      fontWeight = FontWeight.bold;
-                    }
+                  final displayedChapters = snapshot.data!;
+                  return ListView.builder(
+                    controller: _scrollController,
+                    itemCount:
+                        displayedChapters.length + (_isLoadingMore ? 1 : 0),
+                    padding: EdgeInsets.zero,
+                    itemBuilder: (context, index) {
+                      if (index < displayedChapters.length) {
+                        final chapter = displayedChapters[index];
+                        final isLastRead =
+                            chapter.id == widget.lastReadChapterId;
+                        final isRead = widget.readChapterIds.contains(
+                          chapter.id,
+                        );
+                        final isUnread = !isRead;
 
-                    String chapterDisplay = chapter.title;
-                    if (chapter.chapterNumber != null) {
-                      chapterDisplay =
-                          "${chapter.chapterNumber}: ${chapter.title}";
-                    }
+                        FontWeight fontWeight = FontWeight.normal;
+                        if (isUnread) {
+                          fontWeight = FontWeight.bold;
+                        }
 
-                    return Card(
-                      elevation: 1.5,
-                      margin: EdgeInsets.symmetric(vertical: 4.0),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8.0),
-                          onTap: () {
-                            widget.onChapterTap(chapter.id);
-                            _addToHistory(chapter);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 14.0,
-                              horizontal: 16.0,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '$chapterDisplay${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      fontWeight: fontWeight,
-                                      color:
-                                          isLastRead
-                                              ? theme.colorScheme.secondary
-                                              : isRead
-                                              ? theme.disabledColor
-                                              : theme.colorScheme.onSurface,
-                                    ),
-                                  ),
+                        String chapterDisplay = chapter.title;
+                        if (chapter.chapterNumber != null) {
+                          chapterDisplay =
+                              "${chapter.chapterNumber}: ${chapter.title}";
+                        }
+
+                        return Card(
+                          elevation: 1.5,
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8.0),
+                              onTap: () {
+                                widget.onChapterTap(chapter.id);
+                                _addToHistory(chapter);
+                                _searchFocusNode.unfocus();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14.0,
+                                  horizontal: 16.0,
                                 ),
-                                InkWell(
-                                  borderRadius: BorderRadius.circular(24.0),
-                                  onTap: () {
-                                    widget.onMarkAsRead(chapter.id);
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Icon(
-                                      widget.readChapterIds.contains(chapter.id)
-                                          ? Icons.check_circle
-                                          : Icons.radio_button_unchecked,
-                                      color:
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '$chapterDisplay${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: fontWeight,
+                                              color:
+                                                  isLastRead
+                                                      ? theme
+                                                          .colorScheme
+                                                          .secondary
+                                                      : isRead
+                                                      ? theme.disabledColor
+                                                      : theme
+                                                          .colorScheme
+                                                          .onSurface,
+                                            ),
+                                      ),
+                                    ),
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(24.0),
+                                      onTap: () {
+                                        widget.onMarkAsRead(chapter.id);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Icon(
                                           widget.readChapterIds.contains(
                                                 chapter.id,
                                               )
-                                              ? Colors.green
-                                              : theme.disabledColor,
+                                              ? Icons.check_circle
+                                              : Icons.radio_button_unchecked,
+                                          color:
+                                              widget.readChapterIds.contains(
+                                                    chapter.id,
+                                                  )
+                                                  ? Colors.green
+                                                  : theme.disabledColor,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    );
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.secondary,
-                        ),
-                      ),
-                    );
-                  }
+                        );
+                      } else {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Center(
+                            child:
+                                _allChaptersLoaded
+                                    ? Text('No More Chapters'.translate)
+                                    : CircularProgressIndicator(
+                                      color: theme.colorScheme.secondary,
+                                    ),
+                          ),
+                        );
+                      }
+                    },
+                  );
                 },
               ),
             ),

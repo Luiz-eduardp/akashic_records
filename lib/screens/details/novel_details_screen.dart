@@ -21,46 +21,53 @@ class NovelDetailsScreen extends StatefulWidget {
   State<NovelDetailsScreen> createState() => _NovelDetailsScreenState();
 }
 
-class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
-  late SharedPreferences _prefs;
+class _NovelDetailsScreenState extends State<NovelDetailsScreen>
+    with AutomaticKeepAliveClientMixin {
   String? lastReadChapterId;
   int? lastReadChapterIndex;
-  bool isLoading = true;
   String? errorMessage;
   Novel? _detailedNovel;
-  bool _isMounted = false;
   final _novelDetailsLoadingController = StreamController<Novel?>.broadcast();
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    _isMounted = true;
-    _init();
+    _loadData();
   }
 
   @override
   void dispose() {
-    _isMounted = false;
     _novelDetailsLoadingController.close();
     super.dispose();
   }
 
-  Future<void> _init() async {
-    _prefs = await SharedPreferences.getInstance();
-    await _loadDetailedNovel();
-    if (_detailedNovel != null && _isMounted) {
-      await _loadLastReadChapter();
+  Future<void> _loadData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await _loadDetailedNovel();
+      await _loadLastReadChapter(prefs);
+    } catch (e, stacktrace) {
+      _novelDetailsLoadingController.addError(
+        'Erro ao carregar detalhes da novel: $e'.translate,
+      );
+      debugPrint("Erro ao carregar detalhes da novel: $e\n$stacktrace");
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
   Future<void> _loadDetailedNovel() async {
-    if (!_isMounted) return;
-
     _novelDetailsLoadingController.add(null);
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
 
     try {
       final appState = Provider.of<AppState>(context, listen: false);
@@ -70,10 +77,9 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
         _novelDetailsLoadingController.addError(
           'Plugin não encontrado para esta novel.'.translate,
         );
-        if (_isMounted) {
+        if (mounted) {
           setState(() {
             errorMessage = 'Plugin não encontrado para esta novel.'.translate;
-            isLoading = false;
           });
         }
         return;
@@ -84,45 +90,41 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
         timeoutDuration: const Duration(seconds: 30),
       );
 
-      if (!_isMounted) return;
-
       if (detailedNovelData != null) {
         detailedNovelData.pluginId = widget.novel.pluginId;
         _novelDetailsLoadingController.add(detailedNovelData);
-        setState(() {
-          _detailedNovel = detailedNovelData;
-        });
+        if (mounted) {
+          setState(() {
+            _detailedNovel = detailedNovelData;
+          });
+        }
       } else {
         _novelDetailsLoadingController.addError(
           'Falha ao carregar detalhes da novel do plugin.'.translate,
         );
-        setState(() {
-          errorMessage =
-              'Falha ao carregar detalhes da novel do plugin.'.translate;
-        });
+        if (mounted) {
+          setState(() {
+            errorMessage =
+                'Falha ao carregar detalhes da novel do plugin.'.translate;
+          });
+        }
       }
-    } catch (e, stacktrace) {
+    } catch (e) {
       _novelDetailsLoadingController.addError(
         'Erro ao carregar detalhes da novel: $e'.translate,
       );
-      if (!_isMounted) return;
-      setState(() {
-        errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
-      });
-      debugPrint("Erro ao carregar detalhes da novel: $e\n$stacktrace");
-    } finally {
-      if (_isMounted && isLoading) {
+      if (mounted) {
         setState(() {
-          isLoading = false;
+          errorMessage = 'Erro ao carregar detalhes da novel: $e'.translate;
         });
       }
     }
   }
 
-  Future<void> _loadLastReadChapter() async {
-    if (_detailedNovel == null || !_isMounted) return;
+  Future<void> _loadLastReadChapter(SharedPreferences prefs) async {
+    if (_detailedNovel == null) return;
 
-    final lastReadChapterIdPref = _prefs.getString(
+    final lastReadChapterIdPref = prefs.getString(
       'lastRead_${widget.novel.id}',
     );
 
@@ -130,23 +132,27 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
       final index = _detailedNovel!.chapters.indexWhere(
         (chapter) => chapter.id == lastReadChapterIdPref,
       );
-      if (_isMounted) {
+      if (mounted) {
         setState(() {
           lastReadChapterId = lastReadChapterIdPref;
           lastReadChapterIndex = index == -1 ? null : index;
         });
       }
-    } else if (_isMounted) {
-      setState(() {
-        lastReadChapterId = null;
-        lastReadChapterIndex = null;
-      });
+    } else {
+      if (mounted) {
+        setState(() {
+          lastReadChapterId = null;
+          lastReadChapterIndex = null;
+        });
+      }
     }
   }
 
-  Future<void> _saveLastReadChapter(String chapterId) async {
-    if (!_isMounted) return;
-    await _prefs.setString('lastRead_${widget.novel.id}', chapterId);
+  Future<void> _saveLastReadChapter(
+    String chapterId,
+    SharedPreferences prefs,
+  ) async {
+    await prefs.setString('lastRead_${widget.novel.id}', chapterId);
 
     int? index;
     if (_detailedNovel != null) {
@@ -155,7 +161,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
       );
     }
 
-    if (_isMounted) {
+    if (mounted) {
       setState(() {
         lastReadChapterId = chapterId;
         lastReadChapterIndex = (index != null && index != -1) ? index : null;
@@ -170,7 +176,9 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
     if (targetChapterId == null && _detailedNovel!.chapters.isNotEmpty) {
       targetChapterId = _detailedNovel!.chapters.first.id;
-      _saveLastReadChapter(targetChapterId);
+      SharedPreferences.getInstance().then((prefs) {
+        _saveLastReadChapter(targetChapterId!, prefs);
+      });
     }
 
     if (targetChapterId != null) {
@@ -185,8 +193,10 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
               ),
         ),
       ).then((_) {
-        if (_isMounted && mounted) {
-          _loadLastReadChapter();
+        if (mounted) {
+          SharedPreferences.getInstance().then((prefs) {
+            _loadLastReadChapter(prefs);
+          });
         }
       });
     } else {
@@ -200,6 +210,7 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final appState = Provider.of<AppState>(context);
     final novelToCheck = _detailedNovel ?? widget.novel;
@@ -291,8 +302,10 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen> {
                       }
                       : null,
               onChapterTap: (chapterId) {
-                _saveLastReadChapter(chapterId).then((_) {
-                  _navigateToReader(chapterId: chapterId);
+                SharedPreferences.getInstance().then((prefs) {
+                  _saveLastReadChapter(chapterId, prefs).then((_) {
+                    _navigateToReader(chapterId: chapterId);
+                  });
                 });
               },
               onRetryLoad: () => _loadDetailedNovel(),

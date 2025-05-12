@@ -1,12 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'chapter_list_widget.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 
 class NovelDetailsWidget extends StatefulWidget {
   final Novel novel;
@@ -32,12 +33,16 @@ class NovelDetailsWidget extends StatefulWidget {
   State<NovelDetailsWidget> createState() => _NovelDetailsWidgetState();
 }
 
-class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
+class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
+    with AutomaticKeepAliveClientMixin {
   bool _showFullSynopsis = false;
   late List<String> _paragraphs;
   Set<String> _readChapterIds = {};
   bool _isLoading = true;
   bool _isSynopsisHTML = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -52,20 +57,18 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
   }
 
   Future<void> _loadData() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-    await _loadReadChapterIdsFromHistory();
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    try {
+      _readChapterIds = await _loadReadChapterIdsFromHistory();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  Future<void> _loadReadChapterIdsFromHistory() async {
+  Future<Set<String>> _loadReadChapterIdsFromHistory() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final historyKey = 'history_${widget.novel.id}';
@@ -88,13 +91,10 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
         }
       }
 
-      if (mounted) {
-        setState(() {
-          _readChapterIds = readIds;
-        });
-      }
+      return readIds;
     } catch (e) {
       debugPrint('Error loading read chapter IDs: $e');
+      return {};
     }
   }
 
@@ -126,49 +126,45 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget> {
   }
 
   void _markAsRead(String chapterId) {
-    if (mounted) {
-      setState(() {
-        if (_readChapterIds.contains(chapterId)) {
-          _readChapterIds.remove(chapterId);
-        } else {
-          _readChapterIds.add(chapterId);
-        }
-        _saveReadChapterIds();
-      });
-    }
+    setState(() {
+      if (_readChapterIds.contains(chapterId)) {
+        _readChapterIds.remove(chapterId);
+      } else {
+        _readChapterIds.add(chapterId);
+      }
+      _saveReadChapterIds();
+    });
   }
 
   Widget _buildCoverImage(String coverImageUrl) {
-    Widget imageWidget;
-    if (coverImageUrl.startsWith('data:image')) {
-      final imageData = coverImageUrl.split(',').last;
-      final bytes = base64Decode(imageData);
-      imageWidget = Image.memory(
-        bytes,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Image.network(
-            'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
-            fit: BoxFit.cover,
-          );
-        },
-      );
-    } else {
-      imageWidget = CachedNetworkImage(
-        imageUrl: coverImageUrl,
-        fit: BoxFit.cover,
-        errorWidget:
-            (context, url, error) => Image.network(
-              'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
-              fit: BoxFit.cover,
-            ),
-      );
-    }
-    return imageWidget;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CachedNetworkImage(
+          imageUrl: coverImageUrl,
+          fit: BoxFit.cover,
+          placeholder:
+              (context, url) => Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Colors.grey[300],
+                ),
+              ),
+          errorWidget:
+              (context, url, error) => Image.network(
+                'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
+                fit: BoxFit.cover,
+              ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final String firstParagraph = _paragraphs.isNotEmpty ? _paragraphs[0] : '';
