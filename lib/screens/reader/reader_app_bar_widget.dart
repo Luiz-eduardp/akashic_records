@@ -13,6 +13,7 @@ class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onSettingsPressed;
   final int? wordCount;
   final double scrollPercentage;
+  final ScrollController scrollController;
 
   const ReaderAppBar({
     super.key,
@@ -21,6 +22,7 @@ class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.onSettingsPressed,
     this.wordCount,
     required this.scrollPercentage,
+    required this.scrollController,
   });
 
   @override
@@ -42,6 +44,8 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
     uploadSpeed: 0,
   );
 
+  double _currentScrollPercentage = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -62,11 +66,25 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
         });
       }
     });
+
+    widget.scrollController.addListener(_updateScrollPercentage);
+    _currentScrollPercentage = widget.scrollPercentage;
+  }
+
+  @override
+  void didUpdateWidget(covariant ReaderAppBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.scrollController != widget.scrollController) {
+      oldWidget.scrollController.removeListener(_updateScrollPercentage);
+      widget.scrollController.addListener(_updateScrollPercentage);
+    }
   }
 
   @override
   void dispose() {
     _networkSpeedService.dispose();
+    widget.scrollController.removeListener(_updateScrollPercentage);
     super.dispose();
   }
 
@@ -88,6 +106,14 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
       }
     } catch (e) {
       debugPrint('Could not get battery level: $e');
+    }
+  }
+
+  void _updateScrollPercentage() {
+    if (mounted) {
+      setState(() {
+        _currentScrollPercentage = widget.scrollPercentage;
+      });
     }
   }
 
@@ -179,7 +205,7 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
             ),
           ),
           LinearProgressIndicator(
-            value: widget.scrollPercentage,
+            value: _currentScrollPercentage,
             backgroundColor: theme.colorScheme.primary,
             valueColor: AlwaysStoppedAnimation<Color>(
               theme.colorScheme.primary,

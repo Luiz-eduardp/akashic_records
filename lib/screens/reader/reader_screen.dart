@@ -414,6 +414,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
               onSettingsPressed: () => _showSettingsModal(context),
               wordCount: _wordCount,
               scrollPercentage: percentage,
+              scrollController: ScrollController(),
             );
           },
         ),

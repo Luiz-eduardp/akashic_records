@@ -36,6 +36,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   late SharedPreferences _prefs;
   late String _htmlContent;
   double _contentHeight = 0.0;
+  final ScrollController _scrollController = ScrollController();
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
@@ -47,6 +48,39 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   void initState() {
     super.initState();
     _initializeAsyncState();
+    _scrollController.addListener(_updateScrollPercentage);
+  }
+
+  @override
+  void dispose() {
+    _saveScrollPositionBeforeDispose();
+    _webViewController?.clearCache();
+    _webViewController = null;
+    _scrollController.removeListener(_updateScrollPercentage);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _updateScrollPercentage() {
+    if (_scrollController.hasClients && _contentHeight > 0) {
+      double currentScroll = _scrollController.offset;
+      double maxScrollExtent =
+          _contentHeight - MediaQuery.of(context).size.height;
+
+      if (maxScrollExtent < 0) {
+        maxScrollExtent = 0;
+      }
+
+      double scrollPercentage = currentScroll / maxScrollExtent;
+
+      if (scrollPercentage > 1.0) {
+        scrollPercentage = 1.0;
+      } else if (scrollPercentage < 0.0) {
+        scrollPercentage = 0.0;
+      }
+
+      widget.scrollPercentageNotifier.value = scrollPercentage;
+    }
   }
 
   Future<void> _initializeAsyncState() async {
@@ -77,14 +111,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       widget.readerSettings,
     );
     _reloadWebView();
-  }
-
-  @override
-  void dispose() {
-    _saveScrollPositionBeforeDispose();
-    _webViewController?.clearCache();
-    _webViewController = null;
-    super.dispose();
   }
 
   Future<void> _loadScrollPosition() async {
@@ -426,30 +452,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             color: theme.colorScheme.primary,
             child:
                 _webViewController != null
-                    ? NotificationListener<ScrollNotification>(
-                      onNotification: (ScrollNotification scrollInfo) {
-                        if (mounted && _contentHeight > 0) {
-                          double currentScroll = scrollInfo.metrics.pixels;
-                          double maxScrollExtent =
-                              _contentHeight -
-                              MediaQuery.of(context).size.height;
-                          if (maxScrollExtent < 0) {
-                            maxScrollExtent = 0;
-                          }
-                          double scrollPercentage =
-                              currentScroll / maxScrollExtent;
-                          if (scrollPercentage > 1.0) {
-                            scrollPercentage = 1.0;
-                          } else if (scrollPercentage < 0.0) {
-                            scrollPercentage = 0.0;
-                          }
-                          widget.scrollPercentageNotifier.value =
-                              scrollPercentage;
-                        }
-                        return true;
-                      },
-                      child: WebViewWidget(controller: _webViewController!),
-                    )
+                    ? WebViewWidget(controller: _webViewController!)
                     : const Center(child: Text("Erro ao carregar WebView.")),
           ),
         ),
