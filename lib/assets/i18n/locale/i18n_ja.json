@@ -221,5 +221,15 @@
   "Verifique e instale as últimas atualizações da aplicação.": "アプリの最新アップデートを確認してインストールします。",
   "Informações sobre a aplicação e seus desenvolvedores.": "アプリとその開発者に関する情報です。",
   "Sobre o aplicativo": "アプリについて",
-  "Mais detalhes": "詳細"
+  "Mais detalhes": "詳細",
+  "Falha ao carregar o changelog. Verifique sua conexão com a internet e tente novamente.": "変更履歴の読み込みに失敗しました。インターネット接続を確認して、もう一度お試しください。",
+  "Erro ao carregar dados": "データの読み込みエラー",
+  "Não foi possível abrir o link de download. Verifique se você tem um aplicativo padrão configurado para abrir links.": "ダウンロードリンクを開けませんでした。リンクを開くように設定されたデフォルトのアプリケーションがあるか確認してください。",
+  "Erro ao abrir o link de download: $e. Verifique o link ou tente novamente mais tarde.": "ダウンロードリンクを開く際にエラーが発生しました: $e。リンクを確認するか、後でもう一度お試しください。",
+  "Limite de requisições atingido. Tentando carregar dados antigos...": "リクエスト制限に達しました。古いデータを読み込もうとしています...",
+  "Falha ao carregar o changelog. Código de status: $statusCode. Verifique sua conexão com a internet e tente novamente.": "変更履歴の読み込みに失敗しました。ステータスコード: $statusCode。インターネット接続を確認して、もう一度お試しください。",
+  "Falha ao carregar o changelog. Erro: $e. Verifique sua conexão com a internet e tente novamente. Tentando carregar dados antigos...": "変更履歴の読み込みに失敗しました。エラー: $e。インターネット接続を確認して、もう一度お試しください。古いデータを読み込もうとしています...",
+  "Carregando dados...": "データを読み込み中...",
+  "Devido às limitações da API do GitHub sem autenticação, o changelog pode estar desatualizado.": "認証なしのGitHub APIの制限により、変更履歴が最新ではない可能性があります。",
+  "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "GitHub APIのリクエスト制限に達しました。後でもう一度お試しください。"
 }

@@ -221,5 +221,15 @@
   "Verifique e instale as últimas atualizações da aplicação.": "Verifique e instale las últimas actualizaciones de la aplicación.",
   "Informações sobre a aplicação e seus desenvolvedores.": "Información sobre la aplicación y sus desarrolladores.",
   "Sobre o aplicativo": "Acerca de la aplicación",
-  "Mais detalhes": "Más detalles"
+  "Mais detalhes": "Más detalles",
+  "Falha ao carregar o changelog. Verifique sua conexão com a internet e tente novamente.": "Error al cargar el registro de cambios. Verifique su conexión a Internet e intente nuevamente.",
+  "Erro ao carregar dados": "Error al cargar datos",
+  "Não foi possível abrir o link de download. Verifique se você tem um aplicativo padrão configurado para abrir links.": "No se pudo abrir el enlace de descarga. Verifique si tiene una aplicación predeterminada configurada para abrir enlaces.",
+  "Erro ao abrir o link de download: $e. Verifique o link ou tente novamente mais tarde.": "Error al abrir el enlace de descarga: $e. Verifique el enlace o intente nuevamente más tarde.",
+  "Limite de requisições atingido. Tentando carregar dados antigos...": "Límite de solicitudes alcanzado. Intentando cargar datos antiguos...",
+  "Falha ao carregar o changelog. Código de status: $statusCode. Verifique sua conexão com a internet e tente novamente.": "Error al cargar el registro de cambios. Código de estado: $statusCode. Verifique su conexión a Internet e intente nuevamente.",
+  "Falha ao carregar o changelog. Erro: $e. Verifique sua conexão com a internet e tente novamente. Tentando carregar dados antigos...": "Error al cargar el registro de cambios. Error: $e. Verifique su conexión a Internet e intente nuevamente. Intentando cargar datos antiguos...",
+  "Carregando dados...": "Cargando datos...",
+  "Devido às limitações da API do GitHub sem autenticação, o changelog pode estar desatualizado.": "Debido a las limitaciones de la API de GitHub sin autenticación, el registro de cambios puede estar desactualizado.",
+  "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "Se ha alcanzado el límite de solicitudes de la API de GitHub. Por favor, inténtelo de nuevo más tarde."
 }
