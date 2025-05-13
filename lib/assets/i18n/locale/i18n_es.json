@@ -232,5 +232,10 @@
   "Carregando dados...": "Cargando datos...",
   "Devido às limitações da API do GitHub sem autenticação, o changelog pode estar desatualizado.": "Debido a las limitaciones de la API de GitHub sin autenticación, el registro de cambios puede estar desactualizado.",
   "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "Se ha alcanzado el límite de solicitudes de la API de GitHub. Por favor, inténtelo de nuevo más tarde.",
-  "Pesquisando": "Buscando"
+  "Pesquisando": "Buscando",
+  "Carregando scripts...": "Cargando scripts...",
+  "Erro ao carregar scripts:": "Error al cargar scripts:",
+  "Nenhum script encontrado.\nAdicione URLs de scripts para começar.": "No se encontraron scripts.\nAñada URLs de scripts para comenzar.",
+  "Scripts encontrados:": "Scripts encontrados:",
+  "Filtrar por título": "Filtrar por título"
 }

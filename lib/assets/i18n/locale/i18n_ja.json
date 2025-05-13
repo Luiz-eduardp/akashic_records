@@ -232,5 +232,10 @@
   "Carregando dados...": "データを読み込み中...",
   "Devido às limitações da API do GitHub sem autenticação, o changelog pode estar desatualizado.": "認証なしのGitHub APIの制限により、変更履歴が最新ではない可能性があります。",
   "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "GitHub APIのリクエスト制限に達しました。後でもう一度お試しください。",
-  "Pesquisando": "検索中"
+  "Pesquisando": "検索中",
+  "Carregando scripts...": "スクリプトを読み込み中...",
+  "Erro ao carregar scripts:": "スクリプトの読み込みエラー:",
+  "Nenhum script encontrado.\nAdicione URLs de scripts para começar.": "スクリプトが見つかりません。\nスクリプトのURLを追加して開始してください。",
+  "Scripts encontrados:": "スクリプトが見つかりました:",
+  "Filtrar por título": "タイトルでフィルタリング"
 }
