@@ -1042,6 +1042,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.4"
+  traffic_stats:
+    dependency: "direct main"
+    description:
+      name: traffic_stats
+      sha256: fb82dd11b542632260e9050665492b9f30baf1a6b0ad5cd8c83b198e88b6807a
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
   tuple:
     dependency: transitive
     description:

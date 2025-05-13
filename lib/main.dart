@@ -235,11 +235,11 @@ class _MyAppState extends State<MyApp> {
         }
 
         Widget homeWidget;
-        if (!_hasShownInitialScreen ||
-            Provider.of<AppState>(context, listen: false).showChangelog) {
+        if (!_hasShownInitialScreen) {
           homeWidget = InitialLoadingScreen(
             updateAvailable: _updateAvailable,
             downloadUrl: _downloadUrl,
+            showChangelog: appState.showChangelog,
             onDone: () async {
               try {
                 final prefs = await SharedPreferences.getInstance();
@@ -252,7 +252,30 @@ class _MyAppState extends State<MyApp> {
                 Provider.of<AppState>(
                   context,
                   listen: false,
-                ).setShowChangelog(false);
+                ).markChangelogAsShown();
+              } catch (e) {
+                debugPrint("Error saving 'hasShownInitialScreen': $e");
+              }
+            },
+          );
+        } else if (appState.showChangelog) {
+          homeWidget = InitialLoadingScreen(
+            updateAvailable: _updateAvailable,
+            downloadUrl: _downloadUrl,
+            showChangelog: appState.showChangelog,
+            onDone: () async {
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('hasShownInitialScreen', true);
+                if (mounted) {
+                  setState(() {
+                    _hasShownInitialScreen = true;
+                  });
+                }
+                Provider.of<AppState>(
+                  context,
+                  listen: false,
+                ).markChangelogAsShown();
               } catch (e) {
                 debugPrint("Error saving 'hasShownInitialScreen': $e");
               }

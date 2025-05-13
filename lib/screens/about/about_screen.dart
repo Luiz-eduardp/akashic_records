@@ -1,9 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  String _version = 'Carregando...'.translate;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _version = packageInfo.version;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +118,13 @@ class AboutScreen extends StatelessWidget {
                 url: 'https://github.com/Luiz-eduardp',
                 text: 'Github: https://github.com/Luiz-eduardp',
                 theme: theme,
+              ),
+
+              const SizedBox(height: 24),
+
+              ListTile(
+                title: Text('Versão do Aplicativo'.translate),
+                subtitle: Text(_version),
               ),
 
               const SizedBox(height: 24),

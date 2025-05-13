@@ -86,12 +86,18 @@ class ChapterNavigation extends StatelessWidget {
       icon: Icon(
         icon,
         size: 20,
-        color: isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
+        color:
+            isEnabled
+                ? colorScheme.inversePrimary
+                : colorScheme.onSurfaceVariant,
       ),
       label: Text(
         label,
         style: TextStyle(
-          color: isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          color:
+              isEnabled
+                  ? colorScheme.inversePrimary
+                  : colorScheme.onSurfaceVariant,
         ),
       ),
       style: TextButton.styleFrom(
@@ -99,7 +105,7 @@ class ChapterNavigation extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor:
             isEnabled
-                ? colorScheme.primaryContainer.withOpacity(0.3)
+                ? colorScheme.inversePrimary.withOpacity(0.3)
                 : Colors.transparent,
         disabledForegroundColor: colorScheme.onSurfaceVariant,
         disabledIconColor: colorScheme.onSurfaceVariant,

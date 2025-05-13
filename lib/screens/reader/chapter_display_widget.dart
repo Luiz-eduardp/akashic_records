@@ -13,14 +13,14 @@ class ChapterDisplay extends StatefulWidget {
   final String? chapterContent;
   final String chapterId;
   final ReaderSettings readerSettings;
-  final ScrollController scrollController;
+  final ValueNotifier<double> scrollPercentageNotifier;
 
   const ChapterDisplay({
     super.key,
     required this.chapterContent,
     required this.readerSettings,
     required this.chapterId,
-    required this.scrollController,
+    required this.scrollPercentageNotifier,
   });
 
   @override
@@ -35,6 +35,8 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   String get scrollPositionKey => 'scrollPosition_${widget.chapterId}';
   late SharedPreferences _prefs;
   late String _htmlContent;
+  double _contentHeight = 0.0;
+  final ScrollController _scrollController = ScrollController();
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
@@ -46,6 +48,39 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   void initState() {
     super.initState();
     _initializeAsyncState();
+    _scrollController.addListener(_updateScrollPercentage);
+  }
+
+  @override
+  void dispose() {
+    _saveScrollPositionBeforeDispose();
+    _webViewController?.clearCache();
+    _webViewController = null;
+    _scrollController.removeListener(_updateScrollPercentage);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _updateScrollPercentage() {
+    if (_scrollController.hasClients && _contentHeight > 0) {
+      double currentScroll = _scrollController.offset;
+      double maxScrollExtent =
+          _contentHeight - MediaQuery.of(context).size.height;
+
+      if (maxScrollExtent < 0) {
+        maxScrollExtent = 0;
+      }
+
+      double scrollPercentage = currentScroll / maxScrollExtent;
+
+      if (scrollPercentage > 1.0) {
+        scrollPercentage = 1.0;
+      } else if (scrollPercentage < 0.0) {
+        scrollPercentage = 0.0;
+      }
+
+      widget.scrollPercentageNotifier.value = scrollPercentage;
+    }
   }
 
   Future<void> _initializeAsyncState() async {
@@ -76,14 +111,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       widget.readerSettings,
     );
     _reloadWebView();
-  }
-
-  @override
-  void dispose() {
-    _saveScrollPositionBeforeDispose();
-    _webViewController?.clearCache();
-    _webViewController = null;
-    super.dispose();
   }
 
   Future<void> _loadScrollPosition() async {
@@ -129,6 +156,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
               onPageFinished: (String url) async {
                 await _injectJavaScript();
                 _restoreScrollPosition();
+                await _getContentHeight();
                 if (mounted) {
                   setState(() {
                     _isLoading = false;
@@ -176,38 +204,13 @@ class _ChapterDisplayState extends State<ChapterDisplay>
         return scrollPosition;
       }
 
+      function getContentHeight() {
+          return document.documentElement.scrollHeight || document.body.scrollHeight;
+      }
+
       window.getScrollPosition = getScrollPosition;
       window.saveScrollPosition = saveScrollPosition;
-
-      document.addEventListener('touchstart', function(event) {
-        if (event.touches.length > 1) {
-          event.preventDefault();
-        }
-      }, { passive: false });
-
-      document.addEventListener('touchmove', function(event) {
-        if (event.touches.length > 1) {
-          event.preventDefault();
-        }
-      }, { passive: false });
-
-      document.addEventListener('touchend', function(event) {
-        if (event.touches.length > 1) {
-          event.preventDefault();
-        }
-      }, { passive: false });
-
-      document.addEventListener('gesturestart', function(event) {
-        event.preventDefault();
-      });
-
-      document.addEventListener('gesturechange', function(event) {
-        event.preventDefault();
-      });
-
-      document.addEventListener('gestureend', function(event) {
-        event.preventDefault();
-      });
+      window.getContentHeight = getContentHeight;
     ''');
     _injectCustomJavaScript(widget.readerSettings.customJs);
 
@@ -264,8 +267,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       });
     }
   }
-
-  final Map<String, String> _cleanedContentCache = {};
 
   Future<String> _prepareHtmlContent(
     String? content,
@@ -414,6 +415,26 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     ''';
   }
 
+  Future<void> _getContentHeight() async {
+    if (_webViewController != null) {
+      try {
+        final result = await _webViewController!.runJavaScriptReturningResult(
+          'window.getContentHeight();',
+        );
+        if (result is num) {
+          setState(() {
+            _contentHeight = result.toDouble();
+          });
+          print("Content height: $_contentHeight");
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Failed to get content height: $e');
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -453,4 +474,6 @@ class _ChapterDisplayState extends State<ChapterDisplay>
   String _colorToHtmlColor(Color color) {
     return '#${color.value.toRadixString(16).substring(2)}';
   }
+
+  final Map<String, String> _cleanedContentCache = {};
 }

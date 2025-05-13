@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:akashic_records/services/plugins/english/novelbin_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
@@ -317,6 +318,8 @@ class AppState with ChangeNotifier {
   int _novelCount = 0;
   List<Novel> _localNovels = [];
   bool _showChangelog = false;
+  String? _lastShownChangelogVersion;
+  String? _currentAppVersion;
 
   final Map<String, PluginService> _pluginServices = {};
   final Map<String, PluginInfo> _pluginInfo = {};
@@ -781,6 +784,10 @@ class AppState with ChangeNotifier {
     }
   }
 
+  bool shouldShowChangelog() {
+    return _showChangelog;
+  }
+
   Future<void> initialize() async {
     await _initHive();
     await _loadSettings();
@@ -868,7 +875,14 @@ class AppState with ChangeNotifier {
 
       await _createDefaultFavoriteListIfNeeded();
 
-      _showChangelog = prefs.getBool('showChangelog') ?? true;
+      _lastShownChangelogVersion = prefs.getString('lastShownChangelogVersion');
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      _currentAppVersion = packageInfo.version;
+
+      _showChangelog =
+          _lastShownChangelogVersion == null ||
+          _currentAppVersion != _lastShownChangelogVersion;
     } catch (e) {
       debugPrint("Erro CRÍTICO ao carregar configurações: $e");
       _themeMode = ThemeMode.system;
@@ -969,9 +983,9 @@ class AppState with ChangeNotifier {
   Future<void> _saveReaderSettings([SharedPreferences? prefsInstance]) async {
     try {
       final prefs = prefsInstance ?? await SharedPreferences.getInstance();
-      final settingsMap = _readerSettings.toMap();
+      final settingsMap = readerSettings.toMap();
       for (final entry in settingsMap.entries) {
-        final prefsKey = 'reader_${entry.key}';
+        final prefsKey = 'reader${entry.key}';
         final value = entry.value;
         if (value is int) {
           await prefs.setInt(prefsKey, value);
@@ -1036,6 +1050,27 @@ class AppState with ChangeNotifier {
     }
   }
 
+  Future<void> _saveLastShownChangelogVersion(
+    String version, [
+    SharedPreferences? prefsInstance,
+  ]) async {
+    try {
+      final prefs = prefsInstance ?? await SharedPreferences.getInstance();
+      await prefs.setString('lastShownChangelogVersion', version);
+    } catch (e) {
+      debugPrint("Erro ao salvar a versão do changelog mostrada: $e");
+    }
+  }
+
+  Future<void> markChangelogAsShown() async {
+    if (_currentAppVersion != null) {
+      setShowChangelog(false);
+      await _saveLastShownChangelogVersion(_currentAppVersion!);
+      _lastShownChangelogVersion = _currentAppVersion;
+      notifyListeners();
+    }
+  }
+
   void updateNovelCount(int count) {
     _novelCount = count;
     notifyListeners();
@@ -1045,15 +1080,15 @@ class AppState with ChangeNotifier {
     _localNovels.addAll(novels);
 
     for (final novel in novels) {
-      await _saveLocalNovelToHive(novel);
+      await saveLocalNovelToHive(novel);
     }
     notifyListeners();
   }
 
-  Future<void> _saveLocalNovelToHive(Novel novel) async {
+  Future<void> saveLocalNovelToHive(Novel novel) async {
     try {
       final cachedNovel = CachedNovel.fromNovel(novel);
-      String key = 'local_novel_${novel.id}';
+      String key = 'local_novel${novel.id}';
       await _novelCacheBox.put(key, cachedNovel);
       debugPrint("Saved local novel ${novel.title} to Hive with key: $key");
     } catch (e) {

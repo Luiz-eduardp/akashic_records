@@ -25,6 +25,9 @@ analyzer:
     non_constant_identifier_names: ignore
     depend_on_referenced_packages: ignore
     empty_catches: ignore
+    invalid_use_of_visible_for_testing_member: ignore
+    invalid_use_of_protected_member: ignore
+    unrelated_type_equality_checks: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
