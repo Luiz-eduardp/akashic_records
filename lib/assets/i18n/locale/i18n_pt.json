@@ -205,9 +205,21 @@
   "Notificações atualizadas!": "Notificações atualizadas!",
   "Indonésio": "Indonésio",
   "Francês": "Francês",
-  "Árabe":"Árabe",
+  "Árabe": "Árabe",
   "palavras": "palavras",
   "Tentar Novamente": "Tentar Novamente",
   "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.": "Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.",
-  "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "O primeiro carregamento pode demorar um pouco devido à quantidade de informações"
+  "O primeiro carregamento pode demorar um pouco devido à quantidade de informações": "O primeiro carregamento pode demorar um pouco devido à quantidade de informações",
+  "Idioma": "Idioma",
+  "Selecione o idioma da aplicação.": "Selecione o idioma da aplicação.",
+  "Personalize o tema e a cor de destaque da aplicação.": "Personalize o tema e a cor de destaque da aplicação.",
+  "Tema": "Tema",
+  "Cor de destaque": "Cor de destaque",
+  "Toque para alterar": "Toque para alterar",
+  "Selecionar Tema": "Selecionar Tema",
+  "Selecionar Cor de Destaque": "Selecionar Cor de Destaque",
+  "Verifique e instale as últimas atualizações da aplicação.": "Verifique e instale as últimas atualizações da aplicação.",
+  "Informações sobre a aplicação e seus desenvolvedores.": "Informações sobre a aplicação e seus desenvolvedores.",
+  "Sobre o aplicativo": "Sobre o aplicativo",
+  "Mais detalhes": "Mais detalhes"
 }

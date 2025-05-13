@@ -66,3 +66,4 @@ flutter:
   assets:
     - lib/assets/i18n/locale/
     - lib/assets/js/epubjs.js
+    - lib/assets/images/
