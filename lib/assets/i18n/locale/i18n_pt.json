@@ -231,5 +231,6 @@
   "Falha ao carregar o changelog. Erro: $e. Verifique sua conexão com a internet e tente novamente. Tentando carregar dados antigos...": "Falha ao carregar o changelog. Erro: $e. Verifique sua conexão com a internet e tente novamente. Tentando carregar dados antigos...",
   "Carregando dados...": "Carregando dados...",
   "Devido às limitações da API do GitHub sem autenticação, o changelog pode estar desatualizado.": "Devido às limitações da API do GitHub sem autenticação, o changelog pode estar desatualizado.",
-  "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde."
+  "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.",
+  "Pesquisando": "Pesquisando"
 }

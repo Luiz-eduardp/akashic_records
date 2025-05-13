@@ -231,5 +231,6 @@
   "Falha ao carregar o changelog. Erro: $e. Verifique sua conexão com a internet e tente novamente. Tentando carregar dados antigos...": "変更履歴の読み込みに失敗しました。エラー: $e。インターネット接続を確認して、もう一度お試しください。古いデータを読み込もうとしています...",
   "Carregando dados...": "データを読み込み中...",
   "Devido às limitações da API do GitHub sem autenticação, o changelog pode estar desatualizado.": "認証なしのGitHub APIの制限により、変更履歴が最新ではない可能性があります。",
-  "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "GitHub APIのリクエスト制限に達しました。後でもう一度お試しください。"
+  "Limite de requisições da API do GitHub atingido. Por favor, tente novamente mais tarde.": "GitHub APIのリクエスト制限に達しました。後でもう一度お試しください。",
+  "Pesquisando": "検索中"
 }
