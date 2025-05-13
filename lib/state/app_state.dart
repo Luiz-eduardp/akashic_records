@@ -784,6 +784,10 @@ class AppState with ChangeNotifier {
     }
   }
 
+  bool shouldShowChangelog() {
+    return _showChangelog;
+  }
+
   Future<void> initialize() async {
     await _initHive();
     await _loadSettings();
@@ -876,12 +880,9 @@ class AppState with ChangeNotifier {
       final packageInfo = await PackageInfo.fromPlatform();
       _currentAppVersion = packageInfo.version;
 
-      if (_lastShownChangelogVersion == null ||
-          _currentAppVersion != _lastShownChangelogVersion) {
-        _showChangelog = true;
-      } else {
-        _showChangelog = false;
-      }
+      _showChangelog =
+          _lastShownChangelogVersion == null ||
+          _currentAppVersion != _lastShownChangelogVersion;
     } catch (e) {
       debugPrint("Erro CRÍTICO ao carregar configurações: $e");
       _themeMode = ThemeMode.system;
@@ -982,9 +983,9 @@ class AppState with ChangeNotifier {
   Future<void> _saveReaderSettings([SharedPreferences? prefsInstance]) async {
     try {
       final prefs = prefsInstance ?? await SharedPreferences.getInstance();
-      final settingsMap = _readerSettings.toMap();
+      final settingsMap = readerSettings.toMap();
       for (final entry in settingsMap.entries) {
-        final prefsKey = 'reader_${entry.key}';
+        final prefsKey = 'reader${entry.key}';
         final value = entry.value;
         if (value is int) {
           await prefs.setInt(prefsKey, value);
@@ -1079,15 +1080,15 @@ class AppState with ChangeNotifier {
     _localNovels.addAll(novels);
 
     for (final novel in novels) {
-      await _saveLocalNovelToHive(novel);
+      await saveLocalNovelToHive(novel);
     }
     notifyListeners();
   }
 
-  Future<void> _saveLocalNovelToHive(Novel novel) async {
+  Future<void> saveLocalNovelToHive(Novel novel) async {
     try {
       final cachedNovel = CachedNovel.fromNovel(novel);
-      String key = 'local_novel_${novel.id}';
+      String key = 'local_novel${novel.id}';
       await _novelCacheBox.put(key, cachedNovel);
       debugPrint("Saved local novel ${novel.title} to Hive with key: $key");
     } catch (e) {

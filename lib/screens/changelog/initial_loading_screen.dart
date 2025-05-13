@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:akashic_records/i18n/i18n.dart';
-import 'package:akashic_records/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -12,11 +11,14 @@ class InitialLoadingScreen extends StatefulWidget {
     super.key,
     this.updateAvailable = false,
     this.downloadUrl,
-    required Future<Null> Function() onDone,
+    required this.onDone,
+    required this.showChangelog,
   });
 
   final bool updateAvailable;
   final String? downloadUrl;
+  final Future<void> Function() onDone;
+  final bool showChangelog;
 
   @override
   State<InitialLoadingScreen> createState() => _InitialLoadingScreenState();
@@ -139,60 +141,59 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
-
-                      Card(
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: MarkdownBody(
-                            data: _body,
-                            onTapLink: (text, url, title) {
-                              if (url != null) {
-                                launchUrl(Uri.parse(url));
-                              }
-                            },
-                            styleSheet: MarkdownStyleSheet.fromTheme(
-                              theme,
-                            ).copyWith(
-                              p: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                              h1: theme.textTheme.headlineMedium?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              h2: theme.textTheme.headlineSmall?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              h3: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              listBullet: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                              code: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                              blockquoteDecoration: BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(
-                                    color: theme.colorScheme.primary,
-                                    width: 2.0,
-                                  ),
+                      if (widget.showChangelog)
+                        Card(
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: MarkdownBody(
+                              data: _body,
+                              onTapLink: (text, url, title) {
+                                if (url != null) {
+                                  launchUrl(Uri.parse(url));
+                                }
+                              },
+                              styleSheet: MarkdownStyleSheet.fromTheme(
+                                theme,
+                              ).copyWith(
+                                p: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.onSurface,
                                 ),
-                                color: theme.colorScheme.surfaceVariant
-                                    .withOpacity(0.5),
+                                h1: theme.textTheme.headlineMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                h2: theme.textTheme.headlineSmall?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                h3: theme.textTheme.titleLarge?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                listBullet: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                code: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                blockquoteDecoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: theme.colorScheme.primary,
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                  color: theme.colorScheme.surfaceVariant
+                                      .withOpacity(0.5),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-
                       const SizedBox(height: 24),
                       Text(
                         'Enviado por:'.translate,
@@ -250,11 +251,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                           child: ElevatedButton(
                             onPressed: () {
                               _setInitialScreenShown();
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (context) => const HomeScreen(),
-                                ),
-                              );
+                              widget.onDone();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: theme.colorScheme.secondary,
