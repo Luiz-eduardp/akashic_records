@@ -252,7 +252,7 @@ class _MyAppState extends State<MyApp> {
                 Provider.of<AppState>(
                   context,
                   listen: false,
-                ).setShowChangelog(false);
+                ).markChangelogAsShown();
               } catch (e) {
                 debugPrint("Error saving 'hasShownInitialScreen': $e");
               }
