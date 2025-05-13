@@ -184,7 +184,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
       window.getScrollPosition = getScrollPosition;
       window.saveScrollPosition = saveScrollPosition;
-      window.getContentHeight = getContentHeight; // Expose getContentHeight to the window
+      window.getContentHeight = getContentHeight;
     ''');
     _injectCustomJavaScript(widget.readerSettings.customJs);
 
