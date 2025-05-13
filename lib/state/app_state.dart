@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:akashic_records/services/plugins/english/novelbin_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
@@ -317,6 +318,8 @@ class AppState with ChangeNotifier {
   int _novelCount = 0;
   List<Novel> _localNovels = [];
   bool _showChangelog = false;
+  String? _lastShownChangelogVersion;
+  String? _currentAppVersion;
 
   final Map<String, PluginService> _pluginServices = {};
   final Map<String, PluginInfo> _pluginInfo = {};
@@ -868,7 +871,17 @@ class AppState with ChangeNotifier {
 
       await _createDefaultFavoriteListIfNeeded();
 
-      _showChangelog = prefs.getBool('showChangelog') ?? true;
+      _lastShownChangelogVersion = prefs.getString('lastShownChangelogVersion');
+
+      final packageInfo = await PackageInfo.fromPlatform();
+      _currentAppVersion = packageInfo.version;
+
+      if (_lastShownChangelogVersion == null ||
+          _currentAppVersion != _lastShownChangelogVersion) {
+        _showChangelog = true;
+      } else {
+        _showChangelog = false;
+      }
     } catch (e) {
       debugPrint("Erro CRÍTICO ao carregar configurações: $e");
       _themeMode = ThemeMode.system;
@@ -1033,6 +1046,27 @@ class AppState with ChangeNotifier {
       await prefs.setBool('showChangelog', value);
     } catch (e) {
       debugPrint("Erro ao salvar o estado de 'showChangelog': $e");
+    }
+  }
+
+  Future<void> _saveLastShownChangelogVersion(
+    String version, [
+    SharedPreferences? prefsInstance,
+  ]) async {
+    try {
+      final prefs = prefsInstance ?? await SharedPreferences.getInstance();
+      await prefs.setString('lastShownChangelogVersion', version);
+    } catch (e) {
+      debugPrint("Erro ao salvar a versão do changelog mostrada: $e");
+    }
+  }
+
+  Future<void> markChangelogAsShown() async {
+    if (_currentAppVersion != null) {
+      setShowChangelog(false);
+      await _saveLastShownChangelogVersion(_currentAppVersion!);
+      _lastShownChangelogVersion = _currentAppVersion;
+      notifyListeners();
     }
   }
 
