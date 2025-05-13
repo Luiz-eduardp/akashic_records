@@ -5,12 +5,14 @@ import 'package:akashic_records/i18n/i18n.dart';
 import 'package:intl/intl.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:traffic_stats/traffic_stats.dart';
 
 class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String? title;
   final ReaderSettings readerSettings;
   final VoidCallback onSettingsPressed;
   final int? wordCount;
+  final double scrollPercentage;
 
   const ReaderAppBar({
     super.key,
@@ -18,6 +20,7 @@ class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.readerSettings,
     required this.onSettingsPressed,
     this.wordCount,
+    required this.scrollPercentage,
   });
 
   @override
@@ -32,6 +35,13 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
   int _batteryLevel = 100;
   Battery battery = Battery();
 
+  final NetworkSpeedService _networkSpeedService = NetworkSpeedService();
+  late Stream<NetworkSpeedData> _speedStream;
+  NetworkSpeedData _currentSpeed = NetworkSpeedData(
+    downloadSpeed: 0,
+    uploadSpeed: 0,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +52,22 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
       const Duration(minutes: 5),
       (Timer t) => _updateBatteryLevel(),
     );
+
+    _networkSpeedService.init();
+    _speedStream = _networkSpeedService.speedStream;
+    _speedStream.listen((speedData) {
+      if (mounted) {
+        setState(() {
+          _currentSpeed = speedData;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _networkSpeedService.dispose();
+    super.dispose();
   }
 
   void _updateTime() {
@@ -127,6 +153,13 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
                 ),
                 Row(
                   children: [
+                    Text(
+                      '↓${_currentSpeed.downloadSpeed} Kbps ↑${_currentSpeed.uploadSpeed} Kbps',
+                      style: TextStyle(
+                        color: widget.readerSettings.textColor,
+                        fontSize: 12,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Icon(
                       Icons.battery_std,
@@ -143,6 +176,13 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
                   ],
                 ),
               ],
+            ),
+          ),
+          LinearProgressIndicator(
+            value: widget.scrollPercentage,
+            backgroundColor: theme.colorScheme.primary,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              theme.colorScheme.primary,
             ),
           ),
         ],

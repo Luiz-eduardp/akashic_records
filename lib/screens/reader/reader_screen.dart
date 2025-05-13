@@ -45,7 +45,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   String? errorMessage;
   String? _lastReadChapterId;
   int? _wordCount;
-  final ScrollController _scrollController = ScrollController();
+  final ValueNotifier<double> _scrollPercentage = ValueNotifier<double>(0.0);
 
   @override
   void initState() {
@@ -59,7 +59,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void dispose() {
     _exitFullScreen();
     WakelockPlus.disable();
-    _scrollController.dispose();
+    _scrollPercentage.dispose();
     super.dispose();
   }
 
@@ -396,19 +396,26 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    Theme.of(context);
 
     return Scaffold(
       backgroundColor: appState.readerSettings.backgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight * 2),
-        child: ReaderAppBar(
-          title:
-              isLoading || errorMessage != null || currentChapter == null
-                  ? null
-                  : currentChapter!.title,
-          readerSettings: appState.readerSettings,
-          onSettingsPressed: () => _showSettingsModal(context),
-          wordCount: _wordCount,
+        child: ValueListenableBuilder<double>(
+          valueListenable: _scrollPercentage,
+          builder: (context, percentage, child) {
+            return ReaderAppBar(
+              title:
+                  isLoading || errorMessage != null || currentChapter == null
+                      ? null
+                      : currentChapter!.title,
+              readerSettings: appState.readerSettings,
+              onSettingsPressed: () => _showSettingsModal(context),
+              wordCount: _wordCount,
+              scrollPercentage: percentage,
+            );
+          },
         ),
       ),
       endDrawer:
@@ -441,7 +448,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                           chapterContent: currentChapter?.content,
                           readerSettings: appState.readerSettings,
                           chapterId: currentChapter!.id,
-                          scrollController: _scrollController,
+                          scrollPercentageNotifier: _scrollPercentage,
                         ),
                       ),
                       ChapterNavigation(
