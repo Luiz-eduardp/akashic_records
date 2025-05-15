@@ -804,17 +804,10 @@ class _AppearanceTabState extends State<AppearanceTab> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          final newSettings = ReaderSettings(
+          final newSettings = readerSettings.copyWith(
             theme: app_state.ReaderTheme.values[theme.index],
-            fontSize: readerSettings.fontSize,
-            fontFamily: readerSettings.fontFamily,
-            lineHeight: readerSettings.lineHeight,
-            textAlign: readerSettings.textAlign,
             backgroundColor: themeData.scaffoldBackgroundColor,
             textColor: themeData.textTheme.bodyMedium!.color!,
-            fontWeight: readerSettings.fontWeight,
-            customJs: readerSettings.customJs,
-            customCss: readerSettings.customCss,
           );
           context.read<AppState>().setReaderSettings(newSettings);
         },

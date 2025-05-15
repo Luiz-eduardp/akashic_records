@@ -117,45 +117,95 @@ class CustomColors {
   CustomColors({this.backgroundColor, this.textColor});
 }
 
-class ReaderSettings {
-  ReaderTheme theme;
+@HiveType(typeId: 3)
+class ReaderSettings extends HiveObject {
+  @HiveField(0)
+  int themeIndex;
+  @HiveField(1)
   double fontSize;
+  @HiveField(2)
   String fontFamily;
+  @HiveField(3)
   double lineHeight;
-  TextAlign textAlign;
-  Color backgroundColor;
-  Color textColor;
-  FontWeight fontWeight;
-  CustomColors? customColors;
+  @HiveField(4)
+  int textAlignIndex;
+  @HiveField(5)
+  int backgroundColorValue;
+  @HiveField(6)
+  int textColorValue;
+  @HiveField(7)
+  int fontWeightIndex;
+  @HiveField(8)
+  int? customBackgroundColorValue;
+  @HiveField(9)
+  int? customTextColorValue;
+  @HiveField(10)
   String? customJs;
+  @HiveField(11)
   String? customCss;
 
   ReaderSettings({
-    this.theme = ReaderTheme.dark,
-    this.fontSize = 18.0,
-    this.fontFamily = 'Roboto',
-    this.lineHeight = 1.5,
-    this.textAlign = TextAlign.justify,
-    this.backgroundColor = Colors.black,
-    this.textColor = Colors.white,
-    this.fontWeight = FontWeight.normal,
-    this.customColors,
+    required this.themeIndex,
+    required this.fontSize,
+    required this.fontFamily,
+    required this.lineHeight,
+    required this.textAlignIndex,
+    required this.backgroundColorValue,
+    required this.textColorValue,
+    required this.fontWeightIndex,
+    this.customBackgroundColorValue,
+    this.customTextColorValue,
     this.customJs,
     this.customCss,
   });
 
+  ReaderSettings.defaults()
+    : themeIndex = ReaderTheme.dark.index,
+      fontSize = 18.0,
+      fontFamily = 'Roboto',
+      lineHeight = 1.5,
+      textAlignIndex = TextAlign.justify.index,
+      backgroundColorValue = Colors.black.value,
+      textColorValue = Colors.white.value,
+      fontWeightIndex = FontWeight.normal.index,
+      customBackgroundColorValue = null,
+      customTextColorValue = null,
+      customJs = null,
+      customCss = null;
+
+  ReaderTheme get theme => ReaderTheme.values[themeIndex];
+  TextAlign get textAlign => TextAlign.values[textAlignIndex];
+  FontWeight get fontWeight => FontWeight.values[fontWeightIndex];
+
+  Color get backgroundColor => Color(backgroundColorValue);
+  Color get textColor => Color(textColorValue);
+
+  CustomColors? get customColors =>
+      customBackgroundColorValue != null || customTextColorValue != null
+          ? CustomColors(
+            backgroundColor:
+                customBackgroundColorValue != null
+                    ? Color(customBackgroundColorValue!)
+                    : null,
+            textColor:
+                customTextColorValue != null
+                    ? Color(customTextColorValue!)
+                    : null,
+          )
+          : null;
+
   Map<String, dynamic> toMap() {
     return {
-      'theme': theme.index,
+      'theme': themeIndex,
       'fontSize': fontSize,
       'fontFamily': fontFamily,
       'lineHeight': lineHeight,
-      'textAlign': textAlign.index,
-      'backgroundColor': backgroundColor.value,
-      'textColor': textColor.value,
-      'fontWeight': fontWeight.index,
-      'customBackgroundColor': customColors?.backgroundColor?.value,
-      'customTextColor': customColors?.textColor?.value,
+      'textAlign': textAlignIndex,
+      'backgroundColor': backgroundColorValue,
+      'textColor': textColorValue,
+      'fontWeight': fontWeightIndex,
+      'customBackgroundColor': customBackgroundColorValue,
+      'customTextColor': customTextColorValue,
       'customJs': customJs,
       'customCss': customCss,
     };
@@ -163,30 +213,56 @@ class ReaderSettings {
 
   static ReaderSettings fromMap(Map<String, dynamic> map) {
     return ReaderSettings(
-      theme: ReaderTheme.values[map['theme'] ?? ReaderTheme.dark.index],
+      themeIndex: map['theme'] ?? ReaderTheme.dark.index,
       fontSize: (map['fontSize'] ?? 18.0).toDouble(),
       fontFamily: map['fontFamily'] ?? 'Roboto',
       lineHeight: (map['lineHeight'] ?? 1.5).toDouble(),
-      textAlign: TextAlign.values[map['textAlign'] ?? TextAlign.justify.index],
-      backgroundColor: Color(map['backgroundColor'] ?? Colors.black.value),
-      textColor: Color(map['textColor'] ?? Colors.white.value),
-      fontWeight:
-          FontWeight.values[map['fontWeight'] ?? FontWeight.normal.index],
-      customColors:
-          map['customBackgroundColor'] != null || map['customTextColor'] != null
-              ? CustomColors(
-                backgroundColor:
-                    map['customBackgroundColor'] != null
-                        ? Color(map['customBackgroundColor'])
-                        : null,
-                textColor:
-                    map['customTextColor'] != null
-                        ? Color(map['customTextColor'])
-                        : null,
-              )
-              : null,
+      textAlignIndex: map['textAlign'] ?? TextAlign.justify.index,
+      backgroundColorValue: map['backgroundColor'] ?? Colors.black.value,
+      textColorValue: map['textColor'] ?? Colors.white.value,
+      fontWeightIndex: map['fontWeight'] ?? FontWeight.normal.index,
+      customBackgroundColorValue: map['customBackgroundColor'],
+      customTextColorValue: map['customTextColor'],
       customJs: map['customJs'],
       customCss: map['customCss'],
+    );
+  }
+
+  ReaderSettings copyWith({
+    ReaderTheme? theme,
+    double? fontSize,
+    String? fontFamily,
+    double? lineHeight,
+    TextAlign? textAlign,
+    Color? backgroundColor,
+    Color? textColor,
+    FontWeight? fontWeight,
+    CustomColors? customColors,
+    String? customJs,
+    String? customCss,
+    int? themeIndex,
+    int? textAlignIndex,
+    int? backgroundColorValue,
+    int? textColorValue,
+    int? fontWeightIndex,
+    int? customBackgroundColorValue,
+    int? customTextColorValue,
+  }) {
+    return ReaderSettings(
+      themeIndex: themeIndex ?? this.themeIndex,
+      fontSize: fontSize ?? this.fontSize,
+      fontFamily: fontFamily ?? this.fontFamily,
+      lineHeight: lineHeight ?? this.lineHeight,
+      textAlignIndex: textAlignIndex ?? this.textAlignIndex,
+      backgroundColorValue: backgroundColorValue ?? this.backgroundColorValue,
+      textColorValue: textColorValue ?? this.textColorValue,
+      fontWeightIndex: fontWeightIndex ?? this.fontWeightIndex,
+      customBackgroundColorValue:
+          customColors?.backgroundColor?.value ?? customBackgroundColorValue,
+      customTextColorValue:
+          customColors?.textColor?.value ?? customTextColorValue,
+      customJs: customJs ?? this.customJs,
+      customCss: customCss ?? this.customCss,
     );
   }
 }
@@ -309,7 +385,7 @@ class AppState with ChangeNotifier {
   Color _accentColor = AkashicColors.bronze;
   bool _settingsLoaded = false;
   Set<String> _selectedPlugins = {};
-  ReaderSettings _readerSettings = ReaderSettings();
+  late ReaderSettings _readerSettings;
   List<CustomPlugin> _customPlugins = [];
   List<String> _scriptUrls = [
     'https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/',
@@ -331,6 +407,7 @@ class AppState with ChangeNotifier {
   late Box<CustomPlugin> _customPluginsBox;
   late Box<CachedNovel> _novelCacheBox;
   late Box<FavoriteListHive> _favoriteListsBox;
+  late Box<ReaderSettings> _readerSettingsBox;
 
   AppState() {
     _pluginServices['Dispositivo'] = Dispositivo();
@@ -795,18 +872,24 @@ class AppState with ChangeNotifier {
   }
 
   Future<void> _initHive() async {
-    await Hive.initFlutter();
-    Hive.registerAdapter(CustomPluginAdapter());
-    Hive.registerAdapter(CachedNovelAdapter());
-    Hive.registerAdapter(FavoriteListHiveAdapter());
+    try {
+      await Hive.initFlutter();
+      Hive.registerAdapter(CustomPluginAdapter());
+      Hive.registerAdapter(CachedNovelAdapter());
+      Hive.registerAdapter(FavoriteListHiveAdapter());
+      Hive.registerAdapter(ReaderSettingsAdapter());
 
-    _customPluginsBox = await Hive.openBox<CustomPlugin>('customPlugins');
-    _novelCacheBox = await Hive.openBox<CachedNovel>('novelCache');
-    _favoriteListsBox = await Hive.openBox<FavoriteListHive>(
-      'favoriteListsBox',
-    );
+      _customPluginsBox = await Hive.openBox<CustomPlugin>('customPlugins');
+      _novelCacheBox = await Hive.openBox<CachedNovel>('novelCache');
+      _favoriteListsBox = await Hive.openBox<FavoriteListHive>(
+        'favoriteListsBox',
+      );
+      _readerSettingsBox = await Hive.openBox<ReaderSettings>('readerSettings');
 
-    debugPrint("Hive initialized.");
+      debugPrint("Hive initialized.");
+    } catch (e) {
+      debugPrint("Erro ao inicializar o Hive: $e");
+    }
   }
 
   Future<void> _insertCustomPluginToHive(CustomPlugin plugin) async {
@@ -860,11 +943,8 @@ class AppState with ChangeNotifier {
         await _saveSelectedPlugins(prefs);
       }
 
-      final readerSettingsMap = <String, dynamic>{};
-      prefs.getKeys().where((key) => key.startsWith('reader_')).forEach((key) {
-        readerSettingsMap[key.substring(7)] = prefs.get(key);
-      });
-      _readerSettings = ReaderSettings.fromMap(readerSettingsMap);
+      _readerSettings =
+          _readerSettingsBox.get('readerSettings') ?? ReaderSettings.defaults();
 
       _customPlugins = await _getCustomPluginsFromHive();
 
@@ -888,7 +968,7 @@ class AppState with ChangeNotifier {
       _themeMode = ThemeMode.system;
       _accentColor = Colors.blue;
       _selectedPlugins = {};
-      _readerSettings = ReaderSettings();
+      _readerSettings = ReaderSettings.defaults();
       _customPlugins = List.from(_defaultPlugins);
       _favoriteLists = [];
       _scriptUrls = ['https://api.npoint.io/bcd94c36fa7f3bf3b1e6/scripts/'];
@@ -907,33 +987,58 @@ class AppState with ChangeNotifier {
   }
 
   Future<List<FavoriteList>> _getFavoriteListsFromHive() async {
-    return _favoriteListsBox.values
-        .map((hiveList) => hiveList.toFavoriteList())
-        .toList();
+    try {
+      return _favoriteListsBox.values
+          .map((hiveList) => hiveList.toFavoriteList())
+          .toList();
+    } catch (e) {
+      debugPrint("Erro ao carregar listas de favoritos do Hive: $e");
+      return [];
+    }
   }
 
   Future<List<CustomPlugin>> _getCustomPluginsFromHive() async {
-    return _customPluginsBox.values.toList();
+    try {
+      return _customPluginsBox.values.toList();
+    } catch (e) {
+      debugPrint("Erro ao carregar plugins customizados do Hive: $e");
+      return [];
+    }
   }
 
   Future<List<Novel>> _getLocalNovelsFromHive() async {
     List<Novel> novels = [];
     try {
       debugPrint("Iniciando o carregamento de novels locais do Hive...");
+
+      if (_novelCacheBox == null) {
+        debugPrint("Erro: _novelCacheBox is null!");
+        return novels;
+      }
+
+      if (_novelCacheBox.keys == null) {
+        debugPrint("Erro: _novelCacheBox.keys is null!");
+        return novels;
+      }
+
       for (var key in _novelCacheBox.keys) {
-        if (key.toString().startsWith('local_novel_')) {
+        if (key.toString().startsWith('local_novel')) {
           CachedNovel? cachedNovel = _novelCacheBox.get(key);
 
           if (cachedNovel != null) {
-            final file = File(cachedNovel.id);
-            if (await file.exists()) {
-              debugPrint("Novel encontrada no Hive: ${cachedNovel.title}");
-              novels.add(cachedNovel.toNovel());
-            } else {
-              debugPrint(
-                "Arquivo não existe mais: ${cachedNovel.title}. Removendo do Hive.",
-              );
-              await _novelCacheBox.delete(key);
+            try {
+              final file = File(cachedNovel.id);
+              if (await file.exists()) {
+                debugPrint("Novel encontrada no Hive: ${cachedNovel.title}");
+                novels.add(cachedNovel.toNovel());
+              } else {
+                debugPrint(
+                  "Arquivo não existe mais: ${cachedNovel.title}. Removendo do Hive.",
+                );
+                await _novelCacheBox.delete(key);
+              }
+            } catch (e) {
+              debugPrint("Erro ao verificar ou processar arquivo local: $e");
             }
           } else {
             debugPrint("Erro: Novel cacheada nula para a chave: $key");
@@ -980,27 +1085,14 @@ class AppState with ChangeNotifier {
     }
   }
 
-  Future<void> _saveReaderSettings([SharedPreferences? prefsInstance]) async {
+  Future<void> _saveReaderSettings() async {
     try {
-      final prefs = prefsInstance ?? await SharedPreferences.getInstance();
-      final settingsMap = readerSettings.toMap();
-      for (final entry in settingsMap.entries) {
-        final prefsKey = 'reader${entry.key}';
-        final value = entry.value;
-        if (value is int) {
-          await prefs.setInt(prefsKey, value);
-        } else if (value is double)
-          await prefs.setDouble(prefsKey, value);
-        else if (value is String)
-          await prefs.setString(prefsKey, value);
-        else if (value is bool)
-          await prefs.setBool(prefsKey, value);
-        else if (value == null)
-          await prefs.remove(prefsKey);
-      }
+      await _readerSettingsBox.put('readerSettings', _readerSettings);
+      debugPrint("Reader settings saved to Hive.");
     } catch (e) {
-      debugPrint("Erro ao salvar configurações do leitor: $e");
+      debugPrint("Error saving reader settings to Hive: $e");
     }
+    notifyListeners();
   }
 
   Future<void> _saveCustomPlugins([SharedPreferences? prefsInstance]) async {
@@ -1225,6 +1317,74 @@ class FavoriteListHiveAdapter extends TypeAdapter<FavoriteListHive> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is FavoriteListHiveAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class ReaderSettingsAdapter extends TypeAdapter<ReaderSettings> {
+  @override
+  final typeId = 3;
+
+  @override
+  ReaderSettings read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+
+    return ReaderSettings(
+      themeIndex: fields[0] as int,
+      fontSize: fields[1] as double,
+      fontFamily: fields[2] as String,
+      lineHeight: fields[3] as double,
+      textAlignIndex: fields[4] as int,
+      backgroundColorValue: fields[5] as int,
+      textColorValue: fields[6] as int,
+      fontWeightIndex: fields[7] as int,
+      customBackgroundColorValue: fields[8] as int?,
+      customTextColorValue: fields[9] as int?,
+      customJs: fields[10] as String?,
+      customCss: fields[11] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, ReaderSettings obj) {
+    writer
+      ..writeByte(12)
+      ..writeByte(0)
+      ..write(obj.themeIndex)
+      ..writeByte(1)
+      ..write(obj.fontSize)
+      ..writeByte(2)
+      ..write(obj.fontFamily)
+      ..writeByte(3)
+      ..write(obj.lineHeight)
+      ..writeByte(4)
+      ..write(obj.textAlignIndex)
+      ..writeByte(5)
+      ..write(obj.backgroundColorValue)
+      ..writeByte(6)
+      ..write(obj.textColorValue)
+      ..writeByte(7)
+      ..write(obj.fontWeightIndex)
+      ..writeByte(8)
+      ..write(obj.customBackgroundColorValue)
+      ..writeByte(9)
+      ..write(obj.customTextColorValue)
+      ..writeByte(10)
+      ..write(obj.customJs)
+      ..writeByte(11)
+      ..write(obj.customCss);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReaderSettingsAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
