@@ -70,6 +70,37 @@ enum ReaderTheme {
   kindleDX,
   kindleKids,
   kindleScribe,
+  bloodMoon,
+  auroraBorealis,
+  retroGaming,
+  synthwave,
+  desertSand,
+  arcticBlue,
+  crimsonRed,
+  emeraldGreen,
+  goldenHour,
+  silverLining,
+  bronzeAge,
+  copperField,
+  ironForge,
+  onyxNight,
+  pearlWhite,
+  sapphireSea,
+  topazSunset,
+  jadeForest,
+  rubyRed,
+  citrineGlow,
+  garnetDeep,
+  quartzClean,
+  vanillaCream,
+  chocolateDark,
+  coffeeBean,
+  brickRed,
+  cementGray,
+  concreteJungle,
+  mossGreen,
+  skyBlue,
+  cloudWhite,
 }
 
 class AppearanceTab extends StatefulWidget {
@@ -786,6 +817,347 @@ class _AppearanceTabState extends State<AppearanceTab> {
           scaffoldBackgroundColor: const Color(0xFFE8E2D6),
           textTheme: const TextTheme(
             bodyMedium: TextStyle(color: Color(0xFF000000)),
+          ),
+        );
+      case ReaderTheme.bloodMoon:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF8B0000),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF8B0000),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFE4E1)),
+          ),
+        );
+      case ReaderTheme.auroraBorealis:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF004B49),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF004B49),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF7FFFD4)),
+          ),
+        );
+      case ReaderTheme.retroGaming:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF16161D),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF16161D),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFD800)),
+          ),
+        );
+      case ReaderTheme.synthwave:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF232323),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF232323),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFF00FF)),
+          ),
+        );
+      case ReaderTheme.desertSand:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFD2B48C),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFD2B48C),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF6F4E37)),
+          ),
+        );
+      case ReaderTheme.arcticBlue:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFADD8E6),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFADD8E6),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF000080)),
+          ),
+        );
+      case ReaderTheme.crimsonRed:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFDC143C),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFDC143C),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          ),
+        );
+      case ReaderTheme.emeraldGreen:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF50C878),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF50C878),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF000000)),
+          ),
+        );
+      case ReaderTheme.goldenHour:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFFFD700),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFFFD700),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF8B4513)),
+          ),
+        );
+      case ReaderTheme.silverLining:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFC0C0C0),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFC0C0C0),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF696969)),
+          ),
+        );
+      case ReaderTheme.bronzeAge:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFCD7F32),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFCD7F32),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF222222)),
+          ),
+        );
+      case ReaderTheme.copperField:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFB87333),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFB87333),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF000000)),
+          ),
+        );
+      case ReaderTheme.ironForge:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF778899),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF778899),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          ),
+        );
+      case ReaderTheme.onyxNight:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF353839),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF353839),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFEEEEEE)),
+          ),
+        );
+      case ReaderTheme.pearlWhite:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFF8F8FF),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFF8F8FF),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF696969)),
+          ),
+        );
+      case ReaderTheme.sapphireSea:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF0F52BA),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF0F52BA),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFE6E6FA)),
+          ),
+        );
+      case ReaderTheme.topazSunset:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFFFC87C),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFFFC87C),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF8B4513)),
+          ),
+        );
+      case ReaderTheme.jadeForest:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF00A36C),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF00A36C),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          ),
+        );
+      case ReaderTheme.rubyRed:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFE0115F),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFE0115F),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          ),
+        );
+      case ReaderTheme.citrineGlow:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFE4D00A),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFE4D00A),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF2F2F2F)),
+          ),
+        );
+      case ReaderTheme.garnetDeep:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF67001F),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF67001F),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFF08080)),
+          ),
+        );
+      case ReaderTheme.quartzClean:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFD8DAE4),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFD8DAE4),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF232323)),
+          ),
+        );
+      case ReaderTheme.vanillaCream:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFF3E5AB),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFF3E5AB),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF603913)),
+          ),
+        );
+      case ReaderTheme.chocolateDark:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF342D2B),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF342D2B),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFD2691E)),
+          ),
+        );
+      case ReaderTheme.coffeeBean:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF2B1B17),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF2B1B17),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFE6D8B9)),
+          ),
+        );
+      case ReaderTheme.brickRed:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFB22222),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFB22222),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          ),
+        );
+      case ReaderTheme.cementGray:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF95A5A6),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF95A5A6),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF2C3E50)),
+          ),
+        );
+      case ReaderTheme.concreteJungle:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF7F8C8D),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF7F8C8D),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFFFFFFF)),
+          ),
+        );
+      case ReaderTheme.mossGreen:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF8A9A5B),
+            brightness: Brightness.dark,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF8A9A5B),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFFF0F0F0)),
+          ),
+        );
+      case ReaderTheme.skyBlue:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF87CEEB),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF87CEEB),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF2F4F4F)),
+          ),
+        );
+      case ReaderTheme.cloudWhite:
+        return ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFFEBF4FA),
+            brightness: Brightness.light,
+          ),
+          scaffoldBackgroundColor: const Color(0xFFEBF4FA),
+          textTheme: const TextTheme(
+            bodyMedium: TextStyle(color: Color(0xFF696969)),
           ),
         );
     }
