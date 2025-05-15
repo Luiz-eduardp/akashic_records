@@ -208,7 +208,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Nenhum plugin selecionado.\nAdicione fontes para descobrir novas histórias.'
+              'Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.'
                   .translate,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge!.copyWith(
@@ -226,7 +226,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   horizontal: 16,
                   vertical: 12,
                 ),
-                child: Text('Adicionar Fontes'.translate),
+                child: Text('Gerenciar plugins'.translate),
               ),
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.zero,
