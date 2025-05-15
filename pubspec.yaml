@@ -2,7 +2,7 @@ name: akashic_records
 description: A novel reader application.
 publish_to: "none"
 
-version: 1.1.16+1
+version: 1.1.17+1
 
 environment:
   sdk: ^3.7.0
