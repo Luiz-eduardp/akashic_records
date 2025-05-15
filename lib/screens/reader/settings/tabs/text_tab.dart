@@ -115,7 +115,21 @@ class _TextTabState extends State<TextTab> {
             onChanged: (value) {
               _updateReaderSettings(
                 context,
-                readerSettings.copyWith(lineHeight: value),
+                ReaderSettings(
+                  themeIndex: readerSettings.themeIndex,
+                  fontSize: readerSettings.fontSize,
+                  fontFamily: readerSettings.fontFamily,
+                  lineHeight: value,
+                  textAlignIndex: readerSettings.textAlignIndex,
+                  backgroundColorValue: readerSettings.backgroundColorValue,
+                  textColorValue: readerSettings.textColorValue,
+                  fontWeightIndex: readerSettings.fontWeightIndex,
+                  customJs: readerSettings.customJs,
+                  customCss: readerSettings.customCss,
+                  customBackgroundColorValue:
+                      readerSettings.customBackgroundColorValue,
+                  customTextColorValue: readerSettings.customTextColorValue,
+                ),
               );
             },
           ),
@@ -169,7 +183,21 @@ class _TextTabState extends State<TextTab> {
                 onColorChanged: (color) {
                   _updateReaderSettings(
                     context,
-                    readerSettings.copyWith(textColor: color),
+                    ReaderSettings(
+                      themeIndex: readerSettings.themeIndex,
+                      fontSize: readerSettings.fontSize,
+                      fontFamily: readerSettings.fontFamily,
+                      lineHeight: readerSettings.lineHeight,
+                      textAlignIndex: readerSettings.textAlignIndex,
+                      backgroundColorValue: readerSettings.backgroundColorValue,
+                      textColorValue: color.value,
+                      fontWeightIndex: readerSettings.fontWeightIndex,
+                      customJs: readerSettings.customJs,
+                      customCss: readerSettings.customCss,
+                      customBackgroundColorValue:
+                          readerSettings.customBackgroundColorValue,
+                      customTextColorValue: readerSettings.customTextColorValue,
+                    ),
                   );
                 },
               ),
@@ -183,7 +211,21 @@ class _TextTabState extends State<TextTab> {
                 onColorChanged: (color) {
                   _updateReaderSettings(
                     context,
-                    readerSettings.copyWith(backgroundColor: color),
+                    ReaderSettings(
+                      themeIndex: readerSettings.themeIndex,
+                      fontSize: readerSettings.fontSize,
+                      fontFamily: readerSettings.fontFamily,
+                      lineHeight: readerSettings.lineHeight,
+                      textAlignIndex: readerSettings.textAlignIndex,
+                      backgroundColorValue: color.value,
+                      textColorValue: readerSettings.textColorValue,
+                      fontWeightIndex: readerSettings.fontWeightIndex,
+                      customJs: readerSettings.customJs,
+                      customCss: readerSettings.customCss,
+                      customBackgroundColorValue:
+                          readerSettings.customBackgroundColorValue,
+                      customTextColorValue: readerSettings.customTextColorValue,
+                    ),
                   );
                 },
               ),
@@ -204,7 +246,21 @@ class _TextTabState extends State<TextTab> {
       onSelected: (selected) {
         _updateReaderSettings(
           context,
-          readerSettings.copyWith(fontFamily: font),
+          ReaderSettings(
+            themeIndex: readerSettings.themeIndex,
+            fontSize: readerSettings.fontSize,
+            fontFamily: font,
+            lineHeight: readerSettings.lineHeight,
+            textAlignIndex: readerSettings.textAlignIndex,
+            backgroundColorValue: readerSettings.backgroundColorValue,
+            textColorValue: readerSettings.textColorValue,
+            fontWeightIndex: readerSettings.fontWeightIndex,
+            customJs: readerSettings.customJs,
+            customCss: readerSettings.customCss,
+            customBackgroundColorValue:
+                readerSettings.customBackgroundColorValue,
+            customTextColorValue: readerSettings.customTextColorValue,
+          ),
         );
       },
     );
@@ -238,7 +294,21 @@ class _TextTabState extends State<TextTab> {
       onSelected: (selected) {
         _updateReaderSettings(
           context,
-          readerSettings.copyWith(textAlign: align),
+          ReaderSettings(
+            themeIndex: readerSettings.themeIndex,
+            fontSize: readerSettings.fontSize,
+            fontFamily: readerSettings.fontFamily,
+            lineHeight: readerSettings.lineHeight,
+            textAlignIndex: align.index,
+            backgroundColorValue: readerSettings.backgroundColorValue,
+            textColorValue: readerSettings.textColorValue,
+            fontWeightIndex: readerSettings.fontWeightIndex,
+            customJs: readerSettings.customJs,
+            customCss: readerSettings.customCss,
+            customBackgroundColorValue:
+                readerSettings.customBackgroundColorValue,
+            customTextColorValue: readerSettings.customTextColorValue,
+          ),
         );
       },
     );
@@ -258,7 +328,21 @@ class _TextTabState extends State<TextTab> {
       onSelected: (selected) {
         _updateReaderSettings(
           context,
-          readerSettings.copyWith(fontWeight: fontWeight),
+          ReaderSettings(
+            themeIndex: readerSettings.themeIndex,
+            fontSize: readerSettings.fontSize,
+            fontFamily: readerSettings.fontFamily,
+            lineHeight: readerSettings.lineHeight,
+            textAlignIndex: readerSettings.textAlignIndex,
+            backgroundColorValue: readerSettings.backgroundColorValue,
+            textColorValue: readerSettings.textColorValue,
+            fontWeightIndex: fontWeight.index,
+            customJs: readerSettings.customJs,
+            customCss: readerSettings.customCss,
+            customBackgroundColorValue:
+                readerSettings.customBackgroundColorValue,
+            customTextColorValue: readerSettings.customTextColorValue,
+          ),
         );
       },
     );
@@ -278,7 +362,21 @@ class _TextTabState extends State<TextTab> {
       if (newFontSize != null && newFontSize >= 12 && newFontSize <= 100) {
         _updateReaderSettings(
           context,
-          readerSettings.copyWith(fontSize: newFontSize),
+          ReaderSettings(
+            themeIndex: readerSettings.themeIndex,
+            fontSize: newFontSize,
+            fontFamily: readerSettings.fontFamily,
+            lineHeight: readerSettings.lineHeight,
+            textAlignIndex: readerSettings.textAlignIndex,
+            backgroundColorValue: readerSettings.backgroundColorValue,
+            textColorValue: readerSettings.textColorValue,
+            fontWeightIndex: readerSettings.fontWeightIndex,
+            customJs: readerSettings.customJs,
+            customCss: readerSettings.customCss,
+            customBackgroundColorValue:
+                readerSettings.customBackgroundColorValue,
+            customTextColorValue: readerSettings.customTextColorValue,
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -383,36 +481,6 @@ class ColorPicker extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-extension CopyWithReaderSettings on ReaderSettings {
-  ReaderSettings copyWith({
-    String? theme,
-    double? fontSize,
-    String? fontFamily,
-    double? lineHeight,
-    TextAlign? textAlign,
-    Color? backgroundColor,
-    Color? textColor,
-    FontWeight? fontWeight,
-    CustomColors? customColors,
-    String? customJs,
-    String? customCss,
-  }) {
-    return ReaderSettings(
-      theme: this.theme,
-      fontSize: fontSize ?? this.fontSize,
-      fontFamily: fontFamily ?? this.fontFamily,
-      lineHeight: lineHeight ?? this.lineHeight,
-      textAlign: textAlign ?? this.textAlign,
-      backgroundColor: backgroundColor ?? this.backgroundColor,
-      textColor: textColor ?? this.textColor,
-      fontWeight: fontWeight ?? this.fontWeight,
-      customColors: customColors ?? this.customColors,
-      customJs: customJs ?? this.customJs,
-      customCss: customCss ?? this.customCss,
     );
   }
 }

@@ -89,7 +89,7 @@ class _CustomCssTabState extends State<CustomCssTab> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    final newSettings = ReaderSettings(
+                    final newSettings = readerSettings.copyWith(
                       theme: readerSettings.theme,
                       fontSize: readerSettings.fontSize,
                       fontFamily: readerSettings.fontFamily,
