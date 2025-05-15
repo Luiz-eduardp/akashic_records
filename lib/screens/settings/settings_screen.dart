@@ -132,8 +132,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Aparência'.translate, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
             Text(
               'Personalize o tema e a cor de destaque da aplicação.'.translate,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -390,8 +388,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Sobre'.translate, style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
             Text(
               'Informações sobre a aplicação e seus desenvolvedores.'.translate,
               style: theme.textTheme.bodyMedium?.copyWith(
