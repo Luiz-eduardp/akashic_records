@@ -24,30 +24,25 @@ class _TextTabState extends State<TextTab> {
     'Lato',
   ];
 
-  final TextEditingController _fontSizeController = TextEditingController();
+  double _fontSize = 16.0;
+  static const double _minFontSize = 12.0;
+  static const double _maxFontSize = 100.0;
 
   @override
   void initState() {
     super.initState();
-    _initializeFontSizeController();
+    _initializeFontSize();
   }
 
-  void _initializeFontSizeController() {
+  void _initializeFontSize() {
     final appState = Provider.of<AppState>(context, listen: false);
-    _fontSizeController.text =
-        appState.readerSettings.fontSize.round().toString();
+    _fontSize = appState.readerSettings.fontSize;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _initializeFontSizeController();
-  }
-
-  @override
-  void dispose() {
-    _fontSizeController.dispose();
-    super.dispose();
+    _initializeFontSize();
   }
 
   @override
@@ -64,25 +59,50 @@ class _TextTabState extends State<TextTab> {
             'Tamanho da Fonte:'.translate,
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          TextFormField(
-            controller: _fontSizeController,
-            keyboardType: TextInputType.number,
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            decoration: InputDecoration(
-              hintText: '12-100',
-              border: const OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.check),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove),
                 onPressed: () {
-                  _updateFontSize(context, readerSettings);
+                  setState(() {
+                    _fontSize = (_fontSize - 1).clamp(
+                      _minFontSize,
+                      _maxFontSize,
+                    );
+                    _updateFontSize(context, readerSettings, _fontSize);
+                  });
                 },
               ),
-            ),
-            onFieldSubmitted: (value) {
-              _updateFontSize(context, readerSettings);
-            },
+              Expanded(
+                child: Slider(
+                  value: _fontSize,
+                  min: _minFontSize,
+                  max: _maxFontSize,
+                  divisions: (_maxFontSize - _minFontSize).toInt(),
+                  label: _fontSize.round().toString(),
+                  onChanged: (value) {
+                    setState(() {
+                      _fontSize = value;
+                    });
+                  },
+                  onChangeEnd: (value) {
+                    _updateFontSize(context, readerSettings, value);
+                  },
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  setState(() {
+                    _fontSize = (_fontSize + 1).clamp(
+                      _minFontSize,
+                      _maxFontSize,
+                    );
+                    _updateFontSize(context, readerSettings, _fontSize);
+                  });
+                },
+              ),
+            ],
           ),
 
           const SizedBox(height: 16),
@@ -355,41 +375,28 @@ class _TextTabState extends State<TextTab> {
     ).setReaderSettings(newSettings);
   }
 
-  void _updateFontSize(BuildContext context, ReaderSettings readerSettings) {
-    final String value = _fontSizeController.text;
-    if (value.isNotEmpty) {
-      final double? newFontSize = double.tryParse(value);
-      if (newFontSize != null && newFontSize >= 12 && newFontSize <= 100) {
-        _updateReaderSettings(
-          context,
-          ReaderSettings(
-            themeIndex: readerSettings.themeIndex,
-            fontSize: newFontSize,
-            fontFamily: readerSettings.fontFamily,
-            lineHeight: readerSettings.lineHeight,
-            textAlignIndex: readerSettings.textAlignIndex,
-            backgroundColorValue: readerSettings.backgroundColorValue,
-            textColorValue: readerSettings.textColorValue,
-            fontWeightIndex: readerSettings.fontWeightIndex,
-            customJs: readerSettings.customJs,
-            customCss: readerSettings.customCss,
-            customBackgroundColorValue:
-                readerSettings.customBackgroundColorValue,
-            customTextColorValue: readerSettings.customTextColorValue,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Por favor, insira um valor entre 12 e 100.')),
-        );
-        _fontSizeController.text = readerSettings.fontSize.round().toString();
-      }
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Por favor, insira um valor.')));
-      _fontSizeController.text = readerSettings.fontSize.round().toString();
-    }
+  void _updateFontSize(
+    BuildContext context,
+    ReaderSettings readerSettings,
+    double newFontSize,
+  ) {
+    _updateReaderSettings(
+      context,
+      ReaderSettings(
+        themeIndex: readerSettings.themeIndex,
+        fontSize: newFontSize,
+        fontFamily: readerSettings.fontFamily,
+        lineHeight: readerSettings.lineHeight,
+        textAlignIndex: readerSettings.textAlignIndex,
+        backgroundColorValue: readerSettings.backgroundColorValue,
+        textColorValue: readerSettings.textColorValue,
+        fontWeightIndex: readerSettings.fontWeightIndex,
+        customJs: readerSettings.customJs,
+        customCss: readerSettings.customCss,
+        customBackgroundColorValue: readerSettings.customBackgroundColorValue,
+        customTextColorValue: readerSettings.customTextColorValue,
+      ),
+    );
   }
 }
 
