@@ -1387,4 +1387,5 @@ class ReaderSettingsAdapter extends TypeAdapter<ReaderSettings> {
       other is ReaderSettingsAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
+          
 }
