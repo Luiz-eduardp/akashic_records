@@ -23,7 +23,7 @@ import 'package:akashic_records/services/plugins/english/royalroad_service.dart'
 import 'package:akashic_records/services/plugins/english/webnovel_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
-import 'package:akashic_records/services/plugins/portuguese/mtl_service.dart';
+import 'package:akashic_records/services/multi/mtl_service.dart';
 import 'package:akashic_records/services/plugins/spanish/skynovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/novelmania_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/tsundoku_service.dart';
@@ -433,10 +433,10 @@ class AppState with ChangeNotifier {
       language: PluginLanguage.ptBr,
     );
 
-    _pluginServices['MtlNovelPt'] = MtlNovelPt();
-    _pluginInfo['MtlNovelPt'] = PluginInfo(
-      name: 'MtlNovelPt',
-      language: PluginLanguage.ptBr,
+    _pluginServices['MtlNovelMulti'] = MtlNovelMulti();
+    _pluginInfo['MtlNovelMulti'] = PluginInfo(
+      name: 'MtlNovelMulti',
+      language: PluginLanguage.en,
     );
 
     _pluginServices['LightNovelBrasil'] = LightNovelBrasil();
@@ -1387,5 +1387,4 @@ class ReaderSettingsAdapter extends TypeAdapter<ReaderSettings> {
       other is ReaderSettingsAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
-          
 }
