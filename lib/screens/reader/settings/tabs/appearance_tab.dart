@@ -1,5 +1,4 @@
 import 'package:akashic_records/i18n/i18n.dart';
-import 'package:akashic_records/state/app_state.dart' as app_state;
 import 'package:akashic_records/state/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -804,11 +803,22 @@ class _AppearanceTabState extends State<AppearanceTab> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          final newSettings = readerSettings.copyWith(
-            theme: app_state.ReaderTheme.values[theme.index],
-            backgroundColor: themeData.scaffoldBackgroundColor,
-            textColor: themeData.textTheme.bodyMedium!.color!,
+          final newSettings = ReaderSettings(
+            themeIndex: theme.index,
+            fontSize: readerSettings.fontSize,
+            fontFamily: readerSettings.fontFamily,
+            lineHeight: readerSettings.lineHeight,
+            textAlignIndex: readerSettings.textAlignIndex,
+            backgroundColorValue: themeData.scaffoldBackgroundColor.value,
+            textColorValue: themeData.textTheme.bodyMedium!.color!.value,
+            fontWeightIndex: readerSettings.fontWeightIndex,
+            customJs: readerSettings.customJs,
+            customCss: readerSettings.customCss,
+            customBackgroundColorValue:
+                readerSettings.customBackgroundColorValue,
+            customTextColorValue: readerSettings.customTextColorValue,
           );
+
           context.read<AppState>().setReaderSettings(newSettings);
         },
         child: Container(
