@@ -5,6 +5,7 @@ import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/services/local/local_service.dart';
+import 'package:akashic_records/services/multi/mtl_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
@@ -25,7 +26,7 @@ class PluginNovelsScreen extends StatefulWidget {
 class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   final List<Novel> _novels = [];
   bool _isLoading = false;
-  bool _isLoadingMore = false;
+  final bool _isLoadingMore = false;
   String? _errorMessage;
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _filteredNovels = [];
@@ -35,6 +36,15 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   final int _itemsPerPage = 10;
   bool _isInitialLoad = true;
   final Set<String> _loadedNovelKeys = {};
+  String _selectedLanguage = 'en';
+  final Map<String, String> _languageMap = {
+    'en': 'Inglês'.translate,
+    'es': 'Espanhol'.translate,
+    'id': 'Indonésio'.translate,
+    'fr': 'Francês'.translate,
+    'pt': 'Português'.translate,
+    'ru': 'Russo'.translate,
+  };
 
   @override
   void initState() {
@@ -45,6 +55,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         .listen(_searchNovels);
     _scrollController.addListener(_scrollListener);
     _loadViewMode();
+    _loadSelectedLanguage();
   }
 
   @override
@@ -62,7 +73,21 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     });
   }
 
+  Future<void> _loadSelectedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedLanguage = prefs.getString('selectedLanguage') ?? 'en';
+    });
+  }
+
+  Future<void> _saveSelectedLanguage(String language) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedLanguage', language);
+  }
+
   Future<void> _loadData({int? page}) async {
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
       _isInitialLoad = true;
@@ -81,6 +106,10 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       final plugin = appState.pluginServices[widget.pluginName];
 
       if (plugin != null) {
+        if (plugin is MtlNovelMulti) {
+          plugin.lang = _selectedLanguage;
+        }
+
         List<Novel> popularNovels = [];
 
         if (widget.pluginName == 'Dispositivo') {
@@ -92,24 +121,32 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
           );
         }
 
-        for (final novel in popularNovels) {
-          novel.pluginId = widget.pluginName;
-          if (!_loadedNovelKeys.contains(novel.id)) {
-            _novels.add(novel);
-            _loadedNovelKeys.add(novel.id);
+        if (!mounted) return;
+        setState(() {
+          for (final novel in popularNovels) {
+            novel.pluginId = widget.pluginName;
+            if (!_loadedNovelKeys.contains(novel.id)) {
+              _novels.add(novel);
+              _loadedNovelKeys.add(novel.id);
+            }
           }
-        }
-        _updateFilteredNovels();
+          _updateFilteredNovels();
+        });
       } else {
+        if (!mounted) return;
         setState(() {
           _errorMessage = 'Plugin não encontrado.'.translate;
         });
       }
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _errorMessage = 'Erro ao carregar novels: ${e.toString()}'.translate;
       });
     } finally {
+      if (!mounted) return;
+
       setState(() {
         _isLoading = false;
         _isInitialLoad = false;
@@ -118,6 +155,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   }
 
   Future<void> _searchNovels(String term) async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -141,6 +179,9 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         final plugin = appState.pluginServices[widget.pluginName];
 
         if (plugin != null) {
+          if (plugin is MtlNovelMulti) {
+            plugin.lang = _selectedLanguage;
+          }
           pluginResults = await plugin.searchNovels(term, 1);
           for (final novel in pluginResults) {
             novel.pluginId = widget.pluginName;
@@ -174,10 +215,13 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         _filteredNovels = combinedResults;
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _errorMessage = 'Erro ao pesquisar novels: ${e.toString()}'.translate;
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -213,20 +257,21 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   }
 
   void _goToNextPage() {
-    if (!(_isLoading || _errorMessage != null)) {
+    if (!(_isLoading || _isLoadingMore || _errorMessage != null)) {
       setState(() {
         _currentPage++;
-        _loadMoreData(page: _currentPage);
       });
+      _loadData(page: _currentPage);
     }
   }
 
   void _goToPreviousPage() {
-    if (!(_isLoading || _errorMessage != null) && _currentPage > 1) {
+    if (!(_isLoading || _isLoadingMore || _errorMessage != null) &&
+        _currentPage > 1) {
       setState(() {
         _currentPage--;
-        _loadMoreData(page: _currentPage);
       });
+      _loadData(page: _currentPage);
     }
   }
 
@@ -234,49 +279,6 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     setState(() {
       _filteredNovels = List.from(_novels);
     });
-  }
-
-  Future<void> _loadMoreData({int? page}) async {
-    setState(() {
-      _isLoadingMore = true;
-      _errorMessage = null;
-    });
-
-    int pageToLoad = page ?? _currentPage;
-
-    try {
-      final appState = Provider.of<AppState>(context, listen: false);
-      final plugin = appState.pluginServices[widget.pluginName];
-
-      if (plugin != null) {
-        List<Novel> newNovels = await plugin.popularNovels(
-          pageToLoad,
-          context: context,
-        );
-        setState(() {
-          for (final novel in newNovels) {
-            novel.pluginId = widget.pluginName;
-            if (!_loadedNovelKeys.contains(novel.id)) {
-              _novels.add(novel);
-              _loadedNovelKeys.add(novel.id);
-            }
-          }
-          _isLoadingMore = false;
-          _updateFilteredNovels();
-        });
-      } else {
-        setState(() {
-          _errorMessage = 'Plugin não encontrado.'.translate;
-          _isLoadingMore = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage =
-            'Erro ao carregar mais novels: ${e.toString()}'.translate;
-        _isLoadingMore = false;
-      });
-    }
   }
 
   Future<void> _deleteNovel(
@@ -326,6 +328,8 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     Provider.of<AppState>(context);
+    final appState = Provider.of<AppState>(context, listen: false);
+    final plugin = appState.pluginServices[widget.pluginName];
 
     int totalPages = (_filteredNovels.length / _itemsPerPage).ceil();
 
@@ -336,6 +340,34 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         backgroundColor: theme.colorScheme.surface,
         centerTitle: true,
         actions: [
+          if (plugin is MtlNovelMulti)
+            PopupMenuButton<String>(
+              onSelected: (String language) {
+                setState(() {
+                  _selectedLanguage = language;
+                  _saveSelectedLanguage(language);
+                  _loadData();
+                });
+              },
+              itemBuilder: (BuildContext context) {
+                return _languageMap.entries.map((entry) {
+                  return PopupMenuItem<String>(
+                    value: entry.key,
+                    child: Row(children: [Text(entry.value)]),
+                  );
+                }).toList();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    _languageMap[_selectedLanguage] ?? "Desconhecido".translate,
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                  ),
+                ),
+              ),
+            ),
           if (widget.pluginName == 'Dispositivo')
             IconButton(
               icon: const Icon(Icons.file_upload),
@@ -471,7 +503,6 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   }
 
   Widget _buildPaginationButtons(int totalPages) {
-    (_filteredNovels.length / _itemsPerPage).ceil();
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -488,16 +519,23 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.arrow_forward),
-            onPressed:
-                (_isLoading || _errorMessage != null) ||
-                        ((_novels.length) < _itemsPerPage)
-                    ? null
-                    : _goToNextPage,
+            onPressed: !_canLoadNextPage() ? null : _goToNextPage,
             disabledColor: Colors.grey,
           ),
         ],
       ),
     );
+  }
+
+  bool _canLoadNextPage() {
+    if (_isLoading || _isLoadingMore || _errorMessage != null) {
+      return false;
+    }
+
+    if (_filteredNovels.length <= _novels.length) {
+      return true;
+    }
+    return false;
   }
 
   Future<void> _importNovelsFromDevice() async {
