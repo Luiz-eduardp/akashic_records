@@ -31,11 +31,9 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
     }
 
     final listName = _newListController.text.trim();
-    if (mounted) {
-      setState(() {
-        _newListErrorText = null;
-      });
-    }
+    setState(() {
+      _newListErrorText = null;
+    });
 
     try {
       await appState.addFavoriteList(listName);
@@ -54,33 +52,33 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
       }
 
       _newListController.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Lista'.translate +
-                  ' ' +
-                  listName +
-                  ' ' +
-                  'criada e novel adicionada'.translate,
-            ),
-            duration: const Duration(seconds: 2),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Lista'.translate +
+                ' ' +
+                listName +
+                ' ' +
+                'criada e novel adicionada'.translate,
+            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
           ),
-        );
-      }
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.all(10),
+        ),
+      );
     } on Exception catch (e) {
-      if (mounted) {
-        setState(() {
-          _newListErrorText = e.toString();
-        });
-      }
+      setState(() {
+        _newListErrorText = e.toString();
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _newListErrorText =
-              'Erro desconhecido ao criar lista:'.translate + e.toString();
-        });
-      }
+      setState(() {
+        _newListErrorText =
+            'Erro desconhecido ao criar lista:'.translate + e.toString();
+      });
     }
   }
 
@@ -97,65 +95,107 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
       }
     } catch (e) {
       debugPrint("Error toggling novel in list ${list.name}: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao atualizar lista'.translate + list.name),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao atualizar lista'.translate + list.name),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final appState = context.watch<AppState>();
 
     final currentListIds = appState.getListsContainingNovel(widget.novel);
 
     return AlertDialog(
-      title: Text("Adicionar/Remover das Listas".translate),
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(
+        "Adicionar/Remover das Listas".translate,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
+        ),
+      ),
       content: SingleChildScrollView(
         child: ListBody(
           children: <Widget>[
             if (appState.favoriteLists.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text("Nenhuma lista criada ainda.".translate),
+                child: Text(
+                  "Nenhuma lista criada ainda.".translate,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               )
             else
               ...appState.favoriteLists.map((list) {
                 final bool isChecked = currentListIds.contains(list.id);
-                return CheckboxListTile(
-                  title: Text(list.name),
-                  value: isChecked,
-                  onChanged: (bool? value) {
-                    if (value != null) {
-                      _toggleNovelInList(appState, list, value);
-                    }
-                  },
-                  controlAffinity: ListTileControlAffinity.leading,
-                  activeColor: theme.colorScheme.primary,
-                  dense: true,
+                return Card(
+                  color: colorScheme.surfaceVariant,
+                  elevation: 1.5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: CheckboxListTile(
+                    title: Text(
+                      list.name,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    value: isChecked,
+                    onChanged: (bool? value) {
+                      if (value != null) {
+                        _toggleNovelInList(appState, list, value);
+                      }
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: colorScheme.primary,
+                    dense: true,
+                  ),
                 );
               }),
-
             const Divider(height: 24.0),
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Text(
                 "Criar nova lista e adicionar novel".translate,
-                style: theme.textTheme.titleMedium,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
             Form(
               key: _formKey,
               child: TextFormField(
                 controller: _newListController,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
-                  hintText: "Nome da nova lista".translate,
+                  labelText: "Nome da nova lista".translate,
+                  labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceVariant,
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -178,8 +218,8 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
                 child: Text(
                   _newListErrorText!,
                   style: TextStyle(
-                    color: theme.colorScheme.error,
-                    fontSize: 12,
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -188,13 +228,26 @@ class _FavoriteListDialogState extends State<FavoriteListDialog> {
               icon: const Icon(Icons.add_circle_outline),
               label: Text("Criar e Adicionar".translate),
               onPressed: () => _addNewListAndAssignNovel(appState),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                textStyle: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
             ),
           ],
         ),
       ),
       actions: <Widget>[
         TextButton(
-          child: Text("Fechar".translate),
+          child: Text(
+            "Fechar".translate,
+            style: TextStyle(color: colorScheme.onSurface),
+          ),
           onPressed: () {
             Navigator.of(context).pop();
           },
