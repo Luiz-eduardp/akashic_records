@@ -31,6 +31,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -39,8 +40,8 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -51,17 +52,22 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
               Text(
                 'Configurações de Leitura'.translate,
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 20),
               TabBar(
                 controller: _tabController,
-                indicatorColor: theme.colorScheme.primary,
-                labelColor: theme.colorScheme.onSurface,
-                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                indicatorColor: colorScheme.primary,
+                labelColor: colorScheme.onSurface,
+                unselectedLabelColor: colorScheme.onSurfaceVariant,
                 isScrollable: true,
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+
                 tabs: [
                   Tab(
                     text: 'Aparência'.translate,
@@ -97,14 +103,18 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
-                      vertical: 12,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   child: Text('Salvar'.translate),
