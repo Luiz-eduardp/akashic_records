@@ -21,16 +21,18 @@ class HistoryCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(lastRead);
 
     return Card(
-      elevation: 1,
+      elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: colorScheme.surfaceVariant,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           child: Column(
@@ -38,9 +40,9 @@ class HistoryCardWidget extends StatelessWidget {
             children: [
               Text(
                 novelTitle,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -49,7 +51,8 @@ class HistoryCardWidget extends StatelessWidget {
               Text(
                 chapterTitle,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -59,14 +62,14 @@ class HistoryCardWidget extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.history,
-                    size: 18,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 20,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     formattedDate,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const Spacer(),
@@ -76,15 +79,16 @@ class HistoryCardWidget extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(20),
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(25),
                     ),
                     child: Text(
                       pluginId.isNotEmpty
                           ? pluginId
                           : 'Plugin desativado'.translate,
                       style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer,
+                        color: colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

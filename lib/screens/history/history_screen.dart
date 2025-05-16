@@ -176,38 +176,44 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _refreshHistory,
-        backgroundColor: theme.colorScheme.surfaceContainer,
-        color: theme.colorScheme.primary,
-        child: _buildBody(theme),
+        backgroundColor: colorScheme.surfaceContainer,
+        color: colorScheme.primary,
+        child: _buildBody(theme, colorScheme),
       ),
-      floatingActionButton: _buildFilterButton(theme),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showFilterDialog(context, theme, colorScheme),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        tooltip: 'Filtrar'.translate,
+        child: const Icon(Icons.filter_list),
+      ),
     );
   }
 
-  Widget _buildFilterButton(ThemeData theme) {
-    return FloatingActionButton(
-      onPressed: () => _showFilterDialog(context, theme),
-      backgroundColor: theme.colorScheme.primary,
-      foregroundColor: theme.colorScheme.onPrimary,
-      tooltip: 'Filtrar'.translate,
-      child: const Icon(Icons.filter_list),
-    );
-  }
-
-  void _showFilterDialog(BuildContext context, ThemeData theme) {
+  void _showFilterDialog(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: theme.colorScheme.surfaceContainer,
-          surfaceTintColor: theme.colorScheme.surfaceTint,
+          backgroundColor: colorScheme.surfaceContainer,
+          surfaceTintColor: colorScheme.surfaceTint,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text(
             'Filtrar por Novel'.translate,
             style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
             ),
           ),
           content: SingleChildScrollView(
@@ -217,7 +223,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     return RadioListTile<String?>(
                       title: Text(
                         novel,
-                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        style: TextStyle(color: colorScheme.onSurface),
                       ),
                       value:
                           novel == 'Todas as Novels'.translate ? null : novel,
@@ -226,7 +232,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         _updateSelectedNovel(value);
                         Navigator.of(context).pop();
                       },
-                      activeColor: theme.colorScheme.primary,
+                      activeColor: colorScheme.primary,
                     );
                   }).toList(),
             ),
@@ -234,12 +240,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
           actions: <Widget>[
             TextButton(
               style: TextButton.styleFrom(
-                foregroundColor: theme.colorScheme.onSurface,
+                foregroundColor: colorScheme.onSurface,
               ),
-              child: Text(
-                'Fechar'.translate,
-                style: TextStyle(color: theme.colorScheme.onSurface),
-              ),
+              child: Text('Fechar'.translate),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
@@ -248,23 +251,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
+  Widget _buildBody(ThemeData theme, ColorScheme colorScheme) {
     if (_isLoading) {
       return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
-          backgroundColor: theme.colorScheme.surfaceVariant,
+          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+          backgroundColor: colorScheme.surfaceVariant,
         ),
       );
     }
 
     if (_history.isEmpty) {
-      return _buildEmptyHistoryView(theme);
+      return _buildEmptyHistoryView(theme, colorScheme);
     }
 
     return Column(
       children: [
-        _buildMetricsWidget(theme),
+        _buildMetricsWidget(theme, colorScheme),
         Expanded(
           child: ListView.separated(
             padding: const EdgeInsets.all(8),
@@ -294,7 +297,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildEmptyHistoryView(ThemeData theme) {
+  Widget _buildEmptyHistoryView(ThemeData theme, ColorScheme colorScheme) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         return SingleChildScrollView(
@@ -308,13 +311,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Icon(
                     Icons.history,
                     size: 60,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Seu histórico está vazio.'.translate,
                     style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
@@ -323,7 +326,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Text(
                     'Comece a ler para ver seus livros aqui.'.translate,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -336,18 +339,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildMetricsWidget(ThemeData theme) {
+  String _getMostReadNovel() {
+    if (_history.isEmpty) return 'Nenhuma'.translate;
+
+    final novelCounts = <String, int>{};
+    for (var item in _history) {
+      final novelTitle = item['novelTitle'] as String;
+      novelCounts[novelTitle] = (novelCounts[novelTitle] ?? 0) + 1;
+    }
+
+    return novelCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+  }
+
+  Widget _buildMetricsWidget(ThemeData theme, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Card(
-        color: theme.colorScheme.surfaceContainerHigh,
-        elevation: 1,
+        color: colorScheme.surfaceContainerHigh,
+        elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: ExpansionTile(
           title: Text(
             'Estatísticas'.translate,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
+              color: colorScheme.onSurface,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -356,12 +371,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           children: <Widget>[
             _buildStatItem(
               theme,
+              colorScheme,
               Icons.book_outlined,
               _history.length.toString(),
               'Capítulos Lidos'.translate,
             ),
             _buildStatItem(
               theme,
+              colorScheme,
               Icons.favorite_border,
               _getMostReadNovel(),
               'Novel Mais Lida'.translate,
@@ -372,26 +389,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  String _getMostReadNovel() {
-    final novelChapterCounts = <String, int>{};
-    for (final item in _history) {
-      final novelTitle = item['novelTitle'] as String;
-      novelChapterCounts.update(
-        novelTitle,
-        (value) => value + 1,
-        ifAbsent: () => 1,
-      );
-    }
-
-    return novelChapterCounts.entries.isNotEmpty
-        ? novelChapterCounts.entries
-            .reduce((a, b) => a.value > b.value ? a : b)
-            .key
-        : 'Nenhuma'.translate;
-  }
-
   Widget _buildStatItem(
     ThemeData theme,
+    ColorScheme colorScheme,
     IconData icon,
     String value,
     String label,
@@ -400,7 +400,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, size: 24, color: theme.colorScheme.primary),
+          Icon(icon, size: 24, color: colorScheme.primary),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -409,7 +409,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Text(
                   value,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.start,
@@ -417,7 +417,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Text(
                   label,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.start,
                   overflow: TextOverflow.ellipsis,
