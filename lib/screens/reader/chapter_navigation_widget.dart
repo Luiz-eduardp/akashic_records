@@ -44,8 +44,6 @@ class ChapterNavigation extends StatelessWidget {
     return Material(
       color: navigationColor,
       elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
