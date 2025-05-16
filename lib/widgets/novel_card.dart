@@ -20,15 +20,17 @@ class NovelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        elevation: 2,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Card(
+      elevation: 3,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: colorScheme.surfaceVariant,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -54,8 +56,8 @@ class NovelCard extends StatelessWidget {
                   Text(
                     novel.title,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -65,7 +67,8 @@ class NovelCard extends StatelessWidget {
                     Text(
                       novel.author,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -74,8 +77,9 @@ class NovelCard extends StatelessWidget {
                   Text(
                     novel.pluginId,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
-                      fontSize: 10,
+                      color: colorScheme.outline,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -92,8 +96,9 @@ class NovelCard extends StatelessWidget {
     String coverImageUrl,
     BoxConstraints constraints,
   ) {
-    Theme.of(context);
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    ThemeData theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     if (coverImageUrl.startsWith('data:image')) {
       final imageData = coverImageUrl.split(',').last;
@@ -104,7 +109,7 @@ class NovelCard extends StatelessWidget {
         width: constraints.maxWidth,
         height: constraints.maxHeight,
         errorBuilder: (context, error, stackTrace) {
-          return _buildErrorImage(context, constraints);
+          return _buildErrorImage(context, constraints, colorScheme);
         },
       );
     } else {
@@ -118,9 +123,10 @@ class NovelCard extends StatelessWidget {
         height: constraints.maxHeight,
         placeholder:
             (context, url) => Shimmer.fromColors(
-              baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+              baseColor:
+                  isDarkMode ? Colors.grey[700]! : colorScheme.surfaceVariant,
               highlightColor:
-                  isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
+                  isDarkMode ? Colors.grey[600]! : colorScheme.onInverseSurface,
               child: Container(
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
@@ -128,17 +134,28 @@ class NovelCard extends StatelessWidget {
               ),
             ),
         errorWidget:
-            (context, url, error) => _buildErrorImage(context, constraints),
+            (context, url, error) =>
+                _buildErrorImage(context, constraints, colorScheme),
       );
     }
   }
 
-  Widget _buildErrorImage(BuildContext context, BoxConstraints constraints) {
-    return Image.network(
-      'https://placehold.co/400x600.png?text=Cover%20Not%20Found',
-      fit: BoxFit.cover,
+  Widget _buildErrorImage(
+    BuildContext context,
+    BoxConstraints constraints,
+    ColorScheme colorScheme,
+  ) {
+    return Container(
       width: constraints.maxWidth,
       height: constraints.maxHeight,
+      color: colorScheme.surfaceVariant,
+      child: Center(
+        child: Icon(
+          Icons.broken_image,
+          size: 48,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }
