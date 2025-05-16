@@ -32,11 +32,18 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
         String? dialogErrorText;
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final theme = Theme.of(context);
             return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: Text(
                 _editingListId == null
                     ? "Criar Nova Lista".translate
                     : "Renomear Lista".translate,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               content: Form(
                 key: _formKey,
@@ -45,6 +52,9 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
                   decoration: InputDecoration(
                     labelText: "Nome da Lista".translate,
                     errorText: dialogErrorText,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                   autofocus: true,
                   validator: (value) {
@@ -70,7 +80,10 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text("Cancelar".translate),
+                  child: Text(
+                    "Cancelar".translate,
+                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -96,10 +109,18 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
                       setDialogState(() {});
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                   child: Text(
                     _editingListId == null
                         ? "Criar".translate
                         : "Salvar".translate,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -117,39 +138,58 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
   void _confirmDeleteList(FavoriteList list) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text("Confirmar Exclusão".translate),
-            content: Text(
-              "Tem certeza que deseja excluir a lista '${list.name}'? As novels nesta lista não serão removidas dos favoritos gerais (se estiverem em outras listas)."
-                  .translate,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text("Cancelar".translate),
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            "Confirmar Exclusão".translate,
+            style: theme.textTheme.titleLarge,
+          ),
+          content: Text(
+            "Tem certeza que deseja excluir a lista '${list.name}'? As novels nesta lista não serão removidas dos favoritos gerais (se estiverem em outras listas)."
+                .translate,
+            style: theme.textTheme.bodyMedium,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                "Cancelar".translate,
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
-              TextButton(
-                onPressed: () {
-                  Provider.of<AppState>(
-                    context,
-                    listen: false,
-                  ).removeFavoriteList(list.id);
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Lista '${list.name}' excluída.".translate),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                child: Text(
-                  "Excluir".translate,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Provider.of<AppState>(
+                  context,
+                  listen: false,
+                ).removeFavoriteList(list.id);
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Lista '${list.name}' excluída.".translate),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.errorContainer,
+                foregroundColor: theme.colorScheme.onErrorContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
-            ],
-          ),
+              child: Text(
+                "Excluir".translate,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -159,7 +199,15 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Gerenciar Listas de Favoritos".translate)),
+      appBar: AppBar(
+        title: Text(
+          "Gerenciar Listas de Favoritos".translate,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      ),
       body:
           appState.favoriteLists.isEmpty
               ? Center(
@@ -169,41 +217,55 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
                     "Nenhuma lista criada. Toque no botão '+' para adicionar sua primeira lista."
                         .translate,
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 20,
                     ),
                   ),
                 ),
               )
               : ListView.builder(
                 itemCount: appState.favoriteLists.length,
+                padding: const EdgeInsets.all(8),
                 itemBuilder: (context, index) {
                   final list = appState.favoriteLists[index];
-                  return ListTile(
-                    title: Text(list.name),
-                    subtitle: Text(
-                      "${list.novelIds.length} ${list.novelIds.length == 1 ? 'novel'.translate : (list.novelIds.isEmpty ? 'nenhuma novel'.translate : 'novels'.translate)}",
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.edit,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          tooltip: "Renomear Lista".translate,
-                          onPressed: () => _showAddEditDialog(list: list),
+
+                    child: ListTile(
+                      title: Text(
+                        list.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
                         ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: theme.colorScheme.error,
+                      ),
+                      subtitle: Text(
+                        "${list.novelIds.length} ${list.novelIds.length == 1 ? 'novel'.translate : (list.novelIds.isEmpty ? 'nenhuma novel'.translate : 'novels'.translate)}",
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.edit,
+                              color: theme.colorScheme.secondary,
+                            ),
+                            tooltip: "Renomear Lista".translate,
+                            onPressed: () => _showAddEditDialog(list: list),
                           ),
-                          tooltip: "Excluir Lista".translate,
-                          onPressed: () => _confirmDeleteList(list),
-                        ),
-                      ],
+                          IconButton(
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: theme.colorScheme.error,
+                            ),
+                            tooltip: "Excluir Lista".translate,
+                            onPressed: () => _confirmDeleteList(list),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -211,6 +273,8 @@ class _ManageListsScreenState extends State<ManageListsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditDialog(),
         tooltip: "Criar Nova Lista".translate,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         child: const Icon(Icons.add),
       ),
     );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
@@ -11,7 +12,6 @@ import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/favorite_list.dart';
 import 'package:akashic_records/widgets/favorite_list_dialog.dart';
 import 'package:akashic_records/screens/favorites/manage_lists_screen.dart';
-import 'dart:async';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -20,13 +20,17 @@ class FavoritesScreen extends StatefulWidget {
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends State<FavoritesScreen> {
+class _FavoritesScreenState extends State<FavoritesScreen>
+    with AutomaticKeepAliveClientMixin {
   Map<String, Novel> _favoriteNovelsMap = {};
   bool _isInitialLoading = true;
   bool _isRefreshingDetails = false;
   String? _errorMessage;
   bool _mounted = false;
   Timer? _debounce;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -258,7 +262,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     Provider.of<AppState>(context);
 
     final List<Novel> novelsForGrid =
@@ -270,7 +277,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Listas".translate),
+            Text(
+              "Listas".translate,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (_isRefreshingDetails)
               Padding(
                 padding: const EdgeInsets.only(left: 10.0),
@@ -279,12 +291,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.0,
-                    color: theme.colorScheme.onPrimary,
+                    color: colorScheme.primary,
                   ),
                 ),
               ),
           ],
         ),
+        backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.list_alt),
@@ -302,11 +316,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 }
               });
             },
+            style: IconButton.styleFrom(
+              foregroundColor: theme.colorScheme.onSurface,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: "Atualizar Detalhes dos Favoritos".translate,
             onPressed: _isRefreshingDetails ? null : _handleRefresh,
+            style: IconButton.styleFrom(
+              foregroundColor: theme.colorScheme.onSurface,
+            ),
           ),
         ],
       ),
@@ -374,9 +394,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                             child: Text(
                               'Nenhuma novel adicionada a uma lista de favoritos ainda.'
                                   .translate,
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: theme.textTheme.bodyLarge?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 20,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -399,6 +420,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                 }
                               });
                             },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                                horizontal: 24,
+                              ),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
                           ),
                         ],
                       ),
