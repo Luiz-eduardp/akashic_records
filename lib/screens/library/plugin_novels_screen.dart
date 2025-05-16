@@ -170,8 +170,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
             _novels
                 .where(
                   (novel) =>
-                      novel.title.toLowerCase().contains(term.toLowerCase()) ==
-                      true,
+                      novel.title.toLowerCase().contains(term.toLowerCase()),
                 )
                 .toList();
 
@@ -357,8 +356,17 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                   );
                 }).toList();
               },
+              style: ButtonStyle(
+                iconSize: const MaterialStatePropertyAll(30),
+                backgroundColor: MaterialStatePropertyAll(
+                  theme.colorScheme.secondaryContainer,
+                ),
+                foregroundColor: MaterialStatePropertyAll(
+                  theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Align(
                   alignment: Alignment.center,
                   child: Text(
@@ -375,8 +383,19 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
               onPressed: () {
                 _importNovelsFromDevice();
               },
+              style: ButtonStyle(
+                iconSize: const MaterialStatePropertyAll(30),
+                backgroundColor: MaterialStatePropertyAll(
+                  theme.colorScheme.secondaryContainer,
+                ),
+                foregroundColor: MaterialStatePropertyAll(
+                  theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
             ),
         ],
+        surfaceTintColor: theme.colorScheme.surfaceVariant,
+        titleTextStyle: const TextStyle(fontWeight: FontWeight.bold),
       ),
       body: SafeArea(
         child: Stack(
@@ -407,7 +426,12 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
               Positioned.fill(
                 child: Container(
                   color: theme.colorScheme.background.withOpacity(0.5),
-                  child: const Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.tertiary,
+                      strokeWidth: 6,
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -419,7 +443,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   Widget _buildInitialLoadingOverlay(ThemeData theme) {
     return Positioned.fill(
       child: Container(
-        color: theme.colorScheme.background.withOpacity(0.8),
+        color: theme.colorScheme.surface.withOpacity(0.8),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -427,7 +451,10 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
               Text(
                 'O primeiro carregamento pode demorar um pouco devido à quantidade de informações'
                     .translate,
-                style: const TextStyle(fontSize: 16, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: theme.colorScheme.onSurface,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -444,7 +471,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
             itemCount: 5,
             itemBuilder: (context, index) => const NovelTileSkeletonWidget(),
           )
-          : NovelGridSkeletonWidget(itemCount: 4);
+          : const NovelGridSkeletonWidget(itemCount: 4);
     } else {
       if (_filteredNovels.isEmpty && !_isLoading && _errorMessage == null) {
         return Center(
@@ -470,7 +497,13 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text("Deletar Novel?".translate),
+                  title: Text(
+                    "Deletar Novel?".translate,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   content: Text(
                     'Você tem certeza que deseja deletar'.translate +
                         ' ' +
@@ -480,17 +513,29 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                   ),
                   actions: <Widget>[
                     TextButton(
-                      child: Text("Cancelar".translate),
+                      child: Text(
+                        "Cancelar".translate,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
                     ),
-                    TextButton(
-                      child: Text("Deletar".translate),
+                    ElevatedButton(
                       onPressed: () {
                         _deleteNovel(novel, context: context);
                         Navigator.of(context).pop();
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Theme.of(context).colorScheme.errorContainer,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onErrorContainer,
+                      ),
+                      child: Text(
+                        "Deletar".translate,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ),
                   ],
                 );
@@ -503,6 +548,8 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   }
 
   Widget _buildPaginationButtons(int totalPages) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -512,15 +559,24 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
             icon: const Icon(Icons.arrow_back),
             onPressed: _currentPage > 1 ? _goToPreviousPage : null,
             disabledColor: Colors.grey,
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.secondaryContainer,
+              foregroundColor: theme.colorScheme.onSecondaryContainer,
+            ),
           ),
           Text(
             'P'
             '$_currentPage',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
           ),
           IconButton(
             icon: const Icon(Icons.arrow_forward),
             onPressed: !_canLoadNextPage() ? null : _goToNextPage,
             disabledColor: Colors.grey,
+            style: IconButton.styleFrom(
+              backgroundColor: theme.colorScheme.secondaryContainer,
+              foregroundColor: theme.colorScheme.onSecondaryContainer,
+            ),
           ),
         ],
       ),

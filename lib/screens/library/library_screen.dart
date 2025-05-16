@@ -132,7 +132,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Pesquisando...'.translate,
+              'Pesquisando'.translate,
               style: theme.textTheme.bodyMedium!.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -201,18 +201,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.library_add,
-              size: 80,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            Icon(Icons.library_add, size: 80, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
             Text(
               'Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.'
                   .translate,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge!.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: theme.textTheme.headlineSmall!.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 24),
@@ -229,8 +226,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 child: Text('Gerenciar plugins'.translate),
               ),
               style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                elevation: 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
                 padding: EdgeInsets.zero,
-                textStyle: const TextStyle(fontSize: 16),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

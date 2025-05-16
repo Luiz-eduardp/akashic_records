@@ -52,10 +52,10 @@ class _PluginCardState extends State<PluginCard>
     Provider.of<AppState>(context, listen: false);
     bool isDispositivo = widget.pluginName == 'Dispositivo';
     return Card(
-      elevation: 2.0,
+      elevation: 3.0,
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -72,15 +72,15 @@ class _PluginCardState extends State<PluginCard>
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(12.0),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12.0),
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(16.0),
                 ),
                 child: Icon(
                   Icons.extension,
-                  size: 32.0,
-                  color: theme.colorScheme.primary,
+                  size: 36.0,
+                  color: theme.colorScheme.secondary,
                 ),
               ),
               const SizedBox(width: 16.0),
@@ -90,15 +90,19 @@ class _PluginCardState extends State<PluginCard>
                   children: [
                     Row(
                       children: [
-                        Text(
-                          isDispositivo
-                              ? widget.pluginName.translate
-                              : widget.pluginName,
-                          style: theme.textTheme.titleLarge!.copyWith(
-                            color: theme.colorScheme.onSurface,
+                        Expanded(
+                          child: Text(
+                            isDispositivo
+                                ? widget.pluginName.translate
+                                : widget.pluginName,
+                            style: theme.textTheme.titleLarge!.copyWith(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 3.0),
+                        const SizedBox(width: 8.0),
                         Text(
                           _pluginLang,
                           style: theme.textTheme.bodyMedium!.copyWith(
