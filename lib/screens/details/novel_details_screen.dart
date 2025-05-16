@@ -220,13 +220,15 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen>
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(widget.novel.pluginId),
-        backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
+        backgroundColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
+          0.7,
+        ),
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
-        titleTextStyle: theme.appBarTheme.titleTextStyle?.copyWith(
+        titleTextStyle: theme.textTheme.titleLarge?.copyWith(
           color: theme.colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
         ),
         actions: [
           IconButton(
@@ -235,12 +237,15 @@ class _NovelDetailsScreenState extends State<NovelDetailsScreen>
               color:
                   isCurrentlyFavorite
                       ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                      : theme.colorScheme.onSurfaceVariant,
             ),
             onPressed: () {
               showFavoriteListDialog(context, _detailedNovel ?? widget.novel);
             },
             tooltip: 'Gerenciar listas de favoritos'.translate,
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(Colors.transparent),
+            ),
           ),
         ],
       ),
