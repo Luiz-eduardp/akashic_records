@@ -1,24 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:akashic_records/screens/reader/settings/reader_settings_modal_widget.dart';
-import 'package:akashic_records/widgets/skeleton/chapterdisplay_skeleton.dart';
-import 'package:flutter/material.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:akashic_records/screens/reader/chapter_display_widget.dart';
+import 'package:akashic_records/screens/reader/chapter_list_widget.dart';
 import 'package:akashic_records/screens/reader/chapter_navigation_widget.dart';
 import 'package:akashic_records/screens/reader/reader_app_bar_widget.dart';
-import 'package:provider/provider.dart';
+import 'package:akashic_records/screens/reader/settings/reader_settings_modal_widget.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'package:akashic_records/helpers/novel_loading_helper.dart';
 import 'package:akashic_records/widgets/error_message_widget.dart';
-import 'package:akashic_records/i18n/i18n.dart';
-import 'package:akashic_records/screens/reader/chapter_list_widget.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:html/parser.dart' show parse;
-import 'package:html/dom.dart' show Document;
+import 'package:akashic_records/widgets/skeleton/chapterdisplay_skeleton.dart';
+import 'package:akashic_records/helpers/novel_loading_helper.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:html/dom.dart' show Document;
+import 'package:html/parser.dart' show parse;
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String pluginId;
@@ -349,7 +349,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final historyString = await SharedPreferences.getInstance().then(
       (prefs) => prefs.getString(historyKey) ?? '[]',
     );
-    List<dynamic> history = List<dynamic>.from(jsonDecode(historyString));
+    List<dynamic> history = List.from(jsonDecode(historyString));
 
     final newItem = {
       'novelId': widget.novelId,
@@ -396,7 +396,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    Theme.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: appState.readerSettings.backgroundColor,
@@ -415,6 +416,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
               wordCount: _wordCount,
               scrollPercentage: percentage,
               scrollController: ScrollController(),
+              appBarColor: colorScheme.surfaceContainerHighest.withOpacity(0.7),
             );
           },
         ),
@@ -422,9 +424,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
       endDrawer:
           novel != null
               ? Drawer(
+                backgroundColor: colorScheme.surfaceVariant,
                 child: ChapterListWidget(
                   chapters: novel!.chapters,
                   onChapterTap: _onChapterTap,
+                  novelId: widget.novelId,
+                  onMarkAsRead: _onMarkAsRead,
                 ),
               )
               : null,
@@ -464,6 +469,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         lastReadChapterId: _lastReadChapterId,
                         readChapterIds: const {},
                         onMarkAsRead: _onMarkAsRead,
+                        navigationColor: colorScheme.surfaceContainer,
                       ),
                     ],
                   );

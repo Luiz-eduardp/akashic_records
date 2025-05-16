@@ -23,6 +23,7 @@ class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.wordCount,
     required this.scrollPercentage,
     required this.scrollController,
+    required Color appBarColor,
   });
 
   @override

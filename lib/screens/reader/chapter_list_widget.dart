@@ -1,15 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/models/model.dart';
+import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
 
 class ChapterListWidget extends StatefulWidget {
   final List<Chapter> chapters;
   final Function(String) onChapterTap;
+  final String novelId;
+  final void Function(String chapterId) onMarkAsRead;
 
   const ChapterListWidget({
     super.key,
     required this.chapters,
     required this.onChapterTap,
+    required this.novelId,
+    required this.onMarkAsRead,
   });
 
   @override
@@ -18,26 +23,24 @@ class ChapterListWidget extends StatefulWidget {
 
 class _ChapterListWidgetState extends State<ChapterListWidget> {
   List<Chapter> _chapters = [];
-  List<Chapter> _displayedChapters = [];
+  final BehaviorSubject<List<Chapter>> _displayedChapters =
+      BehaviorSubject<List<Chapter>>.seeded([]);
   bool _isAscending = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-
   final ScrollController _scrollController = ScrollController();
-  int _firstItemIndex = 0;
-  final int _pageSize = 20;
+  final int _pageSize = 30;
   bool _isLoadingMore = false;
-  bool _mounted = false;
+  bool _allChaptersLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _mounted = true;
     _chapters = List.from(widget.chapters);
     _sortChapters();
     _loadInitialChapters();
-
     _scrollController.addListener(_onScroll);
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
@@ -46,85 +49,94 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     if (widget.chapters != oldWidget.chapters) {
       _chapters = List.from(widget.chapters);
       _sortChapters();
-      _searchChapters();
+      _filterChapters();
       _resetPagination();
     }
   }
 
   @override
   void dispose() {
-    _mounted = false;
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _displayedChapters.close();
     _searchFocusNode.dispose();
     super.dispose();
   }
 
+  void _onSearchChanged() {
+    _sortChapters();
+  }
+
+  void _filterChapters() {
+    final query = _searchController.text.toLowerCase();
+    final filteredChapters =
+        _chapters.where((chapter) {
+          return chapter.title.toLowerCase().contains(query) ||
+              (chapter.chapterNumber?.toString().contains(query) ?? false);
+        }).toList();
+    _displayedChapters.add(filteredChapters);
+  }
+
   void _resetPagination() {
-    _firstItemIndex = 0;
-    _displayedChapters.clear();
+    _displayedChapters.add([]);
     _loadInitialChapters();
   }
 
   void _loadInitialChapters() {
-    if (!_mounted) return;
+    _allChaptersLoaded = false;
+    _displayedChapters.add(_getChaptersForPage(0));
+  }
 
-    _displayedChapters = _chapters.sublist(
-      0,
-      _pageSize.clamp(0, _chapters.length),
-    );
-    if (_mounted) {
-      setState(() {});
-    }
+  List<Chapter> _getChaptersForPage(int startIndex) {
+    final endIndex = (startIndex + _pageSize).clamp(0, _chapters.length);
+    return _chapters.sublist(startIndex, endIndex);
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent * 0.9 &&
-        !_isLoadingMore) {
+        !_isLoadingMore &&
+        !_allChaptersLoaded) {
       _loadMoreChapters();
     }
   }
 
   Future<void> _loadMoreChapters() async {
-    if (_isLoadingMore || !_mounted) return;
+    if (_isLoadingMore || _allChaptersLoaded) return;
+
     setState(() {
       _isLoadingMore = true;
     });
 
     await Future.delayed(const Duration(milliseconds: 200));
 
-    _firstItemIndex += _pageSize;
-    final int endIndex = (_firstItemIndex + _pageSize).clamp(
-      0,
-      _chapters.length,
-    );
-
-    if (_firstItemIndex < _chapters.length) {
-      if (_mounted) {
-        setState(() {
-          _displayedChapters.addAll(
-            _chapters.sublist(_firstItemIndex, endIndex),
-          );
-          _isLoadingMore = false;
-        });
-      }
+    final startIndex = _displayedChapters.value.length;
+    final newChapters = _getChaptersForPage(startIndex);
+    if (newChapters.isEmpty) {
+      _allChaptersLoaded = true;
     } else {
-      if (_mounted) {
-        setState(() {
-          _isLoadingMore = false;
-        });
-      }
+      _displayedChapters.add([..._displayedChapters.value, ...newChapters]);
     }
+
+    setState(() {
+      _isLoadingMore = false;
+    });
   }
 
   void _sortChapters() {
-    if (!_mounted) return;
+    final query = _searchController.text.toLowerCase();
+    List<Chapter> filteredChapters =
+        _chapters
+            .where(
+              (chapter) =>
+                  chapter.title.toLowerCase().contains(query) ||
+                  (chapter.chapterNumber?.toString().contains(query) ?? false),
+            )
+            .toList();
 
-    _displayedChapters = List.from(_chapters);
-
-    _displayedChapters.sort((a, b) {
+    filteredChapters.sort((a, b) {
       final comparison =
           _isAscending
               ? (a.chapterNumber ?? double.infinity).compareTo(
@@ -135,49 +147,14 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               );
       return comparison;
     });
-
-    if (_mounted) {
-      setState(() {});
-    }
+    _displayedChapters.add(filteredChapters);
   }
 
   void _toggleSortOrder() {
-    if (!_mounted) return;
     setState(() {
       _isAscending = !_isAscending;
       _sortChapters();
     });
-  }
-
-  void _searchChapters() {
-    if (!_mounted) return;
-
-    String query = _searchController.text.toLowerCase();
-    if (query.isEmpty) {
-      _sortChapters();
-    } else {
-      if (_mounted) {
-        setState(() {
-          _displayedChapters =
-              _chapters.where((chapter) {
-                return chapter.title.toLowerCase().contains(query) ||
-                    (chapter.chapterNumber != null &&
-                        chapter.chapterNumber!.toString().contains(query));
-              }).toList();
-          _displayedChapters.sort((a, b) {
-            if (_isAscending) {
-              return (a.chapterNumber ?? double.infinity).compareTo(
-                b.chapterNumber ?? double.infinity,
-              );
-            } else {
-              return (b.chapterNumber ?? double.infinity).compareTo(
-                a.chapterNumber ?? double.infinity,
-              );
-            }
-          });
-        });
-      }
-    }
   }
 
   @override
@@ -201,16 +178,18 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     decoration: InputDecoration(
                       labelText: 'Pesquisar Capítulo'.translate,
                       prefixIcon: const Icon(Icons.search),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 12.0,
+                        horizontal: 20.0,
+                        vertical: 14.0,
                       ),
                     ),
-                    onChanged: (_) => _searchChapters(),
+                    onChanged: (_) => _sortChapters(),
                   ),
                 ),
-                SizedBox(width: 8.0),
+                const SizedBox(width: 8.0),
                 IconButton(
                   icon: Icon(
                     _isAscending ? Icons.arrow_downward : Icons.arrow_upward,
@@ -230,40 +209,37 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
               behavior: ScrollConfiguration.of(
                 context,
               ).copyWith(scrollbars: false),
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  _resetPagination();
-                  _searchChapters();
-                  await Future.delayed(Duration(seconds: 1));
-                },
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount:
-                      _displayedChapters.length + (_isLoadingMore ? 1 : 0),
-                  padding: EdgeInsets.zero,
-                  itemBuilder: (context, index) {
-                    if (index < _displayedChapters.length) {
-                      final chapter = _displayedChapters[index];
+              child: StreamBuilder<List<Chapter>>(
+                stream: _displayedChapters.stream,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
+                    );
+                  }
 
-                      FontWeight fontWeight = FontWeight.normal;
+                  final displayedChapters = snapshot.data!;
+                  return ListView.builder(
+                    controller: _scrollController,
+                    itemCount:
+                        displayedChapters.length + (_isLoadingMore ? 1 : 0),
+                    padding: EdgeInsets.zero,
+                    itemBuilder: (context, index) {
+                      if (index < displayedChapters.length) {
+                        final chapter = displayedChapters[index];
+                        return Card(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          margin: EdgeInsets.symmetric(vertical: 5),
 
-                      String chapterDisplay = chapter.title;
-                      if (chapter.chapterNumber != null) {
-                        chapterDisplay =
-                            "${chapter.chapterNumber}: ${chapter.title}";
-                      }
-                      return Card(
-                        elevation: 1.5,
-                        margin: EdgeInsets.symmetric(vertical: 4.0),
-                        child: Material(
-                          color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(8.0),
                             onTap: () {
-                              FocusScope.of(context).unfocus();
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                widget.onChapterTap(chapter.id);
-                              });
+                              widget.onChapterTap(chapter.id);
+                              _searchFocusNode.unfocus();
                             },
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
@@ -274,10 +250,10 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      '$chapterDisplay${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
+                                      '${chapter.chapterNumber != null ? '${chapter.chapterNumber}: ' : ''}${chapter.title}${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
                                       style: theme.textTheme.bodyLarge
                                           ?.copyWith(
-                                            fontWeight: fontWeight,
+                                            fontWeight: FontWeight.w500,
                                             color: theme.colorScheme.onSurface,
                                           ),
                                     ),
@@ -286,20 +262,20 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    } else {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: theme.colorScheme.secondary,
+                        );
+                      } else {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
-                        ),
-                      );
-                    }
-                  },
-                ),
+                        );
+                      }
+                    },
+                  );
+                },
               ),
             ),
           ),

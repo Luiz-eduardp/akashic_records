@@ -205,7 +205,7 @@ class _ChapterDisplayState extends State<ChapterDisplay>
       }
 
       function getContentHeight() {
-          return document.documentElement.scrollHeight || document.body.scrollHeight;
+        return document.documentElement.scrollHeight || document.body.scrollHeight;
       }
 
       window.getScrollPosition = getScrollPosition;
@@ -440,34 +440,36 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     super.build(context);
     final theme = Theme.of(context);
 
-    return Stack(
-      children: [
-        Listener(
-          onPointerSignal: (pointerSignal) {
-            if (pointerSignal is PointerScrollEvent) {}
-          },
-          child: RefreshIndicator(
-            onRefresh: _reloadWebView,
-            backgroundColor: theme.colorScheme.surface,
-            color: theme.colorScheme.primary,
-            child:
-                _webViewController != null
-                    ? WebViewWidget(controller: _webViewController!)
-                    : const Center(child: Text("Erro ao carregar WebView.")),
+    return Scaffold(
+      body: Stack(
+        children: [
+          Listener(
+            onPointerSignal: (pointerSignal) {
+              if (pointerSignal is PointerScrollEvent) {}
+            },
+            child: RefreshIndicator(
+              onRefresh: _reloadWebView,
+              backgroundColor: theme.colorScheme.surface,
+              color: theme.colorScheme.primary,
+              child:
+                  _webViewController != null
+                      ? WebViewWidget(controller: _webViewController!)
+                      : const Center(child: Text("Erro ao carregar WebView.")),
+            ),
           ),
-        ),
-        if (_isLoading)
-          Container(
-            color: theme.colorScheme.surface.withOpacity(0.8),
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  theme.colorScheme.primary,
+          if (_isLoading)
+            Container(
+              color: theme.colorScheme.surface.withOpacity(0.8),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.colorScheme.primary,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

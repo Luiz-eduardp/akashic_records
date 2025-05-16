@@ -382,9 +382,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                   widget.onContinueReading?.call();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                        'Continuando a leitura...'.translate,
-                                      ),
+                                      content: Text('Continuando'.translate),
                                     ),
                                   );
                                 },
