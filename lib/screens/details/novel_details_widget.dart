@@ -144,12 +144,12 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
           fit: BoxFit.cover,
           placeholder:
               (context, url) => Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
+                baseColor: Theme.of(context).colorScheme.surfaceVariant,
+                highlightColor: Theme.of(context).colorScheme.onInverseSurface,
                 child: Container(
                   width: double.infinity,
                   height: double.infinity,
-                  color: Colors.grey[300],
+                  color: Theme.of(context).colorScheme.surfaceVariant,
                 ),
               ),
           errorWidget:
@@ -230,6 +230,10 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                         context: context,
                                         builder:
                                             (context) => Dialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
                                               child: _buildCoverImage(
                                                 widget.novel.coverImageUrl,
                                               ),
@@ -245,7 +249,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                           clipBehavior: Clip.antiAlias,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
-                                              12,
+                                              20,
                                             ),
                                           ),
                                           child: _buildCoverImage(
@@ -263,7 +267,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                     overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.headlineSmall
                                         ?.copyWith(
-                                          fontWeight: FontWeight.bold,
+                                          fontWeight: FontWeight.w700,
                                           color: Colors.white,
                                           shadows: const [
                                             Shadow(
@@ -316,7 +320,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                           Text(
                             'Resumo'.translate,
                             style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                               color: colorScheme.onSurface,
                             ),
                           ),
@@ -378,9 +382,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                   widget.onContinueReading?.call();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(
-                                        'Continuando a leitura...'.translate,
-                                      ),
+                                      content: Text('Continuando'.translate),
                                     ),
                                   );
                                 },
@@ -394,7 +396,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                     fontWeight: FontWeight.bold,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(25),
                                   ),
                                 ),
                                 child: Text('Continuar Leitura'.translate),
@@ -405,7 +407,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                             'Capítulos:'.translate +
                                 ' ${widget.novel.numberOfChapters == 0 ? 0 : widget.novel.numberOfChapters.toString()}',
                             style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                               color: colorScheme.onSurface,
                             ),
                           ),

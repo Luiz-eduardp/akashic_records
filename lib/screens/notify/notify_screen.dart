@@ -32,7 +32,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Notificações'.translate),
+        title: Text(
+          'Notificações'.translate,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: theme.colorScheme.surfaceContainerHighest,
         foregroundColor: theme.colorScheme.onSurface,
       ),
@@ -46,17 +51,18 @@ class _NotificationScreenState extends State<NotificationScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
                   child: Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
+                    baseColor: theme.colorScheme.surfaceVariant,
+                    highlightColor: theme.colorScheme.onInverseSurface,
                     child: ListView.builder(
                       itemCount: 5,
                       itemBuilder: (context, index) {
                         return Card(
                           margin: const EdgeInsets.all(8.0),
-                          elevation: 2,
+                          elevation: 3,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(20),
                           ),
+                          color: theme.colorScheme.surface,
                           child: const ExpansionTile(
                             title: SizedBox(
                               height: 20,
@@ -86,9 +92,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   ),
                 );
               } else if (snapshot.hasError) {
-                return Text('Erro: ${snapshot.error}');
+                return Center(
+                  child: Text(
+                    'Erro: ${snapshot.error}',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                );
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return SizedBox(width: 4);
+                return Center(
+                  child: Text(
+                    'Nenhuma notificação.'.translate,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                );
               } else {
                 final notifications = snapshot.data!;
                 _isExpandedList = List.generate(
@@ -96,6 +112,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   (index) => false,
                 );
                 return RefreshIndicator(
+                  backgroundColor: theme.colorScheme.surface,
+                  color: theme.colorScheme.primary,
                   onRefresh: _refreshNotifications,
                   child: ListView.builder(
                     itemCount: notifications.length,
@@ -120,13 +138,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
   ) {
     return Card(
       margin: const EdgeInsets.all(8.0),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: theme.colorScheme.surfaceVariant,
       child: ExpansionTile(
         title: Text(
           notification['content'] ?? 'Sem conteúdo',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
             color: theme.colorScheme.onSurface,
           ),
         ),
@@ -152,6 +171,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   child:
                       notification['action'] != 'none'
                           ? ElevatedButton(
+                            onPressed: () {
+                              _handleAction(notification, context);
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: theme.colorScheme.primary,
                               foregroundColor: theme.colorScheme.onPrimary,
@@ -159,14 +181,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 horizontal: 20,
                                 vertical: 12,
                               ),
-                              textStyle: const TextStyle(fontSize: 16),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(25),
                               ),
                             ),
-                            onPressed: () {
-                              _handleAction(notification, context);
-                            },
                             child: Text(notification['action'] ?? 'Ver Mais'),
                           )
                           : const SizedBox.shrink(),
@@ -192,7 +214,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível abrir o link: $url')),
+          SnackBar(
+            content: Text(
+              'Não foi possível abrir o link: $url',
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
+          ),
         );
       }
     } else {
@@ -200,18 +227,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Atenção'),
+            title: Text(
+              'Atenção',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             content: Text(
               'Nenhuma ação extra disponível para esta notificação.',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
             actions: <Widget>[
               TextButton(
-                child: Text('OK'),
+                child: Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
             ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
           );
         },
       );
@@ -241,7 +280,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Notificações atualizadas!'.translate)),
+      SnackBar(
+        content: Text(
+          'Notificações atualizadas!'.translate,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onInverseSurface,
+          ),
+        ),
+      ),
     );
   }
 }

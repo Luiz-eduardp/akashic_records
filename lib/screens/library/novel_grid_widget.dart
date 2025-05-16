@@ -11,6 +11,7 @@ class NovelGridWidget extends StatelessWidget {
   final ScrollController scrollController;
   final Function(Novel) onNovelTap;
   final Function(Novel) onNovelLongPress;
+  final bool isListView;
 
   const NovelGridWidget({
     super.key,
@@ -20,7 +21,7 @@ class NovelGridWidget extends StatelessWidget {
     required this.scrollController,
     required this.onNovelTap,
     required this.onNovelLongPress,
-    required bool isListView,
+    required this.isListView,
   });
 
   @override
@@ -100,18 +101,21 @@ class NovelGridWidget extends StatelessWidget {
                     const SizedBox(height: 24),
                     FilledButton.tonal(
                       onPressed: () {},
-                      child: Padding(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.secondaryContainer,
+                        foregroundColor: theme.colorScheme.onSecondaryContainer,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 12,
                         ),
-                        child: Text(
-                          'Tentar Novamente'.translate,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.onSecondaryContainer,
-                          ),
+                        textStyle: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
                         ),
                       ),
+                      child: Text('Tentar Novamente'.translate),
                     ),
                   ],
                 ),
@@ -157,18 +161,21 @@ class NovelGridWidget extends StatelessWidget {
                       onPressed: () {
                         Navigator.pushNamed(context, '/plugins');
                       },
-                      child: Padding(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 12,
                         ),
-                        child: Text(
-                          'Plugins'.translate,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: theme.colorScheme.onPrimary,
-                          ),
+                        textStyle: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
                         ),
                       ),
+                      child: Text('Plugins'.translate),
                     ),
                     const SizedBox(height: 8),
                   ],

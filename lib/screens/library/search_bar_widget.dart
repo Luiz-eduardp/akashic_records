@@ -72,15 +72,18 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25.0),
+                  borderRadius: BorderRadius.circular(32.0),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25.0),
-                  borderSide: BorderSide(color: theme.colorScheme.primary),
+                  borderRadius: BorderRadius.circular(32.0),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 2.0,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25.0),
+                  borderRadius: BorderRadius.circular(32.0),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
@@ -102,8 +105,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                         )
                         : null,
                 contentPadding: const EdgeInsets.symmetric(
-                  vertical: 15.0,
-                  horizontal: 20.0,
+                  vertical: 14.0,
+                  horizontal: 24.0,
                 ),
               ),
               onSubmitted: (value) {
@@ -117,7 +120,6 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
               },
             ),
           ),
-
           if (widget.extraActions != null) ...widget.extraActions!,
         ],
       ),

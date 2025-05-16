@@ -28,6 +28,7 @@ analyzer:
     invalid_use_of_visible_for_testing_member: ignore
     invalid_use_of_protected_member: ignore
     unrelated_type_equality_checks: ignore
+    control_flow_in_finally: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

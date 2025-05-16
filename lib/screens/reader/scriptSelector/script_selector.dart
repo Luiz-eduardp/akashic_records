@@ -26,6 +26,12 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
     _loadScripts();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadScripts() async {
     setState(() {
       isLoading = true;
@@ -46,11 +52,9 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
             'Erro ao carregar scripts:'.translate + ' ${e.toString()}';
       });
     } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -73,13 +77,20 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Selecionar Script'.translate),
+        title: Text(
+          'Selecionar Script'.translate,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
-        elevation: 1,
-        scrolledUnderElevation: 3,
+        elevation: 3,
+        scrolledUnderElevation: 5,
+        surfaceTintColor: colorScheme.surfaceTint,
         actions: [
           IconButton(
             icon: const Icon(Icons.link),
@@ -92,6 +103,7 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                 ),
               ).then((_) => _loadScripts());
             },
+            style: IconButton.styleFrom(foregroundColor: colorScheme.onSurface),
           ),
         ],
         bottom: PreferredSize(
@@ -123,6 +135,9 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                               _searchController.clear();
                             });
                           },
+                          style: IconButton.styleFrom(
+                            foregroundColor: colorScheme.onSurface,
+                          ),
                         ),
                       ]
                       : null,
@@ -132,11 +147,12 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _loadScripts,
-        color: theme.colorScheme.primary,
+        backgroundColor: colorScheme.surface,
+        color: colorScheme.primary,
         child: SafeArea(
           child: Builder(
             builder: (BuildContext context) {
-              return _buildContent(context, theme);
+              return _buildContent(context, theme, colorScheme);
             },
           ),
         ),
@@ -144,22 +160,25 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
     );
   }
 
-  Widget _buildContent(BuildContext context, ThemeData theme) {
+  Widget _buildContent(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     if (isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary,
-              ),
+              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             Text(
               'Carregando scripts...'.translate,
               style: theme.textTheme.bodyMedium!.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -174,17 +193,14 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 48,
-                color: theme.colorScheme.error,
-              ),
+              Icon(Icons.error_outline, size: 48, color: colorScheme.error),
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge!.copyWith(
-                  color: theme.colorScheme.onErrorContainer,
+                  color: colorScheme.onErrorContainer,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -194,7 +210,7 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
     }
 
     if (scripts.isEmpty) {
-      return _buildNoScriptsFound(theme);
+      return _buildNoScriptsFound(theme, colorScheme);
     }
 
     return Padding(
@@ -207,8 +223,9 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
             child: Text(
               'Scripts encontrados:'.translate +
                   ' ${_filteredScripts.length} / ${scripts.length}',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -218,7 +235,12 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
               separatorBuilder: (context, index) => const Divider(height: 1),
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               itemBuilder: (context, index) {
-                return _buildScriptTile(context, _filteredScripts[index]);
+                return _buildScriptTile(
+                  context,
+                  _filteredScripts[index],
+                  colorScheme,
+                  theme,
+                );
               },
             ),
           ),
@@ -227,25 +249,22 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
     );
   }
 
-  Widget _buildNoScriptsFound(ThemeData theme) {
+  Widget _buildNoScriptsFound(ThemeData theme, ColorScheme colorScheme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.code_off,
-              size: 64,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            Icon(Icons.code_off, size: 64, color: colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             Text(
               'Nenhum script encontrado.\nAdicione URLs de scripts para começar.'
                   .translate,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge!.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 24),
@@ -267,8 +286,14 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
                 child: Text('Gerenciar URLs'.translate),
               ),
               style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                textStyle: const TextStyle(fontSize: 16),
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                textStyle: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
             ),
           ],
@@ -306,59 +331,69 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
           }
         }
 
-        if (mounted) {
-          setState(() {
-            scripts.addAll(newScripts);
-          });
-        }
+        setState(() {
+          scripts.addAll(newScripts);
+        });
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Erro ao carregar a página: ${response.statusCode}',
-              ),
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar a página: ${response.statusCode}'),
+          ),
+        );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro: JSON inválido')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro: JSON inválido')));
       if (kDebugMode) {
         debugPrint("Error parsing JSON: $e");
       }
     }
   }
 
-  Widget _buildScriptTile(BuildContext context, ScriptInfo scriptInfo) {
-    final theme = Theme.of(context);
+  Widget _buildScriptTile(
+    BuildContext context,
+    ScriptInfo scriptInfo,
+    ColorScheme colorScheme,
+    ThemeData theme,
+  ) {
     final subtitle = scriptInfo.use ?? 'Sem descrição';
     final title = scriptInfo.name ?? 'Sem nome';
 
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      color: colorScheme.surfaceVariant,
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         title: Text(
           title,
-          style: TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w500,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         trailing: FilledButton(
           onPressed: () {
-            _addScriptToState(scriptInfo, context);
+            _addScriptToState(scriptInfo, context, theme, colorScheme);
           },
+          style: FilledButton.styleFrom(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            textStyle: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
           child: Text('Adicionar'.translate),
         ),
       ),
@@ -368,8 +403,9 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
   Future<void> _addScriptToState(
     ScriptInfo scriptInfo,
     BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
   ) async {
-    final theme = Theme.of(context);
     final scriptContent = scriptInfo.code ?? '';
     final scriptName = scriptInfo.name ?? 'Sem nome';
     final scriptUse = scriptInfo.use ?? '';
@@ -381,51 +417,70 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
         String use = scriptUse;
 
         return AlertDialog(
-          backgroundColor: theme.colorScheme.surface,
-          surfaceTintColor: theme.colorScheme.surface,
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+
           title: Text(
             'Informações do Plugin'.translate,
-            style: TextStyle(color: theme.colorScheme.onSurface),
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  style: TextStyle(color: theme.colorScheme.onSurface),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Nome do Plugin'.translate,
-                    labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: theme.colorScheme.outline),
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.primary),
-                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: colorScheme.primary),
+                      borderRadius: BorderRadius.circular(20),
                     ),
+                    filled: true,
+                    fillColor: colorScheme.surfaceVariant,
                   ),
                   initialValue: name,
                   onChanged: (value) => name = value,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  style: TextStyle(color: theme.colorScheme.onSurface),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Como usar'.translate,
-                    labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: theme.colorScheme.outline),
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.primary),
-                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: colorScheme.primary),
+                      borderRadius: BorderRadius.circular(20),
                     ),
+                    filled: true,
+                    fillColor: colorScheme.surfaceVariant,
                   ),
                   initialValue: use,
                   onChanged: (value) => use = value,
@@ -437,14 +492,23 @@ class _ScriptSelectorScreenState extends State<ScriptSelectorScreen> {
             TextButton(
               child: Text(
                 'Cancelar'.translate,
-                style: TextStyle(color: theme.colorScheme.onSurface),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                textStyle: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               child: Text('Salvar'.translate),
               onPressed: () {
@@ -496,14 +560,23 @@ class _UrlManagementScreenState extends State<UrlManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final appState = Provider.of<AppState>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gerenciar URLs'.translate),
+        title: Text(
+          'Gerenciar URLs'.translate,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
-        elevation: 1,
-        scrolledUnderElevation: 3,
+        elevation: 3,
+        scrolledUnderElevation: 5,
+        backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+        surfaceTintColor: Colors.transparent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -514,30 +587,28 @@ class _UrlManagementScreenState extends State<UrlManagementScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: urlController,
-                    style: TextStyle(color: theme.colorScheme.onSurface),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Adicionar URL'.translate,
-                      labelStyle: TextStyle(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.outline,
-                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      filled: true,
+                      fillColor: colorScheme.surfaceVariant,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: Icon(Icons.add, color: theme.colorScheme.primary),
+                  icon: Icon(Icons.add, color: colorScheme.primary),
                   tooltip: 'Adicionar URL'.translate,
                   onPressed: () {
                     final url = urlController.text;
@@ -546,6 +617,10 @@ class _UrlManagementScreenState extends State<UrlManagementScreen> {
                       urlController.clear();
                     }
                   },
+                  style: IconButton.styleFrom(
+                    backgroundColor: colorScheme.secondaryContainer,
+                    foregroundColor: colorScheme.onSecondaryContainer,
+                  ),
                 ),
               ],
             ),
@@ -556,22 +631,30 @@ class _UrlManagementScreenState extends State<UrlManagementScreen> {
                 separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   return Card(
-                    elevation: 1,
+                    elevation: 3,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                     ),
+                    color: colorScheme.surfaceVariant,
                     child: ListTile(
                       title: Text(
                         appState.scriptUrls[index],
-                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       trailing: IconButton(
                         icon: Icon(
                           Icons.remove_circle_outline,
-                          color: theme.colorScheme.error,
+                          color: colorScheme.error,
                         ),
                         tooltip: 'Remover URL'.translate,
                         onPressed: () => appState.removeScriptUrl(index),
+                        style: IconButton.styleFrom(
+                          backgroundColor: colorScheme.errorContainer,
+                          foregroundColor: colorScheme.onErrorContainer,
+                        ),
                       ),
                     ),
                   );
@@ -583,8 +666,8 @@ class _UrlManagementScreenState extends State<UrlManagementScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pop(context),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         tooltip: "Voltar".translate,
         child: const Icon(Icons.arrow_back),
       ),

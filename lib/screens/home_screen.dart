@@ -23,6 +23,8 @@ class NotificationBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: notificationsFuture,
       builder: (context, snapshot) {
@@ -31,6 +33,9 @@ class NotificationBadge extends StatelessWidget {
           notificationCount = snapshot.data!.length;
         }
         return IconButton(
+          style: IconButton.styleFrom(
+            foregroundColor: theme.colorScheme.onSurface,
+          ),
           icon: Stack(
             children: [
               const Icon(Icons.notifications),
@@ -40,7 +45,7 @@ class NotificationBadge extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(1),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: theme.colorScheme.error,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     constraints: const BoxConstraints(
@@ -49,7 +54,10 @@ class NotificationBadge extends StatelessWidget {
                     ),
                     child: Text(
                       '$notificationCount',
-                      style: const TextStyle(color: Colors.white, fontSize: 8),
+                      style: TextStyle(
+                        color: theme.colorScheme.onError,
+                        fontSize: 8,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -175,6 +183,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           foregroundColor: theme.colorScheme.onSurface,
           centerTitle: true,
           leading: IconButton(
+            style: IconButton.styleFrom(
+              foregroundColor: theme.colorScheme.onSurface,
+            ),
             onPressed: _handleMenuButtonPressed,
             icon: AnimatedBuilder(
               animation: _advancedDrawerController,

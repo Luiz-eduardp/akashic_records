@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
@@ -191,6 +191,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final screenHeight = MediaQuery.of(context).size.height;
     final listHeight = screenHeight * 0.8;
 
@@ -208,11 +209,16 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
                     focusNode: _searchFocusNode,
                     decoration: InputDecoration(
                       labelText: 'Pesquisar Capítulo'.translate,
-                      prefixIcon: const Icon(Icons.search),
-                      border: const OutlineInputBorder(),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 12.0,
+                        horizontal: 20.0,
+                        vertical: 14.0,
                       ),
                     ),
                   ),
@@ -221,6 +227,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
                 IconButton(
                   icon: Icon(
                     _isAscending ? Icons.arrow_downward : Icons.arrow_upward,
+                    color: colorScheme.primary,
                   ),
                   onPressed: _toggleSortOrder,
                   tooltip:
@@ -241,7 +248,11 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
                 stream: _displayedChapters.stream,
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: colorScheme.primary,
+                      ),
+                    );
                   }
 
                   final displayedChapters = snapshot.data!;
@@ -262,7 +273,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
 
                         FontWeight fontWeight = FontWeight.normal;
                         if (isUnread) {
-                          fontWeight = FontWeight.bold;
+                          fontWeight = FontWeight.w600;
                         }
 
                         String chapterDisplay = chapter.title;
@@ -272,12 +283,17 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
                         }
 
                         return Card(
-                          elevation: 1.5,
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          color: theme.colorScheme.surfaceVariant,
+
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              borderRadius: BorderRadius.circular(8.0),
+                              borderRadius: BorderRadius.circular(20),
                               onTap: () {
                                 widget.onChapterTap(chapter.id);
                                 _addToHistory(chapter);
@@ -300,7 +316,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
                                                   isLastRead
                                                       ? theme
                                                           .colorScheme
-                                                          .secondary
+                                                          .primary
                                                       : isRead
                                                       ? theme.disabledColor
                                                       : theme
@@ -345,7 +361,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
                                 _allChaptersLoaded
                                     ? Text('No More Chapters'.translate)
                                     : CircularProgressIndicator(
-                                      color: theme.colorScheme.secondary,
+                                      color: theme.colorScheme.primary,
                                     ),
                           ),
                         );

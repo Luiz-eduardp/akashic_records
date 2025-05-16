@@ -38,6 +38,11 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
     _fetchData();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _fetchData() async {
     try {
       final response = await http.get(
@@ -62,9 +67,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
         });
       } else {
         setState(() {
-          _errorMessage =
-              'status ${response.statusCode}.'
-                  .translate;
+          _errorMessage = 'status ${response.statusCode}.'.translate;
           _uploader = 'Erro ao carregar'.translate;
           _isLoading = false;
           _loadingMessage = 'Erro ao carregar dados'.translate;
@@ -92,8 +95,8 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
   Future<void> _downloadAndInstall() async {
     if (widget.downloadUrl != null) {
       try {
-        final Uri url = Uri.parse(widget.downloadUrl!);
-        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        final Uri uri = Uri.parse(widget.downloadUrl!);
+        if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
           setState(() {
             _errorMessage =
                 'Não foi possível abrir o link de download. Verifique se você tem um aplicativo padrão configurado para abrir links.'
@@ -115,47 +118,58 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Changelog da Versão'.translate,
-          style: TextStyle(color: theme.colorScheme.onSurface),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: theme.colorScheme.surfaceVariant,
-        foregroundColor: theme.colorScheme.onSurfaceVariant,
-        surfaceTintColor: theme.colorScheme.surfaceVariant,
+        backgroundColor: colorScheme.surfaceContainerHighest,
+        foregroundColor: colorScheme.onSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
       ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child:
             _isLoading
                 ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _loadingMessage,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      if (_errorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: Text(
-                            _errorMessage!,
-                            style: TextStyle(color: Colors.red),
-                            textAlign: TextAlign.center,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            colorScheme.primary,
                           ),
+                          strokeWidth: 5,
                         ),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          _loadingMessage,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (_errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(color: colorScheme.error),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 )
                 : Padding(
@@ -165,7 +179,8 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                   ),
                   child: RefreshIndicator(
                     onRefresh: _fetchData,
-                    color: theme.colorScheme.primary,
+                    backgroundColor: colorScheme.surface,
+                    color: colorScheme.primary,
                     child: LayoutBuilder(
                       builder: (
                         BuildContext context,
@@ -183,11 +198,12 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                                 const SizedBox(height: 20),
                                 if (widget.showChangelog)
                                   Card(
-                                    elevation: 2,
-                                    shadowColor: theme.colorScheme.shadow,
+                                    elevation: 4,
+                                    shadowColor: colorScheme.shadow,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
+                                    color: colorScheme.surfaceVariant,
                                     child: Padding(
                                       padding: const EdgeInsets.all(20.0),
                                       child: MarkdownBody(
@@ -204,55 +220,41 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                                               p: theme.textTheme.bodyLarge
                                                   ?.copyWith(
                                                     color:
-                                                        theme
-                                                            .colorScheme
-                                                            .onSurface,
-                                                    fontSize: 17,
+                                                        colorScheme.onSurface,
+                                                    fontSize: 18,
                                                     height: 1.6,
                                                   ),
                                               h1: theme.textTheme.headlineMedium
                                                   ?.copyWith(
                                                     color:
-                                                        theme
-                                                            .colorScheme
-                                                            .onSurface,
-                                                    fontWeight: FontWeight.bold,
+                                                        colorScheme.onSurface,
+                                                    fontWeight: FontWeight.w700,
                                                   ),
                                               h2: theme.textTheme.headlineSmall
                                                   ?.copyWith(
                                                     color:
-                                                        theme
-                                                            .colorScheme
-                                                            .onSurface,
-                                                    fontWeight: FontWeight.bold,
+                                                        colorScheme.onSurface,
+                                                    fontWeight: FontWeight.w700,
                                                   ),
                                               h3: theme.textTheme.titleLarge
                                                   ?.copyWith(
                                                     color:
-                                                        theme
-                                                            .colorScheme
-                                                            .onSurface,
-                                                    fontWeight: FontWeight.bold,
+                                                        colorScheme.onSurface,
+                                                    fontWeight: FontWeight.w700,
                                                   ),
                                               listBullet: theme
                                                   .textTheme
                                                   .bodyLarge
                                                   ?.copyWith(
-                                                    color:
-                                                        theme
-                                                            .colorScheme
-                                                            .primary,
-                                                    fontSize: 17,
+                                                    color: colorScheme.primary,
+                                                    fontSize: 18,
                                                   ),
                                               code: theme.textTheme.bodyMedium
                                                   ?.copyWith(
                                                     color:
-                                                        theme
-                                                            .colorScheme
-                                                            .onSurface,
+                                                        colorScheme.onSurface,
                                                     backgroundColor:
-                                                        theme
-                                                            .colorScheme
+                                                        colorScheme
                                                             .surfaceVariant,
                                                   ),
                                               blockquoteDecoration:
@@ -260,14 +262,11 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                                                     border: Border(
                                                       left: BorderSide(
                                                         color:
-                                                            theme
-                                                                .colorScheme
-                                                                .primary,
+                                                            colorScheme.primary,
                                                         width: 3.0,
                                                       ),
                                                     ),
-                                                    color: theme
-                                                        .colorScheme
+                                                    color: colorScheme
                                                         .surfaceVariant
                                                         .withOpacity(0.3),
                                                   ),
@@ -279,23 +278,23 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                                 Text(
                                   'Enviado por:'.translate,
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.onSurface,
-                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
                                 ListTile(
                                   leading: CircleAvatar(
                                     backgroundImage: NetworkImage(_avatarUrl),
-                                    radius: 28,
+                                    radius: 30,
                                   ),
                                   title: Text(
                                     _uploader,
-                                    style: TextStyle(
-                                      color: theme.colorScheme.onSurface,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 18,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          color: colorScheme.onSurface,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                   ),
                                 ),
                                 if (widget.updateAvailable)
@@ -314,20 +313,19 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                                           _downloadAndInstall();
                                         },
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              theme.colorScheme.primary,
+                                          backgroundColor: colorScheme.primary,
                                           foregroundColor:
-                                              theme.colorScheme.onPrimary,
+                                              colorScheme.onPrimary,
                                           padding: const EdgeInsets.symmetric(
-                                            vertical: 16,
+                                            vertical: 18,
                                           ),
                                           textStyle: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
-                                              16,
+                                              20,
                                             ),
                                           ),
                                         ),
@@ -342,7 +340,9 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                                     ),
                                     child: Text(
                                       _errorMessage!,
-                                      style: const TextStyle(color: Colors.red),
+                                      style: TextStyle(
+                                        color: colorScheme.error,
+                                      ),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -355,20 +355,19 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
                                         widget.onDone();
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            theme.colorScheme.secondary,
+                                        backgroundColor: colorScheme.secondary,
                                         foregroundColor:
-                                            theme.colorScheme.onSecondary,
+                                            colorScheme.onSecondary,
                                         padding: const EdgeInsets.symmetric(
-                                          vertical: 16,
+                                          vertical: 18,
                                         ),
                                         textStyle: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w500,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            16,
+                                            20,
                                           ),
                                         ),
                                       ),

@@ -11,13 +11,14 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return SafeArea(
       child: Material(
         color: Colors.transparent,
         child: ListTileTheme(
-          textColor: theme.colorScheme.onSurfaceVariant,
-          iconColor: theme.colorScheme.onSurfaceVariant,
+          textColor: colorScheme.onSurface,
+          iconColor: colorScheme.onSurface,
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
@@ -57,13 +58,17 @@ class AppDrawer extends StatelessWidget {
               ),
               const Spacer(),
               DefaultTextStyle(
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                style: theme.textTheme.bodyMedium!.copyWith(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                 ),
                 child: Container(
                   margin: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: const Text('Akashic Records App'),
+                  child: Text(
+                    'Akashic Records App',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ],
@@ -80,16 +85,22 @@ class AppDrawer extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
+        leading: Icon(icon, color: colorScheme.onSurface),
+        title: Text(
+          title,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         onTap: onTap,
-        splashColor: theme.splashColor,
-        hoverColor: theme.hoverColor,
+        splashColor: colorScheme.secondaryContainer,
+        hoverColor: colorScheme.secondaryContainer,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: BorderRadius.circular(20.0),
         ),
       ),
     );
