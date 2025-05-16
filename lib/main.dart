@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/screens/home_screen.dart';
 import 'package:akashic_records/screens/plugins/plugins_screen.dart';
@@ -213,77 +214,9 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, appState, child) {
-        if (_isLoading) {
-          return MaterialApp(
-            theme: AppThemes.lightTheme(appState.accentColor),
-            darkTheme: AppThemes.darkTheme(appState.accentColor),
-            themeMode: appState.themeMode,
-            locale: I18n.currentLocate,
-            supportedLocales: I18n.supportedLocales,
-            localizationsDelegates: const [
-              I18nDelegate(),
-              GlobalMaterialLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-            ],
-            home: Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(color: appState.accentColor),
-              ),
-            ),
-          );
-        }
+        final theme = AppThemes.lightTheme(appState.accentColor);
+        final darkTheme = AppThemes.darkTheme(appState.accentColor);
 
-        Widget homeWidget;
-        if (!_hasShownInitialScreen) {
-          homeWidget = InitialLoadingScreen(
-            updateAvailable: _updateAvailable,
-            downloadUrl: _downloadUrl,
-            showChangelog: appState.showChangelog,
-            onDone: () async {
-              try {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('hasShownInitialScreen', true);
-                if (mounted) {
-                  setState(() {
-                    _hasShownInitialScreen = true;
-                  });
-                }
-                Provider.of<AppState>(
-                  context,
-                  listen: false,
-                ).markChangelogAsShown();
-              } catch (e) {
-                debugPrint("Error saving 'hasShownInitialScreen': $e");
-              }
-            },
-          );
-        } else if (appState.showChangelog) {
-          homeWidget = InitialLoadingScreen(
-            updateAvailable: _updateAvailable,
-            downloadUrl: _downloadUrl,
-            showChangelog: appState.showChangelog,
-            onDone: () async {
-              try {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('hasShownInitialScreen', true);
-                if (mounted) {
-                  setState(() {
-                    _hasShownInitialScreen = true;
-                  });
-                }
-                Provider.of<AppState>(
-                  context,
-                  listen: false,
-                ).markChangelogAsShown();
-              } catch (e) {
-                debugPrint("Error saving 'hasShownInitialScreen': $e");
-              }
-            },
-          );
-        } else {
-          homeWidget = const HomeScreen();
-        }
         return MaterialApp(
           locale: I18n.currentLocate,
           supportedLocales: I18n.supportedLocales,
@@ -296,9 +229,36 @@ class _MyAppState extends State<MyApp> {
           debugShowCheckedModeBanner: false,
           title: 'Akashic Records'.translate,
           themeMode: appState.themeMode,
-          theme: AppThemes.lightTheme(appState.accentColor),
-          darkTheme: AppThemes.darkTheme(appState.accentColor),
-          home: homeWidget,
+          theme: theme,
+          darkTheme: darkTheme,
+          home:
+              _isLoading
+                  ? Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(
+                        color: theme.primaryColor,
+                      ),
+                    ),
+                  )
+                  : _hasShownInitialScreen || !appState.showChangelog
+                  ? const HomeScreen()
+                  : InitialLoadingScreen(
+                    updateAvailable: _updateAvailable,
+                    downloadUrl: _downloadUrl,
+                    showChangelog: appState.showChangelog,
+                    onDone: () async {
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('hasShownInitialScreen', true);
+                        setState(() {
+                          _hasShownInitialScreen = true;
+                        });
+                        appState.markChangelogAsShown();
+                      } catch (e) {
+                        debugPrint("Error saving 'hasShownInitialScreen': $e");
+                      }
+                    },
+                  ),
           routes: {
             '/settings':
                 (context) => SettingsScreen(onLocaleChanged: _updateLocale),
