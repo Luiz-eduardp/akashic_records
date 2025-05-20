@@ -335,7 +335,11 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: Text(widget.pluginName),
+        title: Text(
+          widget.pluginName,
+          style: TextStyle(color: theme.colorScheme.onSurface),
+        ),
+        actionsIconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         backgroundColor: theme.colorScheme.surface,
         centerTitle: true,
         actions: [
