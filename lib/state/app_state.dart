@@ -18,7 +18,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:akashic_records/services/plugins/english/novelbin_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
-import 'package:akashic_records/services/plugins/english/reapersscan_service.dart';
 import 'package:akashic_records/services/plugins/english/royalroad_service.dart';
 import 'package:akashic_records/services/plugins/english/webnovel_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
@@ -472,12 +471,6 @@ class AppState with ChangeNotifier {
     _pluginServices['Webnovel'] = Webnovel();
     _pluginInfo['Webnovel'] = PluginInfo(
       name: 'Webnovel',
-      language: PluginLanguage.en,
-    );
-
-    _pluginServices['ReaperScans'] = ReaperScans();
-    _pluginInfo['ReaperScans'] = PluginInfo(
-      name: 'ReaperScans',
       language: PluginLanguage.en,
     );
 
