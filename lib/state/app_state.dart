@@ -5,6 +5,7 @@ import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/services/local/local_service.dart';
 import 'package:akashic_records/services/plugins/arabic/sunovels_service.dart';
 import 'package:akashic_records/services/plugins/english/projectgutenberg_service.dart';
+import 'package:akashic_records/services/plugins/english/scribblehub_service.dart';
 import 'package:akashic_records/services/plugins/french/chireads_service.dart';
 import 'package:akashic_records/services/plugins/indonesean/indowebnovel_service.dart';
 import 'package:akashic_records/services/plugins/japanese/kakuyomu_service.dart';
@@ -453,6 +454,11 @@ class AppState with ChangeNotifier {
     _pluginServices['NovelsOnline'] = NovelsOnline();
     _pluginInfo['NovelsOnline'] = PluginInfo(
       name: 'NovelsOnline',
+      language: PluginLanguage.en,
+    );
+    _pluginServices['ScribbleHub'] = ScribbleHub();
+    _pluginInfo['ScribbleHub'] = PluginInfo(
+      name: 'ScribbleHub',
       language: PluginLanguage.en,
     );
 
