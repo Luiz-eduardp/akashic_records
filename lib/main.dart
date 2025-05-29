@@ -14,24 +14,28 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:akashic_records/screens/changelog/initial_loading_screen.dart';
 
+const String _lastVersionCheckTimestampKey = 'lastVersionCheckTimestamp';
+const String _cachedLatestVersionKey = 'cachedLatestVersion';
+const String _cachedDownloadUrlKey = 'cachedDownloadUrl';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences prefs;
-  Locale initialLocale;
-  const List<String> supportedLanguageCodes = ['en', 'pt', 'es', 'ja'];
 
+  late SharedPreferences prefs;
   try {
     prefs = await SharedPreferences.getInstance();
-    final savedLocaleCode = prefs.getString('locale');
-    if (savedLocaleCode != null &&
-        supportedLanguageCodes.contains(savedLocaleCode)) {
-      initialLocale = Locale(savedLocaleCode);
-    } else {
-      initialLocale = const Locale('en');
-    }
   } catch (e) {
-    debugPrint("Error loading SharedPreferences or locale: $e");
+    debugPrint("Error initializing SharedPreferences: $e");
     prefs = await SharedPreferences.getInstance();
+  }
+
+  Locale initialLocale;
+  const List<String> supportedLanguageCodes = ['en', 'pt', 'es', 'ja'];
+  final savedLocaleCode = prefs.getString('locale');
+  if (savedLocaleCode != null &&
+      supportedLanguageCodes.contains(savedLocaleCode)) {
+    initialLocale = Locale(savedLocaleCode);
+  } else {
     initialLocale = const Locale('en');
   }
 
@@ -108,60 +112,91 @@ class _MyAppState extends State<MyApp> {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
 
-      final response = await http
-          .get(
-            Uri.parse(
-              'https://api.github.com/repos/AkashicRecordsApp/akashic_records/releases/latest',
-            ),
-            headers: {'Accept': 'application/vnd.github.v3+json'},
-          )
-          .timeout(const Duration(seconds: 15));
+      final lastCheckTimestamp = prefs.getInt(_lastVersionCheckTimestampKey);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      const int checkInterval = 12 * 60 * 60 * 1000;
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final latestVersionTag = data['tag_name']?.toString() ?? '';
-        final latestVersion =
-            latestVersionTag.startsWith('v')
-                ? latestVersionTag.substring(1)
-                : latestVersionTag;
+      bool shouldFetchNewVersion = true;
+      if (lastCheckTimestamp != null &&
+          (now - lastCheckTimestamp < checkInterval)) {
+        final cachedLatestVersion = prefs.getString(_cachedLatestVersionKey);
+        final cachedDownloadUrl = prefs.getString(_cachedDownloadUrlKey);
 
-        final assets = data['assets'] as List<dynamic>? ?? [];
-        String? apkDownloadUrl;
-
-        for (var asset in assets) {
-          final assetName = asset?['name']?.toString();
-          if (assetName != null && assetName.endsWith('.apk')) {
-            apkDownloadUrl = asset?['browser_download_url'] as String?;
-            break;
-          }
+        if (cachedLatestVersion != null && cachedDownloadUrl != null) {
+          shouldFetchNewVersion = false;
+          _updateAvailable = _isUpdateAvailable(
+            currentVersion,
+            cachedLatestVersion,
+          );
+          _downloadUrl = cachedDownloadUrl;
+          debugPrint(
+            "Using cached version info. Latest: $cachedLatestVersion, Update Available: $_updateAvailable",
+          );
         }
+      }
 
-        if (currentVersion.isNotEmpty && latestVersion.isNotEmpty) {
-          _updateAvailable = _isUpdateAvailable(currentVersion, latestVersion);
-          _downloadUrl = apkDownloadUrl;
+      if (shouldFetchNewVersion) {
+        debugPrint("Fetching new version info from GitHub...");
+        final response = await http
+            .get(
+              Uri.parse(
+                'https://api.github.com/repos/AkashicRecordsApp/akashic_records/releases/latest',
+              ),
+              headers: {'Accept': 'application/vnd.github.v3+json'},
+            )
+            .timeout(const Duration(seconds: 15));
 
-          if (_updateAvailable && _downloadUrl != null) {
-            if (!_hasShownInitialScreen) {
-              debugPrint(
-                "Update available ($latestVersion > $currentVersion), forcing initial screen.",
-              );
-              await prefs.setBool('hasShownInitialScreen', false);
-              if (mounted) {
-                setState(() {
-                  _hasShownInitialScreen = false;
-                });
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final latestVersionTag = data['tag_name']?.toString() ?? '';
+          final latestVersion =
+              latestVersionTag.startsWith('v')
+                  ? latestVersionTag.substring(1)
+                  : latestVersionTag;
+
+          final assets = data['assets'] as List<dynamic>? ?? [];
+          String? apkDownloadUrl;
+
+          for (var asset in assets) {
+            final assetName = asset?['name']?.toString();
+            if (assetName != null && assetName.endsWith('.apk')) {
+              apkDownloadUrl = asset?['browser_download_url'] as String?;
+              break;
+            }
+          }
+
+          if (currentVersion.isNotEmpty && latestVersion.isNotEmpty) {
+            _updateAvailable = _isUpdateAvailable(
+              currentVersion,
+              latestVersion,
+            );
+            _downloadUrl = apkDownloadUrl;
+
+            await prefs.setInt(_lastVersionCheckTimestampKey, now);
+            await prefs.setString(_cachedLatestVersionKey, latestVersion);
+            if (_downloadUrl != null) {
+              await prefs.setString(_cachedDownloadUrlKey, _downloadUrl!);
+            } else {
+              await prefs.remove(_cachedDownloadUrlKey);
+            }
+
+            if (_updateAvailable && _downloadUrl != null) {
+              if (!_hasShownInitialScreen) {
+                debugPrint(
+                  "Update available ($latestVersion > $currentVersion), forcing initial screen.",
+                );
               }
             }
+          } else {
+            debugPrint(
+              'Could not compare versions: current=$currentVersion, latest=$latestVersion',
+            );
           }
         } else {
           debugPrint(
-            'Could not compare versions: current=$currentVersion, latest=$latestVersion',
+            'Error fetching releases: ${response.statusCode} ${response.reasonPhrase}',
           );
         }
-      } else {
-        debugPrint(
-          'Error fetching releases: ${response.statusCode} ${response.reasonPhrase}',
-        );
       }
     } catch (e) {
       debugPrint('Error checking version: $e');
@@ -250,9 +285,11 @@ class _MyAppState extends State<MyApp> {
                       try {
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.setBool('hasShownInitialScreen', true);
-                        setState(() {
-                          _hasShownInitialScreen = true;
-                        });
+                        if (mounted) {
+                          setState(() {
+                            _hasShownInitialScreen = true;
+                          });
+                        }
                         appState.markChangelogAsShown();
                       } catch (e) {
                         debugPrint("Error saving 'hasShownInitialScreen': $e");
