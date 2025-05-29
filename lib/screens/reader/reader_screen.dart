@@ -37,7 +37,8 @@ class ReaderScreen extends StatefulWidget {
   State<ReaderScreen> createState() => _ReaderScreenState();
 }
 
-class _ReaderScreenState extends State<ReaderScreen> {
+class _ReaderScreenState extends State<ReaderScreen>
+    with SingleTickerProviderStateMixin {
   Novel? novel;
   Chapter? currentChapter;
   int currentChapterIndex = 0;
@@ -47,12 +48,33 @@ class _ReaderScreenState extends State<ReaderScreen> {
   int? _wordCount;
   final ValueNotifier<double> _scrollPercentage = ValueNotifier<double>(0.0);
 
+  bool _isUiHidden = true;
+
+  late AnimationController _visibilityController;
+  late Animation<double> _animation;
+
   @override
   void initState() {
     super.initState();
+    _isUiHidden = true;
     _enterFullScreen();
     _loadData();
     WakelockPlus.enable();
+
+    _visibilityController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _animation = CurvedAnimation(
+      parent: _visibilityController,
+      curve: Curves.easeInOut,
+    );
+
+    if (_isUiHidden) {
+      _visibilityController.value = 0.0;
+    } else {
+      _visibilityController.value = 1.0;
+    }
   }
 
   @override
@@ -60,6 +82,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _exitFullScreen();
     WakelockPlus.disable();
     _scrollPercentage.dispose();
+    _visibilityController.dispose();
     super.dispose();
   }
 
@@ -72,6 +95,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values,
     );
+  }
+
+  void _handleToggleUiVisibility() {
+    setState(() {
+      _isUiHidden = !_isUiHidden;
+    });
+
+    if (_isUiHidden) {
+      _visibilityController.reverse();
+      _enterFullScreen();
+    } else {
+      _visibilityController.forward();
+      _exitFullScreen();
+    }
   }
 
   Future<void> _loadData() async {
@@ -401,28 +438,36 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     return Scaffold(
       backgroundColor: appState.readerSettings.backgroundColor,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight * 2),
-        child: ValueListenableBuilder<double>(
-          valueListenable: _scrollPercentage,
-          builder: (context, percentage, child) {
-            return ReaderAppBar(
-              title:
-                  isLoading || errorMessage != null || currentChapter == null
-                      ? null
-                      : currentChapter!.title,
-              readerSettings: appState.readerSettings,
-              onSettingsPressed: () => _showSettingsModal(context),
-              wordCount: _wordCount,
-              scrollPercentage: percentage,
-              scrollController: ScrollController(),
-              appBarColor: colorScheme.surfaceContainerHighest.withOpacity(0.7),
-            );
-          },
-        ),
-      ),
+      appBar:
+          _isUiHidden
+              ? null
+              : PreferredSize(
+                preferredSize: const Size.fromHeight(kToolbarHeight * 2),
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _scrollPercentage,
+                  builder: (context, percentage, child) {
+                    return ReaderAppBar(
+                      title:
+                          isLoading ||
+                                  errorMessage != null ||
+                                  currentChapter == null
+                              ? null
+                              : currentChapter!.title,
+                      readerSettings: appState.readerSettings,
+                      onSettingsPressed: () => _showSettingsModal(context),
+                      wordCount: _wordCount,
+                      scrollPercentage: percentage,
+                      scrollController: ScrollController(),
+                      appBarColor: colorScheme.surfaceContainerHighest
+                          .withOpacity(0.7),
+                    );
+                  },
+                ),
+              ),
       endDrawer:
-          novel != null
+          _isUiHidden
+              ? null
+              : novel != null
               ? Drawer(
                 backgroundColor: colorScheme.surfaceVariant,
                 child: ChapterListWidget(
@@ -433,51 +478,57 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 ),
               )
               : null,
-      body: GestureDetector(
-        child: Stack(
-          children: [
-            Builder(
-              builder: (context) {
-                if (isLoading) {
-                  return const Center(child: ChapterDisplaySkeleton());
-                } else if (errorMessage != null) {
-                  return Center(
-                    child: ErrorMessageWidget(errorMessage: errorMessage!),
-                  );
-                } else if (novel == null || currentChapter == null) {
-                  return Center(child: Text("Erro Inesperado".translate));
-                } else {
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ChapterDisplay(
-                          chapterContent: currentChapter?.content,
+      body: Stack(
+        children: [
+          Builder(
+            builder: (context) {
+              if (isLoading) {
+                return const Center(child: ChapterDisplaySkeleton());
+              } else if (errorMessage != null) {
+                return Center(
+                  child: ErrorMessageWidget(errorMessage: errorMessage!),
+                );
+              } else if (novel == null || currentChapter == null) {
+                return Center(child: Text("Erro Inesperado".translate));
+              } else {
+                return Column(
+                  children: [
+                    Expanded(
+                      child: ChapterDisplay(
+                        chapterContent: currentChapter?.content,
+                        readerSettings: appState.readerSettings,
+                        chapterId: currentChapter!.id,
+                        scrollPercentageNotifier: _scrollPercentage,
+                        onToggleUiVisibility: _handleToggleUiVisibility,
+                      ),
+                    ),
+                    FadeTransition(
+                      opacity: _animation,
+                      child: SizeTransition(
+                        sizeFactor: _animation,
+                        axis: Axis.vertical,
+                        child: ChapterNavigation(
+                          onPreviousChapter: _goToPreviousChapter,
+                          onNextChapter: _goToNextChapter,
+                          isLoading: isLoading,
                           readerSettings: appState.readerSettings,
-                          chapterId: currentChapter!.id,
-                          scrollPercentageNotifier: _scrollPercentage,
+                          currentChapterIndex: currentChapterIndex,
+                          chapters: novel!.chapters,
+                          novelId: widget.novelId,
+                          onChapterTap: _onChapterTap,
+                          lastReadChapterId: _lastReadChapterId,
+                          readChapterIds: const {},
+                          onMarkAsRead: _onMarkAsRead,
+                          navigationColor: colorScheme.surfaceContainer,
                         ),
                       ),
-                      ChapterNavigation(
-                        onPreviousChapter: _goToPreviousChapter,
-                        onNextChapter: _goToNextChapter,
-                        isLoading: isLoading,
-                        readerSettings: appState.readerSettings,
-                        currentChapterIndex: currentChapterIndex,
-                        chapters: novel!.chapters,
-                        novelId: widget.novelId,
-                        onChapterTap: _onChapterTap,
-                        lastReadChapterId: _lastReadChapterId,
-                        readChapterIds: const {},
-                        onMarkAsRead: _onMarkAsRead,
-                        navigationColor: colorScheme.surfaceContainer,
-                      ),
-                    ],
-                  );
-                }
-              },
-            ),
-          ],
-        ),
+                    ),
+                  ],
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }

@@ -14,6 +14,7 @@ class ChapterDisplay extends StatefulWidget {
   final String chapterId;
   final ReaderSettings readerSettings;
   final ValueNotifier<double> scrollPercentageNotifier;
+  final VoidCallback? onToggleUiVisibility;
 
   const ChapterDisplay({
     super.key,
@@ -21,6 +22,7 @@ class ChapterDisplay extends StatefulWidget {
     required this.readerSettings,
     required this.chapterId,
     required this.scrollPercentageNotifier,
+    this.onToggleUiVisibility,
   });
 
   @override
@@ -40,6 +42,8 @@ class _ChapterDisplayState extends State<ChapterDisplay>
 
   static const double _headerMargin = 20.0;
   static const double _bottomMargin = 20.0;
+
+  bool _isUiHidden = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -435,6 +439,13 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     }
   }
 
+  void _toggleUiVisibility() {
+    setState(() {
+      _isUiHidden = !_isUiHidden;
+    });
+    widget.onToggleUiVisibility?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -443,18 +454,23 @@ class _ChapterDisplayState extends State<ChapterDisplay>
     return Scaffold(
       body: Stack(
         children: [
-          Listener(
-            onPointerSignal: (pointerSignal) {
-              if (pointerSignal is PointerScrollEvent) {}
-            },
-            child: RefreshIndicator(
-              onRefresh: _reloadWebView,
-              backgroundColor: theme.colorScheme.surface,
-              color: theme.colorScheme.primary,
-              child:
-                  _webViewController != null
-                      ? WebViewWidget(controller: _webViewController!)
-                      : const Center(child: Text("Erro ao carregar WebView.")),
+          GestureDetector(
+            onDoubleTap: _toggleUiVisibility,
+            child: Listener(
+              onPointerSignal: (pointerSignal) {
+                if (pointerSignal is PointerScrollEvent) {}
+              },
+              child: RefreshIndicator(
+                onRefresh: _reloadWebView,
+                backgroundColor: theme.colorScheme.surface,
+                color: theme.colorScheme.primary,
+                child:
+                    _webViewController != null
+                        ? WebViewWidget(controller: _webViewController!)
+                        : const Center(
+                          child: Text("Erro ao carregar WebView."),
+                        ),
+              ),
             ),
           ),
           if (_isLoading)
