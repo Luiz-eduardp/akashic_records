@@ -32,31 +32,35 @@ class NotificationBadge extends StatelessWidget {
         if (snapshot.hasData) {
           notificationCount = snapshot.data!.length;
         }
+
         return IconButton(
-          style: IconButton.styleFrom(
-            foregroundColor: theme.colorScheme.onSurface,
-          ),
           icon: Stack(
             children: [
-              const Icon(Icons.notifications),
+              Icon(Icons.notifications, color: theme.colorScheme.onSurface),
               if (notificationCount > 0)
                 Positioned(
-                  right: 0,
+                  right: 2,
+                  top: 2,
                   child: Container(
-                    padding: const EdgeInsets.all(1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.error,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     constraints: const BoxConstraints(
-                      minWidth: 12,
-                      minHeight: 12,
+                      minWidth: 18,
+                      minHeight: 18,
                     ),
+                    alignment: Alignment.center,
                     child: Text(
-                      '$notificationCount',
+                      notificationCount > 99 ? '99+' : '$notificationCount',
                       style: TextStyle(
                         color: theme.colorScheme.onError,
-                        fontSize: 8,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -153,8 +157,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
 
     return AdvancedDrawer(
       backdropColor: theme.colorScheme.surfaceVariant,
@@ -166,9 +168,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       disabledGestures: false,
       childDecoration: BoxDecoration(
         borderRadius: const BorderRadius.all(Radius.circular(16)),
-        boxShadow: <BoxShadow>[
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5.0),
-        ],
       ),
       drawer: AppDrawer(advancedDrawerController: _advancedDrawerController),
       child: Scaffold(
@@ -183,9 +182,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           foregroundColor: theme.colorScheme.onSurface,
           centerTitle: true,
           leading: IconButton(
-            style: IconButton.styleFrom(
-              foregroundColor: theme.colorScheme.onSurface,
-            ),
             onPressed: _handleMenuButtonPressed,
             icon: AnimatedBuilder(
               animation: _advancedDrawerController,
@@ -194,7 +190,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   _advancedDrawerController.value.visible
                       ? Icons.close
                       : Icons.menu,
-                  color: theme.colorScheme.onSurface,
                 );
               },
             ),
@@ -212,7 +207,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           onNotificationRead: _onNotificationRead,
                         ),
                   ),
-                );
+                ).then((_) {
+                  setState(() {
+                    _notificationsFuture = _loadNotifications();
+                  });
+                });
               },
             ),
           ],
@@ -223,12 +222,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           physics: const NeverScrollableScrollPhysics(),
           children: const [LibraryScreen(), FavoritesScreen(), HistoryScreen()],
         ),
-        bottomNavigationBar: _buildBottomNavigationBar(isTablet, theme),
+        bottomNavigationBar: _buildBottomNavigationBar(theme),
       ),
     );
   }
 
-  Widget _buildBottomNavigationBar(bool isTablet, ThemeData theme) {
+  Widget _buildBottomNavigationBar(ThemeData theme) {
     return Material(
       color: theme.colorScheme.surfaceContainer,
       elevation: 4,
@@ -246,30 +245,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             tabBackgroundColor: theme.colorScheme.primaryContainer,
             color: theme.colorScheme.onSurfaceVariant,
             tabs: [
-              GButton(
-                icon: Icons.library_books,
-                text: 'Biblioteca'.translate,
-                backgroundColor:
-                    _selectedIndex == 0
-                        ? theme.colorScheme.primaryContainer
-                        : null,
-              ),
-              GButton(
-                icon: Icons.favorite,
-                text: 'Favoritos'.translate,
-                backgroundColor:
-                    _selectedIndex == 1
-                        ? theme.colorScheme.primaryContainer
-                        : null,
-              ),
-              GButton(
-                icon: Icons.history,
-                text: 'Histórico'.translate,
-                backgroundColor:
-                    _selectedIndex == 2
-                        ? theme.colorScheme.primaryContainer
-                        : null,
-              ),
+              GButton(icon: Icons.library_books, text: 'Biblioteca'.translate),
+              GButton(icon: Icons.favorite, text: 'Favoritos'.translate),
+              GButton(icon: Icons.history, text: 'Histórico'.translate),
             ],
             selectedIndex: _selectedIndex,
             onTabChange: _onItemTapped,
@@ -282,12 +260,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _onNotificationRead(String notificationId) {
     setState(() {
-      _notificationsFuture = _notificationsFuture.then((notifications) {
-        notifications.removeWhere(
-          (notification) => notification['id'] == notificationId,
-        );
-        return notifications;
-      });
+      _notificationsFuture = _loadNotifications();
     });
   }
 }

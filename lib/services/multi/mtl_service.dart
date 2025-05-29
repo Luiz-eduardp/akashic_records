@@ -125,9 +125,9 @@ class MtlNovelMulti implements PluginService {
       pluginId: nameService,
       id: novelPath,
       title: $.querySelector('h1.entry-title')?.text.trim() ?? 'Untitled',
-      coverImageUrl:
-          $.querySelector('.nov-head > amp-img')?.attributes['src'] ??
-          'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed',
+      coverImageUrl: _fixCoverImageUrl(
+        $.querySelector('.nov-head > amp-img')?.attributes['src'],
+      ),
       description:
           $.querySelector('div.desc > h2')?.nextElementSibling?.text.trim() ??
           '',
@@ -298,10 +298,7 @@ class MtlNovelMulti implements PluginService {
     $.querySelectorAll('div.box.wide').forEach((el) {
       final name = el.querySelector('a.list-title')?.text.trim() ?? '';
       String cover = el.querySelector('amp-img')?.attributes['src'] ?? '';
-      if (cover.isNotEmpty &&
-          cover == 'https://www.mtlnovel.net/no-image.jpg.webp') {
-        cover = 'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
-      }
+      cover = _fixCoverImageUrl(cover);
       final path = el.querySelector('a.list-title')?.attributes['href'];
       if (path != null) {
         final novel = Novel(
@@ -327,6 +324,7 @@ class MtlNovelMulti implements PluginService {
     if (jsonResponse['items'] != null && jsonResponse['items'].isNotEmpty) {
       final List<dynamic> results = jsonResponse['items'][0]['results'];
       for (var e in results) {
+        final String cover = e['thumbnail'].toString();
         final novel = Novel(
           pluginId: nameService,
           id: e['permalink']
@@ -334,7 +332,7 @@ class MtlNovelMulti implements PluginService {
               .replaceAll(mainUrl, '')
               .replaceAll(site, ''),
           title: e['title'].toString().replaceAll(RegExp(r'<\/?strong>'), ''),
-          coverImageUrl: e['thumbnail'].toString(),
+          coverImageUrl: _fixCoverImageUrl(cover),
           author: '',
           description: '',
           genres: [],
@@ -346,6 +344,23 @@ class MtlNovelMulti implements PluginService {
       }
     }
     return novels;
+  }
+
+  String _fixCoverImageUrl(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return 'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
+    }
+
+    if (imageUrl.contains('mtlnovel.net')) {
+      return imageUrl.replaceFirst(
+        'www.mtlnovel.net',
+        'www.mtlnovels.com/wp-content/uploads',
+      );
+    }
+    if (imageUrl == 'https://www.mtlnovel.net/no-image.jpg.webp') {
+      return 'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
+    }
+    return imageUrl;
   }
 
   void dispose() {

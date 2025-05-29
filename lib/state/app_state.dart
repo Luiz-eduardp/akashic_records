@@ -5,6 +5,7 @@ import 'package:akashic_records/screens/settings/appearance_settings.dart';
 import 'package:akashic_records/services/local/local_service.dart';
 import 'package:akashic_records/services/plugins/arabic/sunovels_service.dart';
 import 'package:akashic_records/services/plugins/english/projectgutenberg_service.dart';
+import 'package:akashic_records/services/plugins/english/scribblehub_service.dart';
 import 'package:akashic_records/services/plugins/french/chireads_service.dart';
 import 'package:akashic_records/services/plugins/indonesean/indowebnovel_service.dart';
 import 'package:akashic_records/services/plugins/japanese/kakuyomu_service.dart';
@@ -18,7 +19,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:akashic_records/services/plugins/english/novelbin_service.dart';
 import 'package:akashic_records/services/plugins/english/novelonline_service.dart';
-import 'package:akashic_records/services/plugins/english/reapersscan_service.dart';
 import 'package:akashic_records/services/plugins/english/royalroad_service.dart';
 import 'package:akashic_records/services/plugins/english/webnovel_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
@@ -456,6 +456,11 @@ class AppState with ChangeNotifier {
       name: 'NovelsOnline',
       language: PluginLanguage.en,
     );
+    _pluginServices['ScribbleHub'] = ScribbleHub();
+    _pluginInfo['ScribbleHub'] = PluginInfo(
+      name: 'ScribbleHub',
+      language: PluginLanguage.en,
+    );
 
     _pluginServices['RoyalRoad'] = RoyalRoad();
     _pluginInfo['RoyalRoad'] = PluginInfo(
@@ -472,12 +477,6 @@ class AppState with ChangeNotifier {
     _pluginServices['Webnovel'] = Webnovel();
     _pluginInfo['Webnovel'] = PluginInfo(
       name: 'Webnovel',
-      language: PluginLanguage.en,
-    );
-
-    _pluginServices['ReaperScans'] = ReaperScans();
-    _pluginInfo['ReaperScans'] = PluginInfo(
-      name: 'ReaperScans',
       language: PluginLanguage.en,
     );
 

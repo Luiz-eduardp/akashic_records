@@ -44,18 +44,50 @@ class _PluginCardState extends State<PluginCard>
     }
   }
 
+  Widget _buildInfoTag({
+    required BuildContext context,
+    required String label,
+    required IconData icon,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16.0, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 4.0),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall!.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
     final theme = Theme.of(context);
-    Provider.of<AppState>(context, listen: false);
+    final colorScheme = theme.colorScheme;
+
     bool isDispositivo = widget.pluginName == 'Dispositivo';
+
     return Card(
-      elevation: 3.0,
+      elevation: 4.0,
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -70,70 +102,59 @@ class _PluginCardState extends State<PluginCard>
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12.0),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(16.0),
-                ),
+              CircleAvatar(
+                radius: 30.0,
+                backgroundColor: colorScheme.secondaryContainer,
                 child: Icon(
                   Icons.extension,
-                  size: 36.0,
-                  color: theme.colorScheme.secondary,
+                  size: 32.0,
+                  color: colorScheme.onSecondaryContainer,
                 ),
               ),
               const SizedBox(width: 16.0),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            isDispositivo
-                                ? widget.pluginName.translate
-                                : widget.pluginName,
-                            style: theme.textTheme.titleLarge!.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8.0),
-                        Text(
-                          _pluginLang,
-                          style: theme.textTheme.bodyMedium!.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      isDispositivo
+                          ? widget.pluginName.translate
+                          : widget.pluginName,
+                      style: theme.textTheme.titleLarge!.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                    const SizedBox(height: 4.0),
-                    Row(
+                    const SizedBox(height: 8.0),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
                       children: [
-                        Text(
-                          'Versão'.translate + ': ',
-                          style: theme.textTheme.bodyMedium!.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                        _buildInfoTag(
+                          context: context,
+                          label: _pluginLang,
+                          icon: Icons.language_rounded,
                         ),
-                        Text(
-                          _pluginVersion,
-                          style: theme.textTheme.bodyMedium!.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                        _buildInfoTag(
+                          context: context,
+                          label: 'v$_pluginVersion',
+                          icon: Icons.info_outline_rounded,
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8.0),
               Icon(
                 Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
+                size: 28.0,
               ),
             ],
           ),

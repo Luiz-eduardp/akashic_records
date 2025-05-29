@@ -23,66 +23,77 @@ class NovelCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      elevation: 3,
+      elevation: 4,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: colorScheme.surfaceVariant,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: colorScheme.surfaceContainer,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return AspectRatio(
-                    aspectRatio: 2 / 3,
-                    child: _buildCoverImage(
-                      context,
-                      novel.coverImageUrl,
-                      constraints,
-                    ),
-                  );
-                },
+              flex: 3,
+              child: AspectRatio(
+                aspectRatio: 2 / 3,
+                child: _buildCoverImage(context, novel.coverImageUrl),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    novel.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  if (novel.author != null && novel.author.isNotEmpty)
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                     Text(
-                      novel.author,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
+                      novel.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  const SizedBox(height: 4),
-                  Text(
-                    novel.pluginId,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.outline,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 4),
+                    if (novel.author != null && novel.author.isNotEmpty)
+                      Text(
+                        novel.author,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6.0,
+                        vertical: 2.0,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Text(
+                        novel.pluginId,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -91,14 +102,27 @@ class NovelCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCoverImage(
-    BuildContext context,
-    String coverImageUrl,
-    BoxConstraints constraints,
-  ) {
+  Widget _buildCoverImage(BuildContext context, String coverImageUrl) {
     ThemeData theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
+
+    Widget placeholderWidget = Shimmer.fromColors(
+      baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
+      highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+      child: Container(color: Colors.white),
+    );
+
+    Widget errorWidget = Container(
+      color: colorScheme.surfaceVariant,
+      child: Center(
+        child: Icon(
+          Icons.broken_image_rounded,
+          size: 48,
+          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+        ),
+      ),
+    );
 
     if (coverImageUrl.startsWith('data:image')) {
       final imageData = coverImageUrl.split(',').last;
@@ -106,11 +130,7 @@ class NovelCard extends StatelessWidget {
       return Image.memory(
         bytes,
         fit: BoxFit.cover,
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildErrorImage(context, constraints, colorScheme);
-        },
+        errorBuilder: (context, error, stackTrace) => errorWidget,
       );
     } else {
       return CachedNetworkImage(
@@ -119,43 +139,9 @@ class NovelCard extends StatelessWidget {
                 ? coverImageUrl
                 : 'https://placehold.co/400x600.png?text=Cover%20Not%20Found',
         fit: BoxFit.cover,
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        placeholder:
-            (context, url) => Shimmer.fromColors(
-              baseColor:
-                  isDarkMode ? Colors.grey[700]! : colorScheme.surfaceVariant,
-              highlightColor:
-                  isDarkMode ? Colors.grey[600]! : colorScheme.onInverseSurface,
-              child: Container(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                color: Colors.grey,
-              ),
-            ),
-        errorWidget:
-            (context, url, error) =>
-                _buildErrorImage(context, constraints, colorScheme),
+        placeholder: (context, url) => placeholderWidget,
+        errorWidget: (context, url, error) => errorWidget,
       );
     }
-  }
-
-  Widget _buildErrorImage(
-    BuildContext context,
-    BoxConstraints constraints,
-    ColorScheme colorScheme,
-  ) {
-    return Container(
-      width: constraints.maxWidth,
-      height: constraints.maxHeight,
-      color: colorScheme.surfaceVariant,
-      child: Center(
-        child: Icon(
-          Icons.broken_image,
-          size: 48,
-          color: colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
   }
 }

@@ -52,9 +52,7 @@ class AppDrawer extends StatelessWidget {
                 icon: Icons.paid,
                 title: "Github Sponsor",
                 onTap:
-                    () => launchURL(
-                      'https://github.com/sponsors/AkashicRecordsApp',
-                    ),
+                    () => launchURL('https://github.com/sponsors/Luiz-eduardp'),
               ),
               const Spacer(),
               DefaultTextStyle(
