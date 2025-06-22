@@ -105,7 +105,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 16.0,
+                ),
                 child: SearchBarWidget(
                   onSearch: _onSearchChanged,
                   onFilterPressed: null,
@@ -129,12 +132,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
               valueColor: AlwaysStoppedAnimation<Color>(
                 theme.colorScheme.primary,
               ),
+              strokeWidth: 4.0,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
             Text(
               'Pesquisando'.translate,
-              style: theme.textTheme.bodyMedium!.copyWith(
+              style: theme.textTheme.headlineSmall!.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -145,21 +150,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (_errorMessage != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.error_outline,
-                size: 48,
+                size: 80,
                 color: theme.colorScheme.error,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 24),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge!.copyWith(
+                style: theme.textTheme.headlineSmall!.copyWith(
                   color: theme.colorScheme.onErrorContainer,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -186,7 +192,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     return ListView.builder(
       itemCount: appState.selectedPlugins.length,
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
       itemBuilder: (context, index) {
         final pluginName = appState.selectedPlugins.elementAt(index);
         return PluginCard(pluginName: pluginName);
@@ -197,22 +203,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _buildNoPluginsSelected(ThemeData theme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.library_add, size: 80, color: theme.colorScheme.primary),
-            const SizedBox(height: 16),
+            Icon(
+              Icons.library_add,
+              size: 120,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 32),
             Text(
               'Nenhum plugin selecionado. Acesse as configurações para adicionar plugins.'
                   .translate,
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall!.copyWith(
                 color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 40),
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.pushNamed(context, '/plugins');
@@ -220,21 +230,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
               icon: const Icon(Icons.add),
               label: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                  horizontal: 20,
+                  vertical: 16,
                 ),
                 child: Text('Gerenciar plugins'.translate),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                elevation: 5,
+                elevation: 8,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(32),
                 ),
                 padding: EdgeInsets.zero,
-                textStyle: const TextStyle(
-                  fontSize: 16,
+                textStyle: theme.textTheme.titleMedium!.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
