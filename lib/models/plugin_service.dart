@@ -19,4 +19,5 @@ abstract class PluginService {
     Map<String, dynamic> filters,
   });
   Future<List<Novel>> getAllNovels({BuildContext? context});
+  String? get baseUrl => null;
 }
