@@ -47,6 +47,7 @@ class _ReaderScreenState extends State<ReaderScreen>
   String? _lastReadChapterId;
   int? _wordCount;
   final ValueNotifier<double> _scrollPercentage = ValueNotifier<double>(0.0);
+  Set<String> _readChapterIds = {};
 
   bool _isUiHidden = true;
 
@@ -59,7 +60,10 @@ class _ReaderScreenState extends State<ReaderScreen>
     _isUiHidden = true;
     _enterFullScreen();
     _loadData();
+    _loadReadChapters();
     WakelockPlus.enable();
+
+    _scrollPercentage.addListener(_handleScroll);
 
     _visibilityController = AnimationController(
       vsync: this,
@@ -81,9 +85,18 @@ class _ReaderScreenState extends State<ReaderScreen>
   void dispose() {
     _exitFullScreen();
     WakelockPlus.disable();
+    _scrollPercentage.removeListener(_handleScroll);
     _scrollPercentage.dispose();
     _visibilityController.dispose();
     super.dispose();
+  }
+
+  void _handleScroll() {
+    if (_scrollPercentage.value >= 0.99 && currentChapter != null) {
+      if (!_readChapterIds.contains(currentChapter!.id)) {
+        _onMarkAsRead(currentChapter!.id);
+      }
+    }
   }
 
   void _enterFullScreen() {
@@ -304,6 +317,30 @@ class _ReaderScreenState extends State<ReaderScreen>
     await prefs.setString('lastRead_${widget.novelId}', chapterId);
   }
 
+  Future<void> _loadReadChapters() async {
+    final prefs = await SharedPreferences.getInstance();
+    final readChaptersKey = 'readChapters_${widget.novelId}';
+    final readChaptersString = prefs.getString(readChaptersKey) ?? '[]';
+    try {
+      final List<dynamic> readChaptersList = jsonDecode(readChaptersString);
+      setState(() {
+        _readChapterIds = Set<String>.from(readChaptersList);
+      });
+    } catch (e) {
+      debugPrint("Erro ao carregar capítulos lidos: $e");
+      setState(() {
+        _readChapterIds = {};
+      });
+    }
+  }
+
+  Future<void> _saveReadChapters() async {
+    final prefs = await SharedPreferences.getInstance();
+    final readChaptersKey = 'readChapters_${widget.novelId}';
+    final readChaptersList = _readChapterIds.toList();
+    await prefs.setString(readChaptersKey, jsonEncode(readChaptersList));
+  }
+
   void _showSettingsModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -376,7 +413,14 @@ class _ReaderScreenState extends State<ReaderScreen>
   }
 
   void _onMarkAsRead(String chapterId) {
-    print('Capítulo marcado como lido: $chapterId');
+    setState(() {
+      if (_readChapterIds.contains(chapterId)) {
+        _readChapterIds.remove(chapterId);
+      } else {
+        _readChapterIds.add(chapterId);
+      }
+    });
+    _saveReadChapters();
   }
 
   Future<void> _addToHistory() async {
@@ -475,6 +519,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                   onChapterTap: _onChapterTap,
                   novelId: widget.novelId,
                   onMarkAsRead: _onMarkAsRead,
+                  readChapterIds: _readChapterIds,
                 ),
               )
               : null,
@@ -517,7 +562,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                           novelId: widget.novelId,
                           onChapterTap: _onChapterTap,
                           lastReadChapterId: _lastReadChapterId,
-                          readChapterIds: const {},
+                          readChapterIds: _readChapterIds,
                           onMarkAsRead: _onMarkAsRead,
                           navigationColor: colorScheme.surfaceContainer,
                         ),
