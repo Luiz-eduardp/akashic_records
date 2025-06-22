@@ -23,14 +23,15 @@ class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.wordCount,
     required this.scrollPercentage,
     required this.scrollController,
-    required Color appBarColor,
+    required Color appBarColor, // Este parâmetro parece redundante, pois a cor é obtida de readerSettings
   });
 
   @override
   State<ReaderAppBar> createState() => _ReaderAppBarState();
 
+  // Altura ajustada para a AppBar padrão + uma linha compacta para status + barra de progresso
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight * 2);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 27.0);
 }
 
 class _ReaderAppBarState extends State<ReaderAppBar> {
@@ -121,98 +122,112 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // O Provider.of<AppState>(context) é usado aqui para garantir que o widget
+    // seja reconstruído quando o AppState mudar, o que é necessário para
+    // reagir a mudanças nas configurações do leitor.
     Provider.of<AppState>(context);
 
     return Material(
       color: widget.readerSettings.backgroundColor,
       elevation: 1,
-      child: Column(
-        children: [
-          AppBar(
-            backgroundColor: Colors.transparent,
-            foregroundColor: widget.readerSettings.textColor,
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            centerTitle: true,
-            title: Text(
-              widget.title ?? "Carregando...".translate,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: widget.readerSettings.textColor,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.settings,
+      child: SafeArea( // Adicionado SafeArea para evitar sobreposição com a barra de status do sistema
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              foregroundColor: widget.readerSettings.textColor,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              centerTitle: true,
+              title: Text(
+                widget.title ?? "Carregando...".translate,
+                style: theme.textTheme.titleLarge?.copyWith(
                   color: widget.readerSettings.textColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 18, // Tamanho da fonte ajustado para caber melhor
                 ),
-                onPressed: widget.onSettingsPressed,
-                tooltip: 'Configurações de Leitura'.translate,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 4.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _currentTime,
-                  style: TextStyle(
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.settings,
                     color: widget.readerSettings.textColor,
-                    fontSize: 12,
                   ),
+                  onPressed: widget.onSettingsPressed,
+                  tooltip: 'Configurações de Leitura'.translate,
                 ),
-                Text(
-                  widget.wordCount != null
-                      ? '${widget.wordCount} ' + 'palavras'.translate
-                      : '',
-                  style: TextStyle(
-                    color: widget.readerSettings.textColor,
-                    fontSize: 12,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '↓${_currentSpeed.downloadSpeed} Kbps ↑${_currentSpeed.uploadSpeed} Kbps',
-                      style: TextStyle(
-                        color: widget.readerSettings.textColor,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.battery_std,
+                Builder(
+                  builder: (context) => IconButton(
+                    icon: Icon(
+                      Icons.list,
                       color: widget.readerSettings.textColor,
-                      size: 16,
                     ),
-                    Text(
-                      ' $_batteryLevel%',
-                      style: TextStyle(
-                        color: widget.readerSettings.textColor,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                    onPressed: () => Scaffold.of(context).openEndDrawer(),
+                    tooltip: 'Lista de Capítulos'.translate,
+                  ),
                 ),
               ],
             ),
-          ),
-          LinearProgressIndicator(
-            value: _currentScrollPercentage,
-            backgroundColor: theme.colorScheme.primary,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.primary,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _currentTime,
+                    style: TextStyle(
+                      color: widget.readerSettings.textColor,
+                      fontSize: 11,
+                    ),
+                  ),
+                  if (widget.wordCount != null)
+                    Text(
+                      '${widget.wordCount} ' + 'palavras'.translate,
+                      style: TextStyle(
+                        color: widget.readerSettings.textColor,
+                        fontSize: 11,
+                      ),
+                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '↓${_currentSpeed.downloadSpeed} Kbps ↑${_currentSpeed.uploadSpeed} Kbps',
+                        style: TextStyle(
+                          color: widget.readerSettings.textColor,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.battery_std,
+                        color: widget.readerSettings.textColor,
+                        size: 14,
+                      ),
+                      Text(
+                        ' $_batteryLevel%',
+                        style: TextStyle(
+                          color: widget.readerSettings.textColor,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            LinearProgressIndicator(
+              value: _currentScrollPercentage,
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.primary,
+              ),
+              minHeight: 3.0,
+            ),
+          ],
+        ),
       ),
     );
   }
