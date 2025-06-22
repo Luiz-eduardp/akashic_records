@@ -52,15 +52,15 @@ class _PluginCardState extends State<PluginCard>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(8.0),
+        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(6.0),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16.0, color: colorScheme.onSurfaceVariant),
+          Icon(icon, size: 14.0, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 4.0),
           Text(
             label,
@@ -84,10 +84,10 @@ class _PluginCardState extends State<PluginCard>
     bool isDispositivo = widget.pluginName == 'Dispositivo';
 
     return Card(
-      elevation: 4.0,
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      elevation: 2.0,
+      margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -100,20 +100,20 @@ class _PluginCardState extends State<PluginCard>
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 30.0,
-                backgroundColor: colorScheme.secondaryContainer,
+                radius: 24.0,
+                backgroundColor: colorScheme.surfaceVariant,
                 child: Icon(
-                  Icons.extension,
-                  size: 32.0,
-                  color: colorScheme.onSecondaryContainer,
+                  Icons.extension_outlined,
+                  size: 28.0,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(width: 16.0),
+              const SizedBox(width: 12.0),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,9 +123,9 @@ class _PluginCardState extends State<PluginCard>
                       isDispositivo
                           ? widget.pluginName.translate
                           : widget.pluginName,
-                      style: theme.textTheme.titleLarge!.copyWith(
+                      style: theme.textTheme.titleMedium!.copyWith(
                         color: colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -138,12 +138,12 @@ class _PluginCardState extends State<PluginCard>
                         _buildInfoTag(
                           context: context,
                           label: _pluginLang,
-                          icon: Icons.language_rounded,
+                          icon: Icons.language_outlined,
                         ),
                         _buildInfoTag(
                           context: context,
                           label: 'v$_pluginVersion',
-                          icon: Icons.info_outline_rounded,
+                          icon: Icons.info_outline,
                         ),
                       ],
                     ),
