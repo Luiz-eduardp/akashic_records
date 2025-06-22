@@ -359,7 +359,10 @@ class _ChapterListWidgetState extends State<ChapterListWidget>
                           child: Center(
                             child:
                                 _allChaptersLoaded
-                                    ? Text('No More Chapters'.translate)
+                                    ? Text(
+                                      'No More Chapters'.translate,
+                                      style: theme.textTheme.bodyMedium,
+                                    )
                                     : CircularProgressIndicator(
                                       color: theme.colorScheme.primary,
                                     ),
