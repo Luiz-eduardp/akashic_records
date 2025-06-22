@@ -337,7 +337,10 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
       appBar: AppBar(
         title: Text(
           widget.pluginName,
-          style: TextStyle(color: theme.colorScheme.onSurface),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         actionsIconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         backgroundColor: theme.colorScheme.surface,
@@ -361,36 +364,39 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                 }).toList();
               },
               style: ButtonStyle(
-                iconSize: const MaterialStatePropertyAll(30),
+                iconSize: const MaterialStatePropertyAll(24),
                 backgroundColor: MaterialStatePropertyAll(
-                  theme.colorScheme.secondaryContainer,
+                  theme.colorScheme.secondaryContainer.withOpacity(0.3),
                 ),
                 foregroundColor: MaterialStatePropertyAll(
                   theme.colorScheme.onSecondaryContainer,
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Align(
                   alignment: Alignment.center,
                   child: Text(
                     _languageMap[_selectedLanguage] ?? "Desconhecido".translate,
-                    style: TextStyle(color: theme.colorScheme.onSurface),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
             ),
           if (widget.pluginName == 'Dispositivo')
             IconButton(
-              icon: const Icon(Icons.file_upload),
+              icon: const Icon(Icons.file_upload_outlined),
               tooltip: 'Importar Novels'.translate,
               onPressed: () {
                 _importNovelsFromDevice();
               },
               style: ButtonStyle(
-                iconSize: const MaterialStatePropertyAll(30),
+                iconSize: const MaterialStatePropertyAll(24),
                 backgroundColor: MaterialStatePropertyAll(
-                  theme.colorScheme.secondaryContainer,
+                  theme.colorScheme.secondaryContainer.withOpacity(0.3),
                 ),
                 foregroundColor: MaterialStatePropertyAll(
                   theme.colorScheme.onSecondaryContainer,
@@ -407,13 +413,16 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
             Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    vertical: 4.0,
+                  ),
                   child: SearchBarWidget(
                     onSearch: _onSearchChanged,
                     onFilterPressed: null,
                   ),
                 ),
-                Expanded(child: _buildNovelDisplay()),
+                Expanded(child: _buildNovelDisplay(theme)),
                 _buildPaginationButtons(totalPages),
                 if (_errorMessage != null)
                   Padding(
@@ -429,11 +438,11 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
             if (_isLoading)
               Positioned.fill(
                 child: Container(
-                  color: theme.colorScheme.background.withOpacity(0.5),
+                  color: theme.colorScheme.background.withOpacity(0.3),
                   child: Center(
                     child: CircularProgressIndicator(
                       color: theme.colorScheme.tertiary,
-                      strokeWidth: 6,
+                      strokeWidth: 4,
                     ),
                   ),
                 ),
@@ -447,7 +456,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
   Widget _buildInitialLoadingOverlay(ThemeData theme) {
     return Positioned.fill(
       child: Container(
-        color: theme.colorScheme.surface.withOpacity(0.8),
+        color: theme.colorScheme.surface.withOpacity(0.6),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -455,8 +464,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
               Text(
                 'O primeiro carregamento pode demorar um pouco devido à quantidade de informações'
                     .translate,
-                style: TextStyle(
-                  fontSize: 16,
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
@@ -468,7 +476,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     );
   }
 
-  Widget _buildNovelDisplay() {
+  Widget _buildNovelDisplay(ThemeData theme) {
     if (_isLoading && _filteredNovels.isEmpty) {
       return _isListView
           ? ListView.builder(
@@ -481,7 +489,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
         return Center(
           child: Text(
             "Nenhuma novel encontrada.".translate,
-            style: const TextStyle(fontSize: 16),
+            style: theme.textTheme.bodyMedium,
           ),
         );
       }
@@ -503,8 +511,7 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                 return AlertDialog(
                   title: Text(
                     "Deletar Novel?".translate,
-                    style: const TextStyle(
-                      fontSize: 20,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -514,12 +521,13 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                         novel.title +
                         ' ' +
                         '?',
+                    style: theme.textTheme.bodyMedium,
                   ),
                   actions: <Widget>[
                     TextButton(
                       child: Text(
                         "Cancelar".translate,
-                        style: const TextStyle(fontSize: 16),
+                        style: theme.textTheme.labelLarge,
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
@@ -531,14 +539,12 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            Theme.of(context).colorScheme.errorContainer,
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onErrorContainer,
+                        backgroundColor: theme.colorScheme.errorContainer,
+                        foregroundColor: theme.colorScheme.onErrorContainer,
                       ),
                       child: Text(
                         "Deletar".translate,
-                        style: const TextStyle(fontSize: 16),
+                        style: theme.textTheme.labelLarge,
                       ),
                     ),
                   ],
@@ -555,30 +561,39 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back_outlined),
             onPressed: _currentPage > 1 ? _goToPreviousPage : null,
             disabledColor: Colors.grey,
             style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.secondaryContainer,
+              backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(
+                0.3,
+              ),
               foregroundColor: theme.colorScheme.onSecondaryContainer,
             ),
           ),
-          Text(
-            'P'
-            '$_currentPage',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              'P'
+              '$_currentPage',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.arrow_forward),
+            icon: const Icon(Icons.arrow_forward_outlined),
             onPressed: !_canLoadNextPage() ? null : _goToNextPage,
             disabledColor: Colors.grey,
             style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.secondaryContainer,
+              backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(
+                0.3,
+              ),
               foregroundColor: theme.colorScheme.onSecondaryContainer,
             ),
           ),
