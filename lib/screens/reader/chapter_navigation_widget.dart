@@ -64,7 +64,7 @@ class ChapterNavigation extends StatelessWidget {
                 Scaffold.of(context).openEndDrawer();
               },
               tooltip: 'Lista de Capítulos'.translate,
-              color: colorScheme.onSurfaceVariant,
+              color: colorScheme.onPrimaryContainer,
             ),
             _buildNavigationButton(
               context: context,
