@@ -52,19 +52,19 @@ class _PluginCardState extends State<PluginCard>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 3.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(6.0),
+        color: colorScheme.surfaceVariant.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(8.0),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14.0, color: colorScheme.onSurfaceVariant),
-          const SizedBox(width: 4.0),
+          Icon(icon, size: 16.0, color: colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6.0),
           Text(
             label,
-            style: theme.textTheme.labelSmall!.copyWith(
+            style: theme.textTheme.labelMedium!.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
@@ -84,10 +84,10 @@ class _PluginCardState extends State<PluginCard>
     bool isDispositivo = widget.pluginName == 'Dispositivo';
 
     return Card(
-      elevation: 2.0,
-      margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      elevation: 6.0,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -100,20 +100,20 @@ class _PluginCardState extends State<PluginCard>
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(16.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 24.0,
+                radius: 28.0,
                 backgroundColor: colorScheme.surfaceVariant,
                 child: Icon(
                   Icons.extension_outlined,
-                  size: 28.0,
+                  size: 32.0,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(width: 12.0),
+              const SizedBox(width: 16.0),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,10 +130,10 @@ class _PluginCardState extends State<PluginCard>
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
-                    const SizedBox(height: 8.0),
+                    const SizedBox(height: 10.0),
                     Wrap(
-                      spacing: 8.0,
-                      runSpacing: 4.0,
+                      spacing: 10.0,
+                      runSpacing: 6.0,
                       children: [
                         _buildInfoTag(
                           context: context,
@@ -150,11 +150,11 @@ class _PluginCardState extends State<PluginCard>
                   ],
                 ),
               ),
-              const SizedBox(width: 8.0),
+              const SizedBox(width: 12.0),
               Icon(
                 Icons.chevron_right,
                 color: colorScheme.onSurfaceVariant,
-                size: 28.0,
+                size: 32.0,
               ),
             ],
           ),
