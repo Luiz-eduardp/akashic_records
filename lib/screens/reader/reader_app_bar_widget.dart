@@ -23,13 +23,12 @@ class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.wordCount,
     required this.scrollPercentage,
     required this.scrollController,
-    required Color appBarColor, // Este parâmetro parece redundante, pois a cor é obtida de readerSettings
+    required Color appBarColor,
   });
 
   @override
   State<ReaderAppBar> createState() => _ReaderAppBarState();
 
-  // Altura ajustada para a AppBar padrão + uma linha compacta para status + barra de progresso
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 27.0);
 }
@@ -122,15 +121,12 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // O Provider.of<AppState>(context) é usado aqui para garantir que o widget
-    // seja reconstruído quando o AppState mudar, o que é necessário para
-    // reagir a mudanças nas configurações do leitor.
     Provider.of<AppState>(context);
 
     return Material(
       color: widget.readerSettings.backgroundColor,
       elevation: 1,
-      child: SafeArea( // Adicionado SafeArea para evitar sobreposição com a barra de status do sistema
+      child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -145,7 +141,7 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: widget.readerSettings.textColor,
                   fontWeight: FontWeight.w500,
-                  fontSize: 18, // Tamanho da fonte ajustado para caber melhor
+                  fontSize: 18,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -160,19 +156,23 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
                   tooltip: 'Configurações de Leitura'.translate,
                 ),
                 Builder(
-                  builder: (context) => IconButton(
-                    icon: Icon(
-                      Icons.list,
-                      color: widget.readerSettings.textColor,
-                    ),
-                    onPressed: () => Scaffold.of(context).openEndDrawer(),
-                    tooltip: 'Lista de Capítulos'.translate,
-                  ),
+                  builder:
+                      (context) => IconButton(
+                        icon: Icon(
+                          Icons.list,
+                          color: widget.readerSettings.textColor,
+                        ),
+                        onPressed: () => Scaffold.of(context).openEndDrawer(),
+                        tooltip: 'Lista de Capítulos'.translate,
+                      ),
                 ),
               ],
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 2.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
