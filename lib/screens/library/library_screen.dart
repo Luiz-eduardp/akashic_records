@@ -8,13 +8,11 @@ import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:rxdart/rxdart.dart';
-
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
-
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _searchResults = [];
@@ -27,13 +25,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
         .debounceTime(const Duration(milliseconds: 500))
         .listen(_searchAllPlugins);
   }
-
   @override
   void dispose() {
     _searchTextController.close();
     super.dispose();
   }
-
   Future<void> _searchAllPlugins(String term) async {
     setState(() {
       _isLoading = true;
@@ -72,18 +68,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     }
   }
-
   void _onSearchChanged(String term) {
     _searchTextController.add(term);
   }
-
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -119,7 +112,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
     );
   }
-
   Widget _buildContent(AppState appState, ThemeData theme) {
     if (_isLoading) {
       return Center(
@@ -193,7 +185,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       },
     );
   }
-
   Widget _buildNoPluginsSelected(ThemeData theme) {
     return Center(
       child: Padding(
