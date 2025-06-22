@@ -242,14 +242,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             gap: 10,
             activeColor: theme.colorScheme.primary,
             iconSize: 26,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             duration: const Duration(milliseconds: 400),
             tabBackgroundColor: theme.colorScheme.primaryContainer,
             color: theme.colorScheme.onSurfaceVariant,
             tabs: [
-              GButton(icon: Icons.library_books, text: 'Biblioteca'.translate),
-              GButton(icon: Icons.favorite, text: 'Favoritos'.translate),
-              GButton(icon: Icons.history, text: 'Histórico'.translate),
+              GButton(
+                icon: Icons.library_books,
+                text: 'Biblioteca'.translate,
+                textStyle: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              GButton(
+                icon: Icons.favorite,
+                text: 'Favoritos'.translate,
+                textStyle: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              GButton(
+                icon: Icons.history,
+                text: 'Histórico'.translate,
+                textStyle: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
             selectedIndex: _selectedIndex,
             onTabChange: _onItemTapped,
