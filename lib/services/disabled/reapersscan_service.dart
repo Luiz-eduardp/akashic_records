@@ -5,6 +5,8 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' as parser;
+import 'package:html/dom.dart' as dom;
 
 class ReaperScans implements PluginService {
   @override
@@ -210,35 +212,23 @@ class ReaperScans implements PluginService {
     }
   }
 
-  String extractChapterContent(String chapter) {
+  String extractChapterContent(String chapterHtml) {
     try {
-      final contentSplit = chapter.split('\n').firstWhere((e) {
-        return e.length >= 50 && e.substring(0, 50).contains('<p');
-      }, orElse: () => '');
+      final dom.Document $ = parser.parse(chapterHtml);
+      final contentElement =
+          $.querySelector('div.entry-content') ??
+          $.querySelector('article.post') ??
+          $.querySelector('div.chapter-content');
 
-      if (contentSplit.isEmpty) {
-        print('Could not find content with <p tag');
-        return 'Could not load content';
+      if (contentElement != null) {
+        return contentElement.innerHtml;
+      } else {
+        print('Could not find chapter content element.');
+        return 'Could not load content: Content element not found.';
       }
-
-      final content = contentSplit;
-      final prefix = content.substring(0, content.indexOf('<'));
-      final commonPrefix = prefix.substring(
-        prefix.indexOf(':'),
-        prefix.indexOf(','),
-      );
-
-      final deduplicated = content.split(commonPrefix)[1];
-      print(
-        'Prefix: $prefix, Common Prefix: $commonPrefix, Content Length: ${content.length}, Deduplicated Length: ${deduplicated.length}',
-      );
-      return deduplicated.substring(
-        deduplicated.indexOf('<'),
-        deduplicated.lastIndexOf('>') + 1,
-      );
     } catch (e) {
-      print('Erro ao extract chapter content: $e');
-      return 'Erro ao carregar capítulo';
+      print('Erro ao extract chapter content com parser: $e');
+      return 'Erro ao carregar capítulo: $e';
     }
   }
 
