@@ -267,7 +267,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                     overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.headlineSmall
                                         ?.copyWith(
-                                          fontWeight: FontWeight.w700,
+                                          fontWeight: FontWeight.w600,
                                           color: Colors.white,
                                           shadows: const [
                                             Shadow(
@@ -281,7 +281,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                   if (widget.novel.author != null &&
                                       widget.novel.author.isNotEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
+                                      padding: const EdgeInsets.only(top: 4.0),
                                       child: Text(
                                         'por ${widget.novel.author.split(' ').take(2).join(' ')}',
                                         textAlign: TextAlign.center,
@@ -298,12 +298,24 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                                             ),
                                       ),
                                     ),
-                                  Text(
-                                    widget.novel.status.name
-                                        .toString()
-                                        .translate,
-                                    style:
-                                        theme.textTheme.titleSmall?.copyWith(),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      widget.novel.status.name
+                                          .toString()
+                                          .translate,
+                                      style: theme.textTheme.titleSmall
+                                          ?.copyWith(
+                                            color: Colors.white70,
+                                            shadows: const [
+                                              Shadow(
+                                                blurRadius: 2,
+                                                color: Colors.black54,
+                                                offset: Offset(1, 1),
+                                              ),
+                                            ],
+                                          ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -320,7 +332,7 @@ class _NovelDetailsWidgetState extends State<NovelDetailsWidget>
                           Text(
                             'Resumo'.translate,
                             style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: colorScheme.onSurface,
                             ),
                           ),
