@@ -9,6 +9,7 @@ class ChapterListWidget extends StatefulWidget {
   final Function(String) onChapterTap;
   final String novelId;
   final void Function(String chapterId) onMarkAsRead;
+  final Set<String> readChapterIds;
 
   const ChapterListWidget({
     super.key,
@@ -16,6 +17,7 @@ class ChapterListWidget extends StatefulWidget {
     required this.onChapterTap,
     required this.novelId,
     required this.onMarkAsRead,
+    required this.readChapterIds,
   });
 
   @override
@@ -234,37 +236,68 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                     itemBuilder: (context, index) {
                       if (index < displayedChapters.length) {
                         final chapter = displayedChapters[index];
+                        final isRead = widget.readChapterIds.contains(
+                          chapter.id,
+                        );
+
                         return Card(
                           elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          margin: EdgeInsets.symmetric(vertical: 5),
+                          margin: const EdgeInsets.symmetric(vertical: 5),
 
-                          child: InkWell(
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 8.0,
+                              horizontal: 16.0,
+                            ),
+                            title: Text(
+                              chapter.title,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color:
+                                    isRead
+                                        ? theme.colorScheme.onSurface
+                                            .withOpacity(0.6)
+                                        : theme.colorScheme.onSurface,
+                                fontStyle:
+                                    isRead
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${chapter.chapterNumber != null ? 'Capítulo ${chapter.chapterNumber}' : ''}${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color:
+                                    isRead
+                                        ? theme.colorScheme.onSurfaceVariant
+                                            .withOpacity(0.6)
+                                        : theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                             onTap: () {
                               widget.onChapterTap(chapter.id);
                               _searchFocusNode.unfocus();
                             },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14.0,
-                                horizontal: 16.0,
+                            trailing: IconButton(
+                              icon: Icon(
+                                isRead
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                color:
+                                    isRead
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurfaceVariant,
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${chapter.chapterNumber != null ? '${chapter.chapterNumber}: ' : ''}${chapter.title}${chapter.releaseDate != null ? ' - ${chapter.releaseDate}' : ''}',
-                                      style: theme.textTheme.bodyLarge
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w500,
-                                            color: theme.colorScheme.onSurface,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              tooltip:
+                                  isRead
+                                      ? 'Marcar como não lido'.translate
+                                      : 'Marcar como lido'.translate,
+                              onPressed: () {
+                                widget.onMarkAsRead(chapter.id);
+                              },
                             ),
                           ),
                         );
