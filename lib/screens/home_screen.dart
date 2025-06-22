@@ -174,8 +174,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         appBar: AppBar(
           title: Text(
             'Akashic Records'.translate,
-            style: theme.textTheme.titleLarge?.copyWith(
+            style: theme.textTheme.headlineSmall?.copyWith(
               color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
             ),
           ),
           backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -190,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   _advancedDrawerController.value.visible
                       ? Icons.close
                       : Icons.menu,
+                  size: 28,
                 );
               },
             ),
@@ -215,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               },
             ),
           ],
-          elevation: 2,
+          elevation: 4,
         ),
         body: TabBarView(
           controller: _tabController,
@@ -230,17 +232,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildBottomNavigationBar(ThemeData theme) {
     return Material(
       color: theme.colorScheme.surfaceContainer,
-      elevation: 4,
+      elevation: 8,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
           child: GNav(
             rippleColor: theme.colorScheme.primary.withOpacity(0.1),
             hoverColor: theme.colorScheme.primary.withOpacity(0.1),
-            gap: 8,
+            gap: 10,
             activeColor: theme.colorScheme.primary,
-            iconSize: 24,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            iconSize: 26,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             duration: const Duration(milliseconds: 400),
             tabBackgroundColor: theme.colorScheme.primaryContainer,
             color: theme.colorScheme.onSurfaceVariant,
