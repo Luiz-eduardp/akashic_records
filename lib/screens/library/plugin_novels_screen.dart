@@ -4,7 +4,6 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:akashic_records/screens/library/novel_grid_widget.dart';
 import 'package:akashic_records/screens/library/search_bar_widget.dart';
-import 'package:akashic_records/services/local/local_service.dart';
 import 'package:akashic_records/services/multi/mtl_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -280,48 +279,48 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     });
   }
 
-  Future<void> _deleteNovel(
-    Novel novel, {
-    required BuildContext context,
-  }) async {
-    if (widget.pluginName != 'Dispositivo') return;
+  // Future<void> _deleteNovel(
+  //   Novel novel, {
+  //   required BuildContext context,
+  // }) async {
+  //   if (widget.pluginName != 'Dispositivo') return;
 
-    setState(() {
-      _isLoading = true;
-    });
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
 
-    try {
-      final appState = Provider.of<AppState>(context, listen: false);
-      final dispositivoPlugin =
-          appState.pluginServices[widget.pluginName] as Dispositivo;
+  //   try {
+  //     final appState = Provider.of<AppState>(context, listen: false);
+  //     final dispositivoPlugin =
+  //         // appState.pluginServices[widget.pluginName] as Dispositivo;
 
-      if (dispositivoPlugin != null) {
-        await dispositivoPlugin.deleteNovel(novel.id, context: context);
-        appState.localNovels.removeWhere((n) => n.id == novel.id);
+  //     if (dispositivoPlugin != null) {
+  //       await dispositivoPlugin.deleteNovel(novel.id, context: context);
+  //       appState.localNovels.removeWhere((n) => n.id == novel.id);
 
-        setState(() {
-          _novels.remove(novel);
-          _filteredNovels.remove(novel);
-        });
+  //       setState(() {
+  //         _novels.remove(novel);
+  //         _filteredNovels.remove(novel);
+  //       });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Novel deletada com sucesso.'.translate)),
-        );
-      } else {
-        setState(() {
-          _errorMessage = 'Plugin Dispositivo não encontrado'.translate;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Erro ao deletar novel: ${e.toString()}'.translate;
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Novel deletada com sucesso.'.translate)),
+  //       );
+  //     } else {
+  //       setState(() {
+  //         _errorMessage = 'Plugin Dispositivo não encontrado'.translate;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       _errorMessage = 'Erro ao deletar novel: ${e.toString()}'.translate;
+  //     });
+  //   } finally {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -386,23 +385,23 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                 ),
               ),
             ),
-          if (widget.pluginName == 'Dispositivo')
-            IconButton(
-              icon: const Icon(Icons.file_upload_outlined),
-              tooltip: 'Importar Novels'.translate,
-              onPressed: () {
-                _importNovelsFromDevice();
-              },
-              style: ButtonStyle(
-                iconSize: const MaterialStatePropertyAll(24),
-                backgroundColor: MaterialStatePropertyAll(
-                  theme.colorScheme.secondaryContainer.withOpacity(0.3),
-                ),
-                foregroundColor: MaterialStatePropertyAll(
-                  theme.colorScheme.onSecondaryContainer,
-                ),
-              ),
-            ),
+          // if (widget.pluginName == 'Dispositivo')
+          //   IconButton(
+          //     icon: const Icon(Icons.file_upload_outlined),
+          //     tooltip: 'Importar Novels'.translate,
+          //     // onPressed: () {
+          //     //   _importNovelsFromDevice();
+          //     // },
+          //     style: ButtonStyle(
+          //       iconSize: const MaterialStatePropertyAll(24),
+          //       backgroundColor: MaterialStatePropertyAll(
+          //         theme.colorScheme.secondaryContainer.withOpacity(0.3),
+          //       ),
+          //       foregroundColor: MaterialStatePropertyAll(
+          //         theme.colorScheme.onSecondaryContainer,
+          //       ),
+          //     ),
+          //   ),
         ],
         surfaceTintColor: theme.colorScheme.surfaceVariant,
         titleTextStyle: const TextStyle(fontWeight: FontWeight.bold),
@@ -533,20 +532,20 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
                         Navigator.of(context).pop();
                       },
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        _deleteNovel(novel, context: context);
-                        Navigator.of(context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.errorContainer,
-                        foregroundColor: theme.colorScheme.onErrorContainer,
-                      ),
-                      child: Text(
-                        "Deletar".translate,
-                        style: theme.textTheme.labelLarge,
-                      ),
-                    ),
+                    // ElevatedButton(
+                    //   // onPressed: () {
+                    //   //   _deleteNovel(novel, context: context);
+                    //   //   Navigator.of(context).pop();
+                    //   // },
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: theme.colorScheme.errorContainer,
+                    //     foregroundColor: theme.colorScheme.onErrorContainer,
+                    //   ),
+                    //   child: Text(
+                    //     "Deletar".translate,
+                    //     style: theme.textTheme.labelLarge,
+                    //   ),
+                    // ),
                   ],
                 );
               },
@@ -613,51 +612,51 @@ class _PluginNovelsScreenState extends State<PluginNovelsScreen> {
     return false;
   }
 
-  Future<void> _importNovelsFromDevice() async {
-    setState(() {
-      _isLoading = true;
-    });
+  // Future<void> _importNovelsFromDevice() async {
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
 
-    try {
-      final appState = Provider.of<AppState>(context, listen: false);
-      final dispositivoPlugin =
-          appState.pluginServices[widget.pluginName] as Dispositivo;
+  //   try {
+  //     final appState = Provider.of<AppState>(context, listen: false);
+  //     final dispositivoPlugin =
+  //         appState.pluginServices[widget.pluginName] as Dispositivo?;
 
-      if (dispositivoPlugin != null) {
-        List<Novel> importedNovels = await dispositivoPlugin.getAllNovels(
-          context: context,
-        );
+  //     if (dispositivoPlugin != null) {
+  //       List<Novel> importedNovels = await dispositivoPlugin.getAllNovels(
+  //         context: context,
+  //       );
 
-        setState(() {
-          _novels.clear();
-          _novels.addAll(appState.localNovels);
-          _updateFilteredNovels();
-        });
+  //       setState(() {
+  //         _novels.clear();
+  //         _novels.addAll(appState.localNovels);
+  //         _updateFilteredNovels();
+  //       });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Sucesso ao importar'.translate +
-                  ' ' +
-                  importedNovels.length.toString() +
-                  ' ' +
-                  'novels'.translate,
-            ),
-          ),
-        );
-      } else {
-        setState(() {
-          _errorMessage = 'Plugin Dispositivo não encontrado'.translate;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Erro ao importar'.translate + ' ' + e.toString();
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             'Sucesso ao importar'.translate +
+  //                 ' ' +
+  //                 importedNovels.length.toString() +
+  //                 ' ' +
+  //                 'novels'.translate,
+  //           ),
+  //         ),
+  //       );
+  //     } else {
+  //       setState(() {
+  //         _errorMessage = 'Plugin Dispositivo não encontrado'.translate;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       _errorMessage = 'Erro ao importar'.translate + ' ' + e.toString();
+  //     });
+  //   } finally {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
 }
