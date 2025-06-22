@@ -380,20 +380,24 @@ class _ChapterDisplayState extends State<ChapterDisplay>
             font-weight: $fontWeight;
             padding-top: ${_headerMargin}px;
             padding-bottom: ${_bottomMargin}px;
-            word-wrap: break-word;
-            -webkit-user-select: text; 
-            -moz-user-select: text; 
-            -ms-user-select: text; 
-            user-select: text; 
+          word-wrap: break-word;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
             $textAlignStyle
           }
           h1 {
-            font-size: ${readerSettings.fontSize + 6}px;
+            font-size: ${readerSettings.fontSize + 8}px; /* Aumentado */
             color: ${_colorToHtmlColor(readerSettings.textColor)};
+            margin-top: 1.5em; /* Adicionado */
+            margin-bottom: 0.8em; /* Adicionado */
           }
           h2 {
-            font-size: ${readerSettings.fontSize + 4}px;
+            font-size: ${readerSettings.fontSize + 5}px; /* Aumentado */
             color: ${_colorToHtmlColor(readerSettings.textColor)};
+            margin-top: 1.2em; /* Adicionado */
+            margin-bottom: 0.6em; /* Adicionado */
           }
           p {
             color: ${_colorToHtmlColor(readerSettings.textColor)};
@@ -406,6 +410,47 @@ class _ChapterDisplayState extends State<ChapterDisplay>
           b, strong {
             font-weight: bold;
             color: ${_colorToHtmlColor(readerSettings.textColor)};
+          }
+          img { /* Adicionado estilo para imagens */
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 1em auto;
+          }
+          ul, ol { /* Adicionado estilo para listas */
+            margin-bottom: 1em;
+            padding-left: 1.5em;
+          }
+          li { /* Adicionado estilo para itens de lista */
+            margin-bottom: 0.5em;
+          }
+          blockquote { /* Adicionado estilo para blockquotes */
+            border-left: 4px solid ${_colorToHtmlColor(readerSettings.textColor.withOpacity(0.5))};
+            padding-left: 1em;
+            margin-left: 1em;
+            font-style: italic;
+          }
+          pre { /* Adicionado estilo para código pré-formatado */
+            background-color: ${_colorToHtmlColor(readerSettings.textColor.withOpacity(0.1))};
+            padding: 1em;
+            overflow-x: auto;
+            margin-bottom: 1em;
+          }
+          code { /* Adicionado estilo para código */
+            font-family: monospace;
+          }
+          table { /* Adicionado estilo para tabelas */
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1em;
+          }
+          th, td { /* Adicionado estilo para células de tabela */
+            border: 1px solid ${_colorToHtmlColor(readerSettings.textColor.withOpacity(0.3))};
+            padding: 0.5em;
+            text-align: left;
+          }
+          th { /* Adicionado estilo para cabeçalhos de tabela */
+            background-color: ${_colorToHtmlColor(readerSettings.textColor.withOpacity(0.2))};
           }
           ${readerSettings.customCss ?? ''}
         </style>
@@ -465,25 +510,18 @@ class _ChapterDisplayState extends State<ChapterDisplay>
                 backgroundColor: theme.colorScheme.surface,
                 color: theme.colorScheme.primary,
                 child:
-                    _webViewController != null
+                    _webViewController != null && !_isLoading
                         ? WebViewWidget(controller: _webViewController!)
-                        : const Center(
-                          child: Text("Erro ao carregar WebView."),
+                        : Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.primary,
+                            ),
+                          ),
                         ),
               ),
             ),
           ),
-          if (_isLoading)
-            Container(
-              color: theme.colorScheme.surface.withOpacity(0.8),
-              child: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    theme.colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
