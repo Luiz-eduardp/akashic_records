@@ -8,11 +8,13 @@ import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:rxdart/rxdart.dart';
+
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
+
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _searchResults = [];
@@ -25,11 +27,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
         .debounceTime(const Duration(milliseconds: 500))
         .listen(_searchAllPlugins);
   }
+
   @override
   void dispose() {
     _searchTextController.close();
     super.dispose();
   }
+
   Future<void> _searchAllPlugins(String term) async {
     setState(() {
       _isLoading = true;
@@ -68,15 +72,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     }
   }
+
   void _onSearchChanged(String term) {
     _searchTextController.add(term);
   }
+
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -84,7 +91,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          _onSearchChanged(_searchTextController.value);
+          if (_searchTextController.hasValue) {
+            _onSearchChanged(_searchTextController.value);
+          } else {}
           return Future.value();
         },
         color: theme.colorScheme.primary,
@@ -92,9 +101,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 16.0,
+                padding: const EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  top: 24.0,
+                  bottom: 16.0,
                 ),
                 child: SearchBarWidget(
                   onSearch: _onSearchChanged,
@@ -108,6 +119,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
     );
   }
+
   Widget _buildContent(AppState appState, ThemeData theme) {
     if (_isLoading) {
       return Center(
@@ -181,6 +193,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       },
     );
   }
+
   Widget _buildNoPluginsSelected(ThemeData theme) {
     return Center(
       child: Padding(
@@ -201,6 +214,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               style: theme.textTheme.headlineSmall!.copyWith(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 40),
