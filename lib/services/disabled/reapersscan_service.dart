@@ -5,6 +5,8 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' as parser;
+import 'package:html/dom.dart' as dom;
 
 class ReaperScans implements PluginService {
   @override
@@ -17,7 +19,7 @@ class ReaperScans implements PluginService {
   final String id = 'ReaperScans';
   final String nameService = 'ReaperScans';
   @override
-  final String version = '1.0.0';
+  final String version = '1.0.1';
   final String icon = 'src/en/reaperscans/icon.png';
   final String site = 'https://reaperscans.com';
   final String apiBase = 'https://api.reaperscans.com';
@@ -82,11 +84,22 @@ class ReaperScans implements PluginService {
   @override
   Future<Novel> parseNovel(String novelPath, {BuildContext? context}) async {
     try {
-      final novelResp = await safeFetch(
-        '$apiBase/series/$novelPath',
-        context: context,
-        headers: _headers,
-      );
+      final responses = await Future.wait([
+        safeFetch(
+          '$apiBase/series/$novelPath',
+          context: context,
+          headers: _headers,
+        ),
+        safeFetch(
+          '$apiBase/chapters/$novelPath?perPage=500',
+          context: context,
+          headers: _headers,
+        ),
+      ]);
+
+      final novelResp = responses[0];
+      final chaptersResp = responses[1];
+
       if (novelResp.statusCode != 200) {
         print(
           'Failed to load novel details. Status code: ${novelResp.statusCode}',
@@ -105,12 +118,6 @@ class ReaperScans implements PluginService {
         );
       }
       final novelData = jsonDecode(novelResp.body);
-
-      final chaptersResp = await safeFetch(
-        '$apiBase/chapters/$novelPath?perPage=500',
-        context: context,
-        headers: _headers,
-      );
 
       if (chaptersResp.statusCode != 200) {
         print(
@@ -205,35 +212,23 @@ class ReaperScans implements PluginService {
     }
   }
 
-  String extractChapterContent(String chapter) {
+  String extractChapterContent(String chapterHtml) {
     try {
-      final contentSplit = chapter.split('\n').firstWhere((e) {
-        return e.length >= 50 && e.substring(0, 50).contains('<p');
-      }, orElse: () => '');
+      final dom.Document $ = parser.parse(chapterHtml);
+      final contentElement =
+          $.querySelector('div.entry-content') ??
+          $.querySelector('article.post') ??
+          $.querySelector('div.chapter-content');
 
-      if (contentSplit.isEmpty) {
-        print('Could not find content with <p tag');
-        return 'Could not load content';
+      if (contentElement != null) {
+        return contentElement.innerHtml;
+      } else {
+        print('Could not find chapter content element.');
+        return 'Could not load content: Content element not found.';
       }
-
-      final content = contentSplit;
-      final prefix = content.substring(0, content.indexOf('<'));
-      final commonPrefix = prefix.substring(
-        prefix.indexOf(':'),
-        prefix.indexOf(','),
-      );
-
-      final deduplicated = content.split(commonPrefix)[1];
-      print(
-        'Prefix: $prefix, Common Prefix: $commonPrefix, Content Length: ${content.length}, Deduplicated Length: ${deduplicated.length}',
-      );
-      return deduplicated.substring(
-        deduplicated.indexOf('<'),
-        deduplicated.lastIndexOf('>') + 1,
-      );
     } catch (e) {
-      print('Erro ao extract chapter content: $e');
-      return 'Erro ao carregar capítulo';
+      print('Erro ao extract chapter content com parser: $e');
+      return 'Erro ao carregar capítulo: $e';
     }
   }
 

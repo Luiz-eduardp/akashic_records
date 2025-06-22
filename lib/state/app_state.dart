@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/screens/settings/appearance_settings.dart';
-import 'package:akashic_records/services/local/local_service.dart';
 import 'package:akashic_records/services/plugins/arabic/sunovels_service.dart';
 import 'package:akashic_records/services/plugins/english/projectgutenberg_service.dart';
 import 'package:akashic_records/services/plugins/english/scribblehub_service.dart';
@@ -410,11 +409,7 @@ class AppState with ChangeNotifier {
   late Box<ReaderSettings> _readerSettingsBox;
 
   AppState() {
-    _pluginServices['Dispositivo'] = Dispositivo();
-    _pluginInfo['Dispositivo'] = PluginInfo(
-      name: 'Dispositivo',
-      language: PluginLanguage.Local,
-    );
+
     _pluginServices['NovelMania'] = NovelMania();
     _pluginInfo['NovelMania'] = PluginInfo(
       name: 'NovelMania',

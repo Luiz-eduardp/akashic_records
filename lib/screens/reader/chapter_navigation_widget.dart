@@ -44,39 +44,51 @@ class ChapterNavigation extends StatelessWidget {
     return Material(
       color: navigationColor,
       elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavigationButton(
-              context: context,
-              onPressed: canGoPrevious ? onPreviousChapter : null,
-              icon: Icons.arrow_back_ios_new_rounded,
-              label: 'Anterior'.translate,
-              isEnabled: canGoPrevious,
-              theme: theme,
-              colorScheme: colorScheme,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 2.0,
             ),
-            IconButton(
-              icon: const Icon(Icons.list_rounded),
-              onPressed: () {
-                Scaffold.of(context).openEndDrawer();
-              },
-              tooltip: 'Lista de Capítulos'.translate,
-              color: colorScheme.onSurfaceVariant,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavigationButton(
+                  context: context,
+                  onPressed: canGoPrevious ? onPreviousChapter : null,
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  label: 'Anterior'.translate,
+                  isEnabled: canGoPrevious,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+
+                _buildNavigationButton(
+                  context: context,
+                  onPressed: canGoNext ? onNextChapter : null,
+                  icon: Icons.arrow_forward_ios_rounded,
+                  label: 'Próximo'.translate,
+                  isEnabled: canGoNext,
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+              ],
             ),
-            _buildNavigationButton(
-              context: context,
-              onPressed: canGoNext ? onNextChapter : null,
-              icon: Icons.arrow_forward_ios_rounded,
-              label: 'Próximo'.translate,
-              isEnabled: canGoNext,
-              theme: theme,
-              colorScheme: colorScheme,
+          ),
+          if (isLoading)
+            Container(
+              color: navigationColor.withOpacity(0.7),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -90,33 +102,36 @@ class ChapterNavigation extends StatelessWidget {
     required ColorScheme colorScheme,
     bool isEnabled = true,
   }) {
-    return TextButton.icon(
+    return TextButton(
       onPressed: onPressed,
-      icon: Icon(
-        icon,
-        size: 24,
-        color:
-            isEnabled
-                ? colorScheme.onPrimaryContainer
-                : colorScheme.onSurfaceVariant,
-      ),
-      label: Text(
-        label,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color:
-              isEnabled
-                  ? colorScheme.onPrimaryContainer
-                  : colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        backgroundColor:
-            isEnabled ? colorScheme.primaryContainer : Colors.transparent,
+        foregroundColor:
+            isEnabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
         disabledForegroundColor: colorScheme.onSurfaceVariant,
-        disabledIconColor: colorScheme.onSurfaceVariant,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 24,
+            color:
+                isEnabled
+                    ? colorScheme.onSurface
+                    : colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color:
+                  isEnabled
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

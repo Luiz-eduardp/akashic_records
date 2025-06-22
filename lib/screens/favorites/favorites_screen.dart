@@ -382,11 +382,11 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                         children: <Widget>[
                           Icon(
                             Icons.favorite_border,
-                            size: 60,
+                            size: 80,
                             color: theme.colorScheme.onSurfaceVariant
                                 .withOpacity(0.7),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 24),
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 30.0,
@@ -394,12 +394,25 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                             child: Text(
                               'Nenhuma novel adicionada a uma lista de favoritos ainda.'
                                   .translate,
-                              style: theme.textTheme.bodyLarge?.copyWith(
+                              style: theme.textTheme.headlineSmall!.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
                               ),
                               textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30.0,
+                            ),
+                            child: Text(
+                              'Adicione suas novels favoritas para vê-las aqui.'
+                                  .translate,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyLarge!.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 24),

@@ -22,7 +22,20 @@ class AppDrawer extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              const SizedBox(height: 35),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 40.0,
+                  horizontal: 16.0,
+                ),
+                width: double.infinity,
+                child: Text(
+                  'Akashic Records',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
               _buildDrawerTile(
                 context: context,
                 icon: Icons.settings,
@@ -49,7 +62,7 @@ class AppDrawer extends StatelessWidget {
               ),
               _buildDrawerTile(
                 context: context,
-                icon: Icons.paid,
+                icon: Icons.volunteer_activism,
                 title: "Github Sponsor",
                 onTap:
                     () => launchURL('https://github.com/sponsors/Luiz-eduardp'),
@@ -65,7 +78,10 @@ class AppDrawer extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Text(
                     'Akashic Records App',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.bodyMedium!.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    ),
                   ),
                 ),
               ),
@@ -85,7 +101,7 @@ class AppDrawer extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 4.0),
       child: ListTile(
         leading: Icon(icon, color: colorScheme.onSurface),
         title: Text(

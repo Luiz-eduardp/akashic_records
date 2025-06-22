@@ -269,12 +269,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       children: [
         _buildMetricsWidget(theme, colorScheme),
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(8),
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             itemCount: _history.length,
-            separatorBuilder:
-                (context, index) =>
-                    Divider(height: 1, color: theme.dividerColor),
             itemBuilder: (context, index) {
               final item = _history[index];
               return HistoryCardWidget(
@@ -353,7 +350,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildMetricsWidget(ThemeData theme, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Card(
         color: colorScheme.surfaceContainerHigh,
         elevation: 3,

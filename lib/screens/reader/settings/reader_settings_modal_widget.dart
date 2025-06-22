@@ -44,7 +44,7 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,12 +62,12 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                 indicatorColor: colorScheme.primary,
                 labelColor: colorScheme.onSurface,
                 unselectedLabelColor: colorScheme.onSurfaceVariant,
-                isScrollable: true,
-                labelStyle: TextStyle(
+                isScrollable: false,
+                labelStyle: const TextStyle(
                   fontWeight: FontWeight.w500,
                   fontSize: 16,
                 ),
-
+                indicatorSize: TabBarIndicatorSize.tab,
                 tabs: [
                   Tab(
                     text: 'Aparência'.translate,
@@ -95,7 +95,6 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
               Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
@@ -120,7 +119,6 @@ class _ReaderSettingsModalState extends State<ReaderSettingsModal>
                   child: Text('Salvar'.translate),
                 ),
               ),
-              const SizedBox(height: 20),
             ],
           ),
         ),

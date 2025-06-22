@@ -108,10 +108,11 @@ class _PluginsScreenState extends State<PluginsScreen> {
     final languageName = _getLanguageName(language);
 
     return ExpansionTile(
+      tilePadding: const EdgeInsets.symmetric(horizontal: 8.0),
       title: Text(
         languageName,
-        style: theme.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
           color: theme.colorScheme.onSurface,
         ),
       ),
@@ -123,7 +124,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
       },
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -144,8 +145,8 @@ class _PluginsScreenState extends State<PluginsScreen> {
         ...plugins.map((plugin) {
           return Padding(
             padding: const EdgeInsets.symmetric(
-              vertical: 4.0,
-              horizontal: 16.0,
+              vertical: 2.0,
+              horizontal: 8.0,
             ),
             child: CheckboxListTile(
               title: Text(
@@ -168,9 +169,9 @@ class _PluginsScreenState extends State<PluginsScreen> {
               activeColor: theme.colorScheme.primary,
               contentPadding: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(4.0),
               ),
-              side: BorderSide(color: theme.colorScheme.outlineVariant),
+              side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
             ),
           );
         }),
@@ -181,22 +182,22 @@ class _PluginsScreenState extends State<PluginsScreen> {
   Widget _buildRequestPluginSection(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: theme.colorScheme.surfaceVariant,
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Não encontrou o que procurava?'.translate,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w500,
                 color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             InkWell(
               onTap:
                   () => launchURL(
@@ -210,7 +211,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Clique no link acima para abrir uma solicitação no GitHub.'
                   .translate,

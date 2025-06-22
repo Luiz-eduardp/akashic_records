@@ -30,7 +30,7 @@ class ReaderAppBar extends StatefulWidget implements PreferredSizeWidget {
   State<ReaderAppBar> createState() => _ReaderAppBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight * 2);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 27.0);
 }
 
 class _ReaderAppBarState extends State<ReaderAppBar> {
@@ -126,93 +126,108 @@ class _ReaderAppBarState extends State<ReaderAppBar> {
     return Material(
       color: widget.readerSettings.backgroundColor,
       elevation: 1,
-      child: Column(
-        children: [
-          AppBar(
-            backgroundColor: Colors.transparent,
-            foregroundColor: widget.readerSettings.textColor,
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            centerTitle: true,
-            title: Text(
-              widget.title ?? "Carregando...".translate,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: widget.readerSettings.textColor,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.settings,
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              foregroundColor: widget.readerSettings.textColor,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              centerTitle: true,
+              title: Text(
+                widget.title ?? "Carregando...".translate,
+                style: theme.textTheme.titleLarge?.copyWith(
                   color: widget.readerSettings.textColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 18,
                 ),
-                onPressed: widget.onSettingsPressed,
-                tooltip: 'Configurações de Leitura'.translate,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 4.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _currentTime,
-                  style: TextStyle(
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.settings,
                     color: widget.readerSettings.textColor,
-                    fontSize: 12,
                   ),
+                  onPressed: widget.onSettingsPressed,
+                  tooltip: 'Configurações de Leitura'.translate,
                 ),
-                Text(
-                  widget.wordCount != null
-                      ? '${widget.wordCount} ' + 'palavras'.translate
-                      : '',
-                  style: TextStyle(
-                    color: widget.readerSettings.textColor,
-                    fontSize: 12,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '↓${_currentSpeed.downloadSpeed} Kbps ↑${_currentSpeed.uploadSpeed} Kbps',
-                      style: TextStyle(
-                        color: widget.readerSettings.textColor,
-                        fontSize: 12,
+                Builder(
+                  builder:
+                      (context) => IconButton(
+                        icon: Icon(
+                          Icons.list,
+                          color: widget.readerSettings.textColor,
+                        ),
+                        onPressed: () => Scaffold.of(context).openEndDrawer(),
+                        tooltip: 'Lista de Capítulos'.translate,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.battery_std,
-                      color: widget.readerSettings.textColor,
-                      size: 16,
-                    ),
-                    Text(
-                      ' $_batteryLevel%',
-                      style: TextStyle(
-                        color: widget.readerSettings.textColor,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
-          ),
-          LinearProgressIndicator(
-            value: _currentScrollPercentage,
-            backgroundColor: theme.colorScheme.primary,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              theme.colorScheme.primary,
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 2.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _currentTime,
+                    style: TextStyle(
+                      color: widget.readerSettings.textColor,
+                      fontSize: 11,
+                    ),
+                  ),
+                  if (widget.wordCount != null)
+                    Text(
+                      '${widget.wordCount} ' + 'palavras'.translate,
+                      style: TextStyle(
+                        color: widget.readerSettings.textColor,
+                        fontSize: 11,
+                      ),
+                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '↓${_currentSpeed.downloadSpeed} Kbps ↑${_currentSpeed.uploadSpeed} Kbps',
+                        style: TextStyle(
+                          color: widget.readerSettings.textColor,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.battery_std,
+                        color: widget.readerSettings.textColor,
+                        size: 14,
+                      ),
+                      Text(
+                        ' $_batteryLevel%',
+                        style: TextStyle(
+                          color: widget.readerSettings.textColor,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            LinearProgressIndicator(
+              value: _currentScrollPercentage,
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                theme.colorScheme.primary,
+              ),
+              minHeight: 3.0,
+            ),
+          ],
+        ),
       ),
     );
   }
