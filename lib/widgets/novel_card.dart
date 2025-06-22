@@ -46,7 +46,7 @@ class NovelCard extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12.0,
-                  vertical: 8.0,
+                  vertical: 12.0,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,12 +104,11 @@ class NovelCard extends StatelessWidget {
 
   Widget _buildCoverImage(BuildContext context, String coverImageUrl) {
     ThemeData theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
     final colorScheme = theme.colorScheme;
 
     Widget placeholderWidget = Shimmer.fromColors(
-      baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[200]!,
-      highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+      baseColor: colorScheme.surfaceContainerHighest,
+      highlightColor: colorScheme.surfaceContainer,
       child: Container(color: Colors.white),
     );
 
