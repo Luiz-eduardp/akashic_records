@@ -13,8 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:akashic_records/screens/changelog/initial_loading_screen.dart';
-import 'package:clarity_flutter/clarity_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 const String _lastVersionCheckTimestampKey = 'lastVersionCheckTimestamp';
 const String _cachedLatestVersionKey = 'cachedLatestVersion';
@@ -22,7 +20,6 @@ const String _cachedDownloadUrlKey = 'cachedDownloadUrl';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
 
   late SharedPreferences prefs;
   try {
@@ -67,16 +64,8 @@ void main() async {
     debugPrint("Error initializing AppState: $e");
   }
 
-  final config = ClarityConfig(
-    projectId: dotenv.env['CLARITY_PROJECT_ID']!,
-    logLevel: LogLevel.Verbose,
-  );
-
   runApp(
-    ClarityWidget(
-      app: ChangeNotifierProvider.value(value: appState, child: const MyApp()),
-      clarityConfig: config,
-    ),
+    ChangeNotifierProvider.value(value: appState, child: const MyApp()),
   );
 }
 
