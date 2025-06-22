@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,7 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
   final int _pageSize = 30;
   bool _isLoadingMore = false;
   bool _allChaptersLoaded = false;
+  late final _searchDebouncer = Debouncer(milliseconds: 300);
 
   @override
   void initState() {
@@ -62,11 +64,14 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
     _searchController.dispose();
     _displayedChapters.close();
     _searchFocusNode.dispose();
+    _searchDebouncer.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    _sortChapters();
+    _searchDebouncer.run(() {
+      _sortChapters();
+    });
   }
 
   void _filterChapters() {
@@ -267,8 +272,20 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           child: Center(
-                            child: CircularProgressIndicator(
-                              color: theme.colorScheme.primary,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(height: 8.0),
+                                Text(
+                                  'Carregando mais capítulos...'.translate,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );
@@ -282,5 +299,24 @@ class _ChapterListWidgetState extends State<ChapterListWidget> {
         ],
       ),
     );
+  }
+}
+
+class Debouncer {
+  final int milliseconds;
+  VoidCallback? action;
+  Timer? _timer;
+
+  Debouncer({required this.milliseconds});
+
+  run(VoidCallback action) {
+    if (_timer != null) {
+      _timer!.cancel();
+    }
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
+  }
+
+  void dispose() {
+    _timer?.cancel();
   }
 }
