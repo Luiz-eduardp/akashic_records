@@ -8,20 +8,16 @@ import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:rxdart/rxdart.dart';
-
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
-
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
-
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _searchResults = [];
   bool _isLoading = false;
   String? _errorMessage;
-
   @override
   void initState() {
     super.initState();
@@ -29,25 +25,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
         .debounceTime(const Duration(milliseconds: 500))
         .listen(_searchAllPlugins);
   }
-
   @override
   void dispose() {
     _searchTextController.close();
     super.dispose();
   }
-
   Future<void> _searchAllPlugins(String term) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-
     try {
       if (term.isNotEmpty) {
         final appState = Provider.of<AppState>(context, listen: false);
         final selectedPlugins = appState.selectedPlugins;
         List<Novel> allResults = [];
-
         for (final pluginName in selectedPlugins) {
           final plugin = appState.pluginServices[pluginName];
           if (plugin != null) {
@@ -58,7 +50,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
             allResults.addAll(searchResults);
           }
         }
-
         setState(() {
           _searchResults = allResults;
         });
@@ -77,23 +68,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     }
   }
-
   void _onSearchChanged(String term) {
     _searchTextController.add(term);
   }
-
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final theme = Theme.of(context);
-
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
@@ -121,7 +108,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
     );
   }
-
   Widget _buildContent(AppState appState, ThemeData theme) {
     if (_isLoading) {
       return Center(
@@ -146,7 +132,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
       );
     }
-
     if (_errorMessage != null) {
       return Center(
         child: Padding(
@@ -173,11 +158,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
       );
     }
-
     if (appState.selectedPlugins.isEmpty) {
       return _buildNoPluginsSelected(theme);
     }
-
     if (_searchResults.isNotEmpty) {
       return NovelGridWidget(
         novels: _searchResults,
@@ -189,7 +172,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
         isLoading: _isLoading,
       );
     }
-
     return ListView.builder(
       itemCount: appState.selectedPlugins.length,
       padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -199,7 +181,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       },
     );
   }
-
   Widget _buildNoPluginsSelected(ThemeData theme) {
     return Center(
       child: Padding(
