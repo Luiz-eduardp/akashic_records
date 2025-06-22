@@ -17,7 +17,7 @@ class ReaperScans implements PluginService {
   final String id = 'ReaperScans';
   final String nameService = 'ReaperScans';
   @override
-  final String version = '1.0.0';
+  final String version = '1.0.1';
   final String icon = 'src/en/reaperscans/icon.png';
   final String site = 'https://reaperscans.com';
   final String apiBase = 'https://api.reaperscans.com';
@@ -82,11 +82,22 @@ class ReaperScans implements PluginService {
   @override
   Future<Novel> parseNovel(String novelPath, {BuildContext? context}) async {
     try {
-      final novelResp = await safeFetch(
-        '$apiBase/series/$novelPath',
-        context: context,
-        headers: _headers,
-      );
+      final responses = await Future.wait([
+        safeFetch(
+          '$apiBase/series/$novelPath',
+          context: context,
+          headers: _headers,
+        ),
+        safeFetch(
+          '$apiBase/chapters/$novelPath?perPage=500',
+          context: context,
+          headers: _headers,
+        ),
+      ]);
+
+      final novelResp = responses[0];
+      final chaptersResp = responses[1];
+
       if (novelResp.statusCode != 200) {
         print(
           'Failed to load novel details. Status code: ${novelResp.statusCode}',
@@ -105,12 +116,6 @@ class ReaperScans implements PluginService {
         );
       }
       final novelData = jsonDecode(novelResp.body);
-
-      final chaptersResp = await safeFetch(
-        '$apiBase/chapters/$novelPath?perPage=500',
-        context: context,
-        headers: _headers,
-      );
 
       if (chaptersResp.statusCode != 200) {
         print(
