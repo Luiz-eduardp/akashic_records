@@ -10,7 +10,7 @@ class ProjectGutenberg implements PluginService {
 
   @override
   String get lang => 'en';
-
+  
   @override
   Map<String, dynamic> get filters => {};
 
@@ -19,6 +19,9 @@ class ProjectGutenberg implements PluginService {
   final String baseURL = 'https://gnikdroy.pythonanywhere.com/api';
   @override
   final String version = '1.0.4';
+
+  @override
+  String? get baseUrl => baseURL;
 
   String? _extractCoverUrl(List<dynamic>? resources) {
     if (resources == null || resources.isEmpty) {

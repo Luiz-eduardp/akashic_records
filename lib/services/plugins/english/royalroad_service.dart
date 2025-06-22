@@ -12,7 +12,8 @@ class RoyalRoad implements PluginService {
   String get lang => 'en';
   @override
   String get version => '1.2.7';
-
+  @override
+  String? get baseUrl => baseURL;
   String get id => 'royalroad';
 
   final String baseURL = 'https://www.royalroad.com/';

@@ -18,6 +18,8 @@ class CentralNovel implements PluginService {
   @override
   String get name => 'CentralNovel';
   @override
+  String? get baseUrl => baseURL;
+  @override
   String get lang => 'pt-BR';
   @override
   Map<String, dynamic> get filters => {};

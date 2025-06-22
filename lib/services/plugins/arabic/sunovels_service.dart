@@ -9,7 +9,8 @@ class Sunovels implements PluginService {
 
   @override
   String get name => 'Sunovels';
-
+  @override
+  String? get baseUrl => site;
   @override
   String get version => '1.0.0';
 

@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 
@@ -23,30 +25,40 @@ class SkyNovels implements PluginService {
   final String apiURL = 'https://api.skynovels.net/api/';
   final String icon = 'src/es/skynovels/icon.png';
 
+  @override
+  String? get baseUrl => baseURL;
+
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
-  Future<dynamic> _fetchApi(String url) async {
+  Future<dynamic> _fetchApi(String url, {BuildContext? context}) async {
+    Map<String, String> headers = {
+      'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Referer': baseURL,
+    };
+    if (context != null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final pluginName = name;
+      final pluginCookies = appState.pluginCookies[pluginName];
+      if (pluginCookies != null) {
+        final cookieString = pluginCookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
+        headers['Cookie'] = cookieString;
+      }
+    }
     try {
-      final response = await http
-          .get(
-            Uri.parse(url),
-            headers: {
-              'User-Agent':
-                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-              'Referer': baseURL,
-            },
-          )
-          .timeout(const Duration(seconds: 10));
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final body = response.body;
         try {
-          return jsonDecode(body);
+          return jsonDecode(response.body);
         } catch (jsonError) {
           print('Erro ao decodificar JSON: $jsonError');
           try {
-            parse(body);
+            parse(response.body);
             print(
               'Recebido HTML em vez de JSON, indicando uma página de erro.',
             );
@@ -56,11 +68,6 @@ class SkyNovels implements PluginService {
             return null;
           }
         }
-      } else {
-        print(
-          'Falha ao carregar dados de: $url - Status code: ${response.statusCode}',
-        );
-        return null;
       }
     } catch (e) {
       print('Erro ao fazer a requisição: $e');

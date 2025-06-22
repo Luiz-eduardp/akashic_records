@@ -13,7 +13,8 @@ class BlogDoAmonNovels implements PluginService {
   String get id => 'BlogDoAmonNovels';
 @override
   String get version => '1.0.5';
-
+  @override
+  String? get baseUrl => baseURL;
   @override
   Map<String, dynamic> get filters => {};
 

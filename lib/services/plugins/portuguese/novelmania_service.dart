@@ -19,6 +19,8 @@ class NovelMania implements PluginService {
   String get name => 'NovelMania';
   @override
   String get lang => 'pt-BR';
+    @override
+  String? get baseUrl => site;
   @override
   Map<String, dynamic> get filters => {
     'genres': {

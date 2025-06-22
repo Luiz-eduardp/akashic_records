@@ -1,6 +1,8 @@
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
@@ -22,8 +24,21 @@ class NovelBin implements PluginService {
   @override
   Map<String, dynamic> get filters => {};
 
-  Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+  @override
+  String? get baseUrl => baseURL;
+
+  Future<String> _fetchApi(String url, {BuildContext? context}) async {
+    Map<String, String> headers = {};
+    if (context != null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final pluginName = name;
+      final pluginCookies = appState.pluginCookies[pluginName];
+      if (pluginCookies != null) {
+        final cookieString = pluginCookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
+        headers['Cookie'] = cookieString;
+      }
+    }
+    final response = await http.get(Uri.parse(url), headers: headers);
     if (response.statusCode == 200) {
       return response.body;
     } else {

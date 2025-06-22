@@ -13,7 +13,8 @@ class ScribbleHub implements PluginService {
 
   @override
   String get lang => 'en';
-
+  @override
+  String? get baseUrl => site;
   @override
   Map<String, dynamic> get filters => _filters;
 

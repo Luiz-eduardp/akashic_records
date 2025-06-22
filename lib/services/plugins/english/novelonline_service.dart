@@ -4,6 +4,8 @@ import 'package:html/dom.dart' as dom;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
 
 class NovelsOnline implements PluginService {
   @override
@@ -73,13 +75,26 @@ class NovelsOnline implements PluginService {
   @override
   final String version = '1.0.0';
 
+  @override
+  String? get baseUrl => site;
+
   Future<http.Response> safeFetch(
     String url, {
     BuildContext? context,
     required Map<String, String> headers,
   }) async {
+    Map<String, String> newHeaders = Map<String, String>.from(headers);
+    if (context != null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final pluginName = name;
+      final pluginCookies = appState.pluginCookies[pluginName];
+      if (pluginCookies != null) {
+        final cookieString = pluginCookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
+        newHeaders['Cookie'] = cookieString;
+      }
+    }
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await http.get(Uri.parse(url), headers: newHeaders);
       if (response.statusCode == 200 || response.statusCode == 404) {
         return response;
       } else if (response.statusCode == 403 && context != null) {

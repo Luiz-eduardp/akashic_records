@@ -399,6 +399,7 @@ class AppState with ChangeNotifier {
 
   final Map<String, PluginService> _pluginServices = {};
   final Map<String, PluginInfo> _pluginInfo = {};
+  final Map<String, Map<String, String>> _pluginCookies = {};
   final _uuid = const Uuid();
   static const String _novelCachePrefix = 'novel_cache_';
 
@@ -538,6 +539,13 @@ class AppState with ChangeNotifier {
   int get novelCount => _novelCount;
   List<Novel> get localNovels => _localNovels;
   bool get showChangelog => _showChangelog;
+
+  Map<String, Map<String, String>> get pluginCookies => _pluginCookies;
+
+  void setPluginCookies(String pluginName, Map<String, String> cookies) {
+    _pluginCookies[pluginName] = cookies;
+    notifyListeners();
+  }
 
   get pluginInfo => _pluginInfo;
 
