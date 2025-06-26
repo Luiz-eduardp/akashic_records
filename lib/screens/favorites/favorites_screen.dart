@@ -402,20 +402,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 30.0,
-                            ),
-                            child: Text(
-                              'Adicione suas novels favoritas para vê-las aqui.'
-                                  .translate,
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyLarge!.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+
                           ElevatedButton.icon(
                             icon: const Icon(Icons.list_alt_outlined),
                             label: Text("Gerenciar Listas".translate),
