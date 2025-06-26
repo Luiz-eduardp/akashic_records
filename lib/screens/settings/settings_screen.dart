@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:akashic_records/utils/backup_restore.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.onLocaleChanged});
@@ -52,6 +53,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           _buildSectionTitle(context, 'Atualização'.translate, theme),
           UpdateSettings(),
+          const Divider(),
+          _buildSectionTitle(context, 'Backup e Restauração'.translate, theme),
+          _buildBackupRestoreSettings(context, appState, theme),
           const Divider(),
           _buildSectionTitle(context, 'Sobre'.translate, theme),
           _buildAboutSetting(context, theme),
@@ -377,6 +381,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool useWhiteForeground(Color color) {
     return ThemeData.estimateBrightnessForColor(color) == Brightness.dark;
+  }
+
+  Widget _buildBackupRestoreSettings(
+    BuildContext context,
+    AppState appState,
+    ThemeData theme,
+  ) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Faça backup ou restaure os dados do seu aplicativo.'.translate,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.cloud_upload),
+              title: Text('Fazer Backup'.translate),
+              subtitle: Text(
+                'Exportar dados do aplicativo para um arquivo JSON'.translate,
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () async {
+                final filePath = await exportBackup(appState);
+                if (filePath.isNotEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Backup salvo em:'.translate + filePath),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao fazer backup'.translate)),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.cloud_download),
+              title: Text('Restaurar Backup'.translate),
+              subtitle: Text(
+                'Importar dados do aplicativo de um arquivo JSON'.translate,
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () async {
+                final success = await importBackup(appState);
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Backup restaurado com sucesso!'.translate),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erro ao restaurar backup'.translate),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildAboutSetting(BuildContext context, ThemeData theme) {
