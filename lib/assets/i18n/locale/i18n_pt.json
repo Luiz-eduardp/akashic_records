@@ -240,6 +240,15 @@
   "Erro ao carregar scripts:": "Erro ao carregar scripts:",
   "Nenhum script encontrado.\nAdicione URLs de scripts para começar.": "Nenhum script encontrado.\nAdicione URLs de scripts para começar.",
   "Scripts encontrados:": "Scripts encontrados:",
-  "Filtrar por título": "Filtrar por título"
-
+  "Filtrar por título": "Filtrar por título",
+  "Faça backup ou restaure os dados do seu aplicativo.": "Faça backup ou restaure os dados do seu aplicativo.",
+  "Fazer Backup": "Fazer Backup",
+  "Exportar dados do aplicativo para um arquivo JSON": "Exportar dados do aplicativo para um arquivo JSON",
+  "Backup salvo em:": "Backup salvo em:",
+  "Erro ao fazer backup": "Erro ao fazer backup",
+  "Restaurar Backup": "Restaurar Backup",
+  "Importar dados do aplicativo de um arquivo JSON": "Importar dados do aplicativo de um arquivo JSON",
+  "Backup restaurado com sucesso!": "Backup restaurado com sucesso!",
+  "Erro ao restaurar backup": "Erro ao restaurar backup",
+  "Backup e Restauração": "Backup e Restauração"
 }

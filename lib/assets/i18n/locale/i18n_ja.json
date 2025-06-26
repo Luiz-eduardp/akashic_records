@@ -240,5 +240,15 @@
   "Erro ao carregar scripts:": "スクリプトの読み込みエラー:",
   "Nenhum script encontrado.\nAdicione URLs de scripts para começar.": "スクリプトが見つかりません。\nスクリプトのURLを追加して開始してください。",
   "Scripts encontrados:": "スクリプトが見つかりました:",
-  "Filtrar por título": "タイトルでフィルタリング"
+  "Filtrar por título": "タイトルでフィルタリング",
+  "Faça backup ou restaure os dados do seu aplicativo.": "アプリケーションのデータをバックアップまたは復元する。",
+  "Fazer Backup": "バックアップ",
+  "Exportar dados do aplicativo para um arquivo JSON": "アプリケーションデータをJSONファイルにエクスポートする。",
+  "Backup salvo em:": "バックアップは保存されました：",
+  "Erro ao fazer backup": "バックアップに失敗しました",
+  "Restaurar Backup": "バックアップを復元",
+  "Importar dados do aplicativo de um arquivo JSON": "JSONファイルからアプリケーションデータをインポートする。",
+  "Backup restaurado com sucesso!": "バックアップの復元に成功しました！",
+  "Erro ao restaurar backup": "バックアップの復元に失敗しました",
+  "Backup e Restauração": "バックアップと復元"
 }

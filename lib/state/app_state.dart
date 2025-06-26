@@ -335,6 +335,14 @@ class CachedNovel extends HiveObject {
     );
   }
 
+  factory CachedNovel.fromJson(Map<String, dynamic> json) => CachedNovel(
+    id: json['id'] as String,
+    pluginId: json['pluginId'] as String,
+    title: json['title'] as String,
+    coverImageUrl: json['coverImageUrl'] as String,
+    author: json['author'] as String,
+  );
+
   Novel toNovel() {
     return Novel(
       id: id,
@@ -409,7 +417,6 @@ class AppState with ChangeNotifier {
   late Box<ReaderSettings> _readerSettingsBox;
 
   AppState() {
-
     _pluginServices['NovelMania'] = NovelMania();
     _pluginInfo['NovelMania'] = PluginInfo(
       name: 'NovelMania',
@@ -534,9 +541,41 @@ class AppState with ChangeNotifier {
   List<Novel> get localNovels => _localNovels;
   bool get showChangelog => _showChangelog;
 
+  Map<String, dynamic> toJson() => {
+    'themeMode': _themeMode.index,
+    'accentColor': _accentColor.value,
+    'selectedPlugins': _selectedPlugins.toList(),
+    'readerSettings': _readerSettings.toMap(),
+    'customPlugins': _customPlugins.map((plugin) => plugin.toJson()).toList(),
+    'scriptUrls': _scriptUrls,
+    'favoriteLists': _favoriteLists.map((list) => list.toJson()).toList(),
+  };
+
+  factory AppState.fromJson(Map<String, dynamic> json) {
+    final appState = AppState();
+    appState._themeMode = ThemeMode.values[json['themeMode'] as int];
+    appState._accentColor = Color(json['accentColor'] as int);
+    appState._selectedPlugins = Set<String>.from(
+      json['selectedPlugins'] as List,
+    );
+    appState._readerSettings = ReaderSettings.fromMap(
+      json['readerSettings'] as Map<String, dynamic>,
+    );
+    appState._customPlugins =
+        (json['customPlugins'] as List)
+            .map((e) => CustomPlugin.fromJson(e as Map<String, dynamic>))
+            .toList();
+    appState._scriptUrls = List<String>.from(json['scriptUrls'] as List);
+    appState._favoriteLists =
+        (json['favoriteLists'] as List)
+            .map((e) => FavoriteList.fromJson(e as Map<String, dynamic>))
+            .toList();
+    return appState;
+  }
+
   get pluginInfo => _pluginInfo;
 
-  get novelCacheBox => null;
+  Box<CachedNovel> get novelCacheBox => _novelCacheBox;
 
   @override
   void dispose() {
@@ -759,6 +798,12 @@ class AppState with ChangeNotifier {
       await removeNovelCache(novel.pluginId, novel.id);
       notifyListeners();
     }
+  }
+
+  Future<void> clearFavoriteLists() async {
+    _favoriteLists.clear();
+    await _favoriteListsBox.clear();
+    notifyListeners();
   }
 
   bool isNovelInList(String listId, Novel novel) {
@@ -1159,6 +1204,20 @@ class AppState with ChangeNotifier {
 
   void updateNovelCount(int count) {
     _novelCount = count;
+    notifyListeners();
+  }
+
+  Future<void> addFavoriteListFromBackup(FavoriteList list) async {
+    _favoriteLists.add(list);
+    await _favoriteListsBox.put(
+      list.id,
+      FavoriteListHive.fromFavoriteList(list),
+    );
+    notifyListeners();
+  }
+
+  Future<void> addCachedNovelFromBackup(CachedNovel novel) async {
+    await _novelCacheBox.put(getNovelCacheKey(novel.pluginId, novel.id), novel);
     notifyListeners();
   }
 
