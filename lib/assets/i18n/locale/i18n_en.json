@@ -240,5 +240,14 @@
   "Erro ao carregar scripts:": "Error loading scripts:",
   "Nenhum script encontrado.\nAdicione URLs de scripts para começar.": "No scripts found.\nAdd script URLs to get started.",
   "Scripts encontrados:": "Scripts found:",
-  "Filtrar por título": "Filter by title"
+  "Faça backup ou restaure os dados do seu aplicativo.": "Backup or restore your application data.",
+  "Fazer Backup": "Backup",
+  "Exportar dados do aplicativo para um arquivo JSON": "Export app data to a JSON file",
+  "Backup salvo em:": "Backup saved to:",
+  "Erro ao fazer backup": "Error while backing up",
+  "Restaurar Backup": "Restore Backup",
+  "Importar dados do aplicativo de um arquivo JSON": "Import app data from a JSON file",
+  "Backup restaurado com sucesso!": "Backup restored successfully!",
+  "Erro ao restaurar backup": "Error while restoring backup",
+  "Backup e Restauração": "Backup and Restore"
 }
