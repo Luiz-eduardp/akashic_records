@@ -14,7 +14,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:akashic_records/screens/changelog/initial_loading_screen.dart';
 import 'package:clarity_flutter/clarity_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:version/version.dart';
 
 const String _lastVersionCheckTimestampKey = 'lastVersionCheckTimestamp';
 const String _cachedLatestVersionKey = 'cachedLatestVersion';
@@ -22,14 +22,12 @@ const String _cachedDownloadUrlKey = 'cachedDownloadUrl';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
 
   late SharedPreferences prefs;
   try {
     prefs = await SharedPreferences.getInstance();
   } catch (e) {
     debugPrint("Error initializing SharedPreferences: $e");
-    prefs = await SharedPreferences.getInstance();
   }
 
   Locale initialLocale;
@@ -68,7 +66,7 @@ void main() async {
   }
 
   final config = ClarityConfig(
-    projectId: dotenv.env['CLARITY_PROJECT_ID']!,
+    projectId: 'rbu33na9ru',
     logLevel: LogLevel.Verbose,
   );
 
@@ -129,26 +127,7 @@ class _MyAppState extends State<MyApp> {
       final now = DateTime.now().millisecondsSinceEpoch;
       const int checkInterval = 12 * 60 * 60 * 1000;
 
-      bool shouldFetchNewVersion = true;
-      if (lastCheckTimestamp != null &&
-          (now - lastCheckTimestamp < checkInterval)) {
-        final cachedLatestVersion = prefs.getString(_cachedLatestVersionKey);
-        final cachedDownloadUrl = prefs.getString(_cachedDownloadUrlKey);
-
-        if (cachedLatestVersion != null && cachedDownloadUrl != null) {
-          shouldFetchNewVersion = false;
-          _updateAvailable = _isUpdateAvailable(
-            currentVersion,
-            cachedLatestVersion,
-          );
-          _downloadUrl = cachedDownloadUrl;
-          debugPrint(
-            "Using cached version info. Latest: $cachedLatestVersion, Update Available: $_updateAvailable",
-          );
-        }
-      }
-
-      if (shouldFetchNewVersion) {
+      if (lastCheckTimestamp == null || (now - lastCheckTimestamp >= checkInterval)) {
         debugPrint("Fetching new version info from GitHub...");
         final response = await http
             .get(
@@ -218,25 +197,9 @@ class _MyAppState extends State<MyApp> {
 
   bool _isUpdateAvailable(String currentVersion, String latestVersion) {
     try {
-      List<int> currentParts =
-          currentVersion.split('.').map(int.parse).toList();
-      List<int> latestParts = latestVersion.split('.').map(int.parse).toList();
-
-      while (currentParts.length < latestParts.length) {
-        currentParts.add(0);
-      }
-      while (latestParts.length < currentParts.length) {
-        latestParts.add(0);
-      }
-
-      for (int i = 0; i < currentParts.length; i++) {
-        if (latestParts[i] > currentParts[i]) {
-          return true;
-        } else if (latestParts[i] < currentParts[i]) {
-          return false;
-        }
-      }
-      return false;
+      final current = Version.parse(currentVersion);
+      final latest = Version.parse(latestVersion);
+      return latest > current;
     } catch (e) {
       debugPrint(
         "Error comparing versions '$currentVersion' and '$latestVersion': $e",
