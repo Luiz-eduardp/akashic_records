@@ -15,7 +15,8 @@ class MtlNovelMulti implements PluginService {
   @override
   String get lang => _lang;
   String _lang = 'en';
-
+  @override
+  String get siteUrl => site; 
   set lang(String newLang) {
     _lang = newLang;
   }

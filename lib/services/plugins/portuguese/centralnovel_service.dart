@@ -21,7 +21,8 @@ class CentralNovel implements PluginService {
   String get lang => 'pt-BR';
   @override
   Map<String, dynamic> get filters => {};
-
+  @override
+  String get siteUrl => baseURL; 
   final String id = 'CentralNovel';
   final String nameService = 'Central Novel';
   final String baseURL = 'https://centralnovel.com';

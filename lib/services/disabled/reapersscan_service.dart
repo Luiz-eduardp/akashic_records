@@ -14,6 +14,8 @@ class ReaperScans implements PluginService {
   @override
   String get lang => 'en';
   @override
+  String get siteUrl => site; // Implementando siteUrl
+  @override
   Map<String, dynamic> get filters => {};
 
   final String id = 'ReaperScans';

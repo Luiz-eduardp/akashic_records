@@ -14,6 +14,8 @@ class NovelBin implements PluginService {
   String get lang => 'en';
   @override
   String get version => '1.0.7';
+  @override
+  String get siteUrl => baseURL; 
 
   final String baseURL = 'https://novelbin.me/';
   final String catalogURL = 'https://novelbin.me/sort/novelbin-popular';

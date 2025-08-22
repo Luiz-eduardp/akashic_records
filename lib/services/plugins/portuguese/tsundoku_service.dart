@@ -11,6 +11,8 @@ class Tsundoku implements PluginService {
   @override
   String get lang => 'pt-BR';
   @override
+  String get siteUrl => site; // Implementando siteUrl
+  @override
   Map<String, dynamic> get filters => {
     'order': {
       'label': 'Ordenar por',

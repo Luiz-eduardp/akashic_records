@@ -18,6 +18,8 @@ class RoyalRoad implements PluginService {
   final String baseURL = 'https://www.royalroad.com/';
 
   @override
+  String get siteUrl => baseURL; 
+  @override
   Map<String, dynamic> get filters => {
     'keyword': {
       'type': FilterTypes.textInput,

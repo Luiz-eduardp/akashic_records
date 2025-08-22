@@ -5,6 +5,7 @@ abstract class PluginService {
   String get name;
   String get version;
   String get lang;
+  String get siteUrl; // Adicionando a propriedade siteUrl
   Map<String, dynamic> get filters;
   Future<List<Novel>> popularNovels(
     int page, {

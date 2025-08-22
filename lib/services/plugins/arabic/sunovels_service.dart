@@ -15,7 +15,9 @@ class Sunovels implements PluginService {
 
   @override
   String get lang => 'ar';
-
+  
+  @override
+  String get siteUrl => site; 
   final String site = 'https://sunovels.com/';
 
   @override

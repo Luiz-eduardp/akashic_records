@@ -15,7 +15,8 @@ class SkyNovels implements PluginService {
   String get id => 'SkyNovels';
   @override
   String get version => '1.0.5';
-
+  @override
+  String get siteUrl => baseURL; 
   @override
   Map<String, dynamic> get filters => {};
 

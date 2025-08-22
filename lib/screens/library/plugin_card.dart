@@ -1,4 +1,5 @@
 import 'package:akashic_records/screens/library/plugin_novels_screen.dart';
+import 'package:akashic_records/screens/library/plugin_webview_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
@@ -155,6 +156,33 @@ class _PluginCardState extends State<PluginCard>
                 Icons.chevron_right,
                 color: colorScheme.onSurfaceVariant,
                 size: 32.0,
+              ),
+              const SizedBox(width: 8.0),
+              IconButton(
+                icon: Icon(
+                  Icons.public,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 28.0,
+                ),
+                onPressed: () {
+                  final appState = Provider.of<AppState>(context, listen: false);
+                  final pluginService = appState.pluginServices[widget.pluginName];
+                  if (pluginService != null && pluginService.siteUrl.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PluginWebViewScreen(
+                          title: widget.pluginName,
+                          url: pluginService.siteUrl,
+                        ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('URL do plugin não disponível.'.translate)),
+                    );
+                  }
+                },
               ),
             ],
           ),
