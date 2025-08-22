@@ -536,43 +536,43 @@ class _ReaderScreenState extends State<ReaderScreen>
               } else if (novel == null || currentChapter == null) {
                 return Center(child: Text("Erro Inesperado".translate));
               } else {
-                return Column(
-                  children: [
-                    Expanded(
-                      child: ChapterDisplay(
-                        chapterContent: currentChapter?.content,
-                        readerSettings: appState.readerSettings,
-                        chapterId: currentChapter!.id,
-                        scrollPercentageNotifier: _scrollPercentage,
-                        onToggleUiVisibility: _handleToggleUiVisibility,
-                      ),
-                    ),
-                    FadeTransition(
-                      opacity: _animation,
-                      child: SizeTransition(
-                        sizeFactor: _animation,
-                        axis: Axis.vertical,
-                        child: ChapterNavigation(
-                          onPreviousChapter: _goToPreviousChapter,
-                          onNextChapter: _goToNextChapter,
-                          isLoading: isLoading,
-                          readerSettings: appState.readerSettings,
-                          currentChapterIndex: currentChapterIndex,
-                          chapters: novel!.chapters,
-                          novelId: widget.novelId,
-                          onChapterTap: _onChapterTap,
-                          lastReadChapterId: _lastReadChapterId,
-                          readChapterIds: _readChapterIds,
-                          onMarkAsRead: _onMarkAsRead,
-                          navigationColor: colorScheme.surfaceContainer,
-                        ),
-                      ),
-                    ),
-                  ],
+                return ChapterDisplay(
+                  chapterContent: currentChapter?.content,
+                  readerSettings: appState.readerSettings,
+                  chapterId: currentChapter!.id,
+                  scrollPercentageNotifier: _scrollPercentage,
+                  onToggleUiVisibility: _handleToggleUiVisibility,
                 );
               }
             },
           ),
+          if (novel != null && currentChapter != null)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: FadeTransition(
+                opacity: _animation,
+                child: SizeTransition(
+                  sizeFactor: _animation,
+                  axis: Axis.vertical,
+                  child: SafeArea(
+                    child: ChapterNavigation(
+                      onPreviousChapter: _goToPreviousChapter,
+                      onNextChapter: _goToNextChapter,
+                      isLoading: isLoading,
+                      readerSettings: appState.readerSettings,
+                      currentChapterIndex: currentChapterIndex,
+                      chapters: novel!.chapters,
+                      novelId: widget.novelId,
+                      onChapterTap: _onChapterTap,
+                      lastReadChapterId: _lastReadChapterId,
+                      readChapterIds: _readChapterIds,
+                      onMarkAsRead: _onMarkAsRead,
+                      navigationColor: colorScheme.surfaceContainer,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
