@@ -151,12 +151,6 @@ class _PluginCardState extends State<PluginCard>
                   ],
                 ),
               ),
-              const SizedBox(width: 12.0),
-              Icon(
-                Icons.chevron_right,
-                color: colorScheme.onSurfaceVariant,
-                size: 32.0,
-              ),
               const SizedBox(width: 8.0),
               IconButton(
                 icon: Icon(
@@ -183,6 +177,12 @@ class _PluginCardState extends State<PluginCard>
                     );
                   }
                 },
+              ),
+               const SizedBox(width: 12.0),
+              Icon(
+                Icons.chevron_right,
+                color: colorScheme.onSurfaceVariant,
+                size: 32.0,
               ),
             ],
           ),
