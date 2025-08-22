@@ -28,82 +28,116 @@ class _NovelFilterSortWidgetState extends State<NovelFilterSortWidget> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            child: Container(
+        final theme = Theme.of(context);
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) {
+            return Container(
               padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28.0),
+                ),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ...widget.filters.entries.map((entry) {
-                    final filterName = entry.key;
-                    final filter = entry.value;
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        borderRadius: BorderRadius.circular(2.0),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Filtros e Ordenação'.translate,
+                    style: theme.textTheme.headlineSmall!.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      children: [
+                        ...widget.filters.entries.map((entry) {
+                          final filterName = entry.key;
+                          final filter = entry.value;
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            filter['label'],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          if (filter['type'] == 'Picker')
-                            DropdownButtonFormField<String>(
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                              ),
-                              value: _currentFilters[filterName]['value'],
-                              items:
-                                  (filter['options']
-                                          as List<Map<String, dynamic>>)
-                                      .map(
-                                        (option) => DropdownMenuItem<String>(
-                                          value: option['value'],
-                                          child: Text(option['label']),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  filter['label'],
+                                  style: theme.textTheme.titleMedium!.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                if (filter['type'] == 'Picker')
+                                  DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(
+                                      border: const OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(12.0),
                                         ),
-                                      )
-                                      .toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _currentFilters[filterName]['value'] =
-                                      newValue!;
-                                  widget.onFilterChanged(_currentFilters);
-                                });
-                              },
-                            ),
-                          if (filter['type'] == 'CheckboxGroup')
-                            Wrap(
-                              children:
-                                  (filter['options']
-                                          as List<Map<String, dynamic>>)
-                                      .map(
-                                        (option) => SizedBox(
-                                          width:
-                                              MediaQuery.of(
-                                                    context,
-                                                  ).size.width /
-                                                  2 -
-                                              24,
-                                          child: CheckboxListTile(
-                                            title: Text(
-                                              option['label'],
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            value:
-                                                (_currentFilters[filterName]['value']
-                                                        as List)
-                                                    .contains(option['value']),
-                                            onChanged: (bool? newValue) {
+                                      ),
+                                      filled: true,
+                                      fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                        vertical: 12.0,
+                                      ),
+                                    ),
+                                    value: _currentFilters[filterName]['value'],
+                                    items: (filter['options']
+                                            as List<Map<String, dynamic>>)
+                                        .map(
+                                          (option) => DropdownMenuItem<String>(
+                                            value: option['value'],
+                                            child: Text(option['label']),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        _currentFilters[filterName]['value'] =
+                                            newValue!;
+                                      });
+                                    },
+                                  ),
+                                if (filter['type'] == 'CheckboxGroup')
+                                  Wrap(
+                                    spacing: 8.0,
+                                    runSpacing: 4.0,
+                                    children: (filter['options']
+                                            as List<Map<String, dynamic>>)
+                                        .map(
+                                          (option) => FilterChip(
+                                            label: Text(option['label']),
+                                            selected: (_currentFilters[filterName]['value']
+                                                    as List)
+                                                .contains(option['value']),
+                                            onSelected: (bool selected) {
                                               setState(() {
                                                 final List currentValue =
                                                     _currentFilters[filterName]['value'];
-                                                if (newValue == true) {
+                                                if (selected) {
                                                   currentValue.add(
                                                     option['value'],
                                                   );
@@ -114,31 +148,34 @@ class _NovelFilterSortWidgetState extends State<NovelFilterSortWidget> {
                                                 }
                                                 _currentFilters[filterName]['value'] =
                                                     currentValue;
-                                                widget.onFilterChanged(
-                                                  _currentFilters,
-                                                );
                                               });
                                             },
+                                            selectedColor: theme.colorScheme.primaryContainer,
+                                            checkmarkColor: theme.colorScheme.onPrimaryContainer,
+                                            labelStyle: theme.textTheme.labelLarge,
                                           ),
-                                        ),
-                                      )
-                                      .toList(),
+                                        )
+                                        .toList(),
+                                  ),
+                              ],
                             ),
-                        ],
-                      ),
-                    );
-                  }),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      ElevatedButton(
+                      TextButton(
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: Text('Voltar para a Biblioteca'.translate),
+                        child: Text('Cancelar'.translate),
                       ),
-                      ElevatedButton(
+                      const SizedBox(width: 8),
+                      FilledButton(
                         onPressed: () {
                           widget.onFilterChanged(_currentFilters);
                           Navigator.pop(context);
@@ -149,8 +186,8 @@ class _NovelFilterSortWidgetState extends State<NovelFilterSortWidget> {
                   ),
                 ],
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -158,8 +195,23 @@ class _NovelFilterSortWidgetState extends State<NovelFilterSortWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    final theme = Theme.of(context);
+    return FilledButton.tonal(
       onPressed: () => _showFilterDialog(context),
+      style: FilledButton.styleFrom(
+        backgroundColor: theme.colorScheme.secondaryContainer,
+        foregroundColor: theme.colorScheme.onSecondaryContainer,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
+        ),
+        textStyle: theme.textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+      ),
       child: Text('Filtros'.translate),
     );
   }
