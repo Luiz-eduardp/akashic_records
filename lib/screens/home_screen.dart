@@ -225,53 +225,66 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           children: const [LibraryScreen(), FavoritesScreen(), HistoryScreen()],
         ),
         bottomNavigationBar: _buildBottomNavigationBar(theme),
+        extendBody: true,
       ),
     );
   }
 
   Widget _buildBottomNavigationBar(ThemeData theme) {
-    return Material(
-      color: theme.colorScheme.surfaceContainer,
-      elevation: 8,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-          child: GNav(
-            rippleColor: theme.colorScheme.primary.withOpacity(0.1),
-            hoverColor: theme.colorScheme.primary.withOpacity(0.1),
-            gap: 10,
-            activeColor: theme.colorScheme.primary,
-            iconSize: 26,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: theme.colorScheme.primaryContainer,
-            color: theme.colorScheme.onSurfaceVariant,
-            tabs: [
-              GButton(
-                icon: Icons.library_books,
-                text: 'Biblioteca'.translate,
-                textStyle: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
+            child: GNav(
+              rippleColor: theme.colorScheme.primary.withOpacity(0.1),
+              hoverColor: theme.colorScheme.primary.withOpacity(0.1),
+              gap: 10,
+              activeColor: theme.colorScheme.primary,
+              iconSize: 26,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              duration: const Duration(milliseconds: 400),
+              tabBackgroundColor: theme.colorScheme.primaryContainer,
+              color: theme.colorScheme.onSurfaceVariant,
+              tabs: [
+                GButton(
+                  icon: Icons.library_books,
+                  text: 'Biblioteca'.translate,
+                  textStyle: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              GButton(
-                icon: Icons.favorite,
-                text: 'Favoritos'.translate,
-                textStyle: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                GButton(
+                  icon: Icons.favorite,
+                  text: 'Favoritos'.translate,
+                  textStyle: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              GButton(
-                icon: Icons.history,
-                text: 'Histórico'.translate,
-                textStyle: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
+                GButton(
+                  icon: Icons.history,
+                  text: 'Histórico'.translate,
+                  textStyle: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
-            selectedIndex: _selectedIndex,
-            onTabChange: _onItemTapped,
-            curve: Curves.easeOutExpo,
+              ],
+              selectedIndex: _selectedIndex,
+              onTabChange: _onItemTapped,
+              curve: Curves.easeOutExpo,
+            ),
           ),
         ),
       ),

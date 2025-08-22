@@ -20,6 +20,8 @@ class IndoWebNovel implements PluginService {
   final String site = 'https://indowebnovel.id/';
 
   @override
+  String get siteUrl => site; 
+  @override
   Map<String, dynamic> get filters => {};
 
   Future<String> _fetchApi(String url) async {

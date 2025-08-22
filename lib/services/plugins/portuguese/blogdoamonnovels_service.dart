@@ -11,9 +11,10 @@ class BlogDoAmonNovels implements PluginService {
   @override
   String get lang =>  'pt-BR';
   String get id => 'BlogDoAmonNovels';
-@override
+  @override
   String get version => '1.0.5';
-
+  @override
+  String get siteUrl => baseURL; 
   @override
   Map<String, dynamic> get filters => {};
 

@@ -11,6 +11,8 @@ class Tsundoku implements PluginService {
   @override
   String get lang => 'pt-BR';
   @override
+  String get siteUrl => site;
+  @override
   Map<String, dynamic> get filters => {
     'order': {
       'label': 'Ordenar por',
@@ -164,8 +166,8 @@ class Tsundoku implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     return _fetchNovels(pageNo, filters: filters);
   }

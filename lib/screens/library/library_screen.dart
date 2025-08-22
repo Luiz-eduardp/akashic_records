@@ -8,11 +8,13 @@ import 'package:akashic_records/screens/library/search_bar_widget.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/details/novel_details_screen.dart';
 import 'package:rxdart/rxdart.dart';
+
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
+
 class _LibraryScreenState extends State<LibraryScreen> {
   final _searchTextController = BehaviorSubject<String>();
   List<Novel> _searchResults = [];
@@ -25,11 +27,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
         .debounceTime(const Duration(milliseconds: 500))
         .listen(_searchAllPlugins);
   }
+
   @override
   void dispose() {
     _searchTextController.close();
     super.dispose();
   }
+
   Future<void> _searchAllPlugins(String term) async {
     setState(() {
       _isLoading = true;
@@ -68,15 +72,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
       });
     }
   }
+
   void _onSearchChanged(String term) {
     _searchTextController.add(term);
   }
+
   void _handleNovelTap(Novel novel) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NovelDetailsScreen(novel: novel)),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
@@ -84,27 +91,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          if (_searchTextController.hasValue) {
+          if (_searchTextController.hasValue &&
+              _searchTextController.value.isNotEmpty) {
             _onSearchChanged(_searchTextController.value);
-          } else {}
+          } else {
+            setState(() {
+              _searchResults = [];
+            });
+          }
           return Future.value();
         },
         color: theme.colorScheme.primary,
         child: SafeArea(
           child: Column(
             children: [
+              const SizedBox(height: 16.0),
               Padding(
-                padding: const EdgeInsets.only(
-                  left: 16.0,
-                  right: 16.0,
-                  top: 24.0,
-                  bottom: 16.0,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: SearchBarWidget(
                   onSearch: _onSearchChanged,
                   onFilterPressed: null,
                 ),
               ),
+              const SizedBox(height: 16.0),
               Expanded(child: _buildContent(appState, theme)),
             ],
           ),
@@ -112,6 +121,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
     );
   }
+
   Widget _buildContent(AppState appState, ThemeData theme) {
     if (_isLoading) {
       return Center(
@@ -119,17 +129,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary,
-              ),
+              color: theme.colorScheme.primary,
               strokeWidth: 4.0,
             ),
             const SizedBox(height: 24),
             Text(
-              'Pesquisando'.translate,
-              style: theme.textTheme.headlineSmall!.copyWith(
+              'Pesquisando...'.translate,
+              style: theme.textTheme.titleMedium!.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -152,10 +160,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall!.copyWith(
-                  color: theme.colorScheme.onErrorContainer,
-                  fontWeight: FontWeight.w600,
+                style: theme.textTheme.titleMedium!.copyWith(
+                  color: theme.colorScheme.error,
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.tonal(
+                onPressed: () {
+                  if (_searchTextController.hasValue &&
+                      _searchTextController.value.isNotEmpty) {
+                    _onSearchChanged(_searchTextController.value);
+                  } else {
+                    setState(() {
+                      _searchResults = [];
+                      _errorMessage = null;
+                    });
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.secondaryContainer,
+                  foregroundColor: theme.colorScheme.onSecondaryContainer,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  textStyle: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+                child: Text('Tentar Novamente'.translate),
               ),
             ],
           ),
@@ -185,6 +222,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       },
     );
   }
+
   Widget _buildNoPluginsSelected(ThemeData theme) {
     return Center(
       child: Padding(
@@ -209,7 +247,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            ElevatedButton.icon(
+            FilledButton.icon(
               onPressed: () {
                 Navigator.pushNamed(context, '/plugins');
               },
@@ -221,14 +259,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
                 child: Text('Gerenciar plugins'.translate),
               ),
-              style: ElevatedButton.styleFrom(
+              style: FilledButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
-                elevation: 8,
+                elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(32),
                 ),
-                padding: EdgeInsets.zero,
                 textStyle: theme.textTheme.titleMedium!.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

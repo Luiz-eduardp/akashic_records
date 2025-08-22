@@ -11,7 +11,8 @@ class Syosetu implements PluginService {
 
   @override
   String get lang => 'ja';
-
+  @override
+  String get siteUrl => site; 
   @override
   Map<String, dynamic> get filters => {
     'ranking': {

@@ -16,6 +16,8 @@ class ScribbleHub implements PluginService {
 
   @override
   Map<String, dynamic> get filters => _filters;
+  @override
+  String get siteUrl => site; 
 
   final String id = 'ScribbleHub';
   final String nameService = 'ScribbleHub';

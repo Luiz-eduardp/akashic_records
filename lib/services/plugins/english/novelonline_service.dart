@@ -11,6 +11,8 @@ class NovelsOnline implements PluginService {
   @override
   String get lang => 'en';
   @override
+  String get siteUrl => site;
+  @override
   Map<String, dynamic> get filters => {
     'sort': {
       'value': 'top_rated',

@@ -12,6 +12,7 @@ class NovelGridWidget extends StatelessWidget {
   final Function(Novel) onNovelTap;
   final Function(Novel) onNovelLongPress;
   final bool isListView;
+  final VoidCallback? onRetry;
 
   const NovelGridWidget({
     super.key,
@@ -22,6 +23,7 @@ class NovelGridWidget extends StatelessWidget {
     required this.onNovelTap,
     required this.onNovelLongPress,
     required this.isListView,
+    this.onRetry,
   });
 
   @override
@@ -52,7 +54,7 @@ class NovelGridWidget extends StatelessWidget {
             maxCrossAxisExtent: 200,
             crossAxisSpacing: 8.0,
             mainAxisSpacing: 8.0,
-            childAspectRatio: 0.7,
+            childAspectRatio: 0.65,
           ),
           itemCount: novels.length,
           itemBuilder: (context, index) {
@@ -100,7 +102,7 @@ class NovelGridWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     FilledButton.tonal(
-                      onPressed: () {},
+                      onPressed: onRetry,
                       style: FilledButton.styleFrom(
                         backgroundColor: theme.colorScheme.secondaryContainer,
                         foregroundColor: theme.colorScheme.onSecondaryContainer,
@@ -146,36 +148,42 @@ class NovelGridWidget extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.search_off,
-                      size: 60,
+                      size: 80,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     Text(
                       "Nenhuma novel encontrada.".translate,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 24),
-                    FilledButton(
+                    const SizedBox(height: 32),
+                    FilledButton.icon(
                       onPressed: () {
                         Navigator.pushNamed(context, '/plugins');
                       },
+                      icon: const Icon(Icons.add),
+                      label: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                        child: Text('Gerenciar plugins'.translate),
+                      ),
                       style: FilledButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        textStyle: theme.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                        elevation: 4,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                        textStyle: theme.textTheme.titleMedium!.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: Text('Plugins'.translate),
                     ),
                     const SizedBox(height: 8),
                   ],

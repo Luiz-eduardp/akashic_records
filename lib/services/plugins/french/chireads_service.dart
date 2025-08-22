@@ -11,7 +11,9 @@ class Chireads implements PluginService {
 
   @override
   String get name => 'Chireads';
-
+  
+  @override
+  String get siteUrl => site; 
   @override
   String get lang => 'fr';
 

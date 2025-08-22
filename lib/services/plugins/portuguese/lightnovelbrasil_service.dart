@@ -20,6 +20,8 @@ class LightNovelBrasil implements PluginService {
   @override
   String get lang => 'pt-BR';
   @override
+  String get siteUrl => baseURL; 
+  @override
   Map<String, dynamic> get filters => {
     'genre[]': {
       'type': 'Checkbox',

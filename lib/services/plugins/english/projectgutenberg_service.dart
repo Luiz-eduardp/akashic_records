@@ -10,7 +10,8 @@ class ProjectGutenberg implements PluginService {
 
   @override
   String get lang => 'en';
-
+  @override
+  String get siteUrl => baseURL; 
   @override
   Map<String, dynamic> get filters => {};
 

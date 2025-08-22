@@ -21,6 +21,8 @@ class NovelasLigera implements PluginService {
   @override
   String get lang => 'es';
   @override
+  String get siteUrl => baseURL; 
+  @override
   Map<String, dynamic> get filters => {};
 
   final String id = 'novelasligera';
