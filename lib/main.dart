@@ -67,7 +67,7 @@ void main() async {
 
   final config = ClarityConfig(
     projectId: 'rbu33na9ru',
-    logLevel: LogLevel.Verbose,
+    logLevel: LogLevel.None,
   );
 
   runApp(

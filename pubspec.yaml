@@ -2,7 +2,7 @@ name: akashic_records
 description: A novel reader application.
 publish_to: "none"
 
-version: 1.1.21+1
+version: 1.1.22+1
 
 environment:
   sdk: ^3.7.0
@@ -19,7 +19,7 @@ dependencies:
   webview_flutter_plus: ^0.4.13
   flutter_html: ^3.0.0
   shared_preferences: ^2.5.2
-  intl: ^0.19.0
+  intl: ^0.20.2
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   webdriver: ^3.1.0
