@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class I18n {
   static Locale currentLocate = const Locale('en');
@@ -21,18 +22,52 @@ class I18n {
     required Locale defaultLocale,
     List<Locale>? supportLocales,
   }) async {
-    currentLocate = defaultLocale;
     supportedLocales = supportLocales ?? supportedLocales;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString('locale');
+      if (saved != null && saved.isNotEmpty) {
+        final parts = saved.split('_');
+        final loc =
+            parts.length == 2 ? Locale(parts[0], parts[1]) : Locale(parts[0]);
+        currentLocate = loc;
+        await _loadLocale(currentLocate);
+        return;
+      }
+    } catch (_) {}
+
+    currentLocate = defaultLocale;
     await _loadLocale(currentLocate);
   }
 
   static Future<void> _loadLocale(Locale locale) async {
     try {
-      final data = await rootBundle.loadString(
-        'lib/assets/i18n/locale/${locale.languageCode}.json',
-      );
-      _translations = json.decode(data) as Map<String, dynamic>;
-      currentLocate = locale;
+      String? data;
+      if (locale.countryCode != null && locale.countryCode!.isNotEmpty) {
+        try {
+          data = await rootBundle.loadString(
+            'lib/assets/i18n/locale/${locale.languageCode}_${locale.countryCode}.json',
+          );
+        } catch (_) {
+          data = null;
+        }
+      }
+      if (data == null) {
+        try {
+          data = await rootBundle.loadString(
+            'lib/assets/i18n/locale/${locale.languageCode}.json',
+          );
+        } catch (_) {
+          data = null;
+        }
+      }
+
+      if (data != null) {
+        _translations = json.decode(data) as Map<String, dynamic>;
+        currentLocate = locale;
+      } else {
+        _translations = {};
+      }
     } catch (e) {
       _translations = {};
     }
@@ -40,6 +75,14 @@ class I18n {
 
   static Future<void> updateLocate(Locale locale) async {
     await _loadLocale(locale);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key =
+          locale.countryCode != null && locale.countryCode!.isNotEmpty
+              ? '${locale.languageCode}_${locale.countryCode}'
+              : locale.languageCode;
+      await prefs.setString('locale', key);
+    } catch (_) {}
   }
 }
 
