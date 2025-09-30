@@ -22,7 +22,7 @@ class CentralNovel implements PluginService {
   @override
   Map<String, dynamic> get filters => {};
   @override
-  String get siteUrl => baseURL; 
+  String get siteUrl => baseURL;
   final String id = 'CentralNovel';
   final String nameService = 'Central Novel';
   final String baseURL = 'https://centralnovel.com';
@@ -98,8 +98,8 @@ class CentralNovel implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     final url = 'https://centralnovel.com/series/?order=popular&page=$pageNo';
     return await _parseList(url);
