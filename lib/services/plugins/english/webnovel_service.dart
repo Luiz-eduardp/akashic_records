@@ -13,7 +13,7 @@ class Webnovel implements PluginService {
   @override
   String get lang => 'en';
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
 
   @override
   Map<String, dynamic> get filters => {
@@ -146,9 +146,9 @@ class Webnovel implements PluginService {
     } catch (e) {
       print('Error in safeFetch: $e');
       if (context != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${'failed_to_load_data'.translate}: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'failed_to_load_data'.translate}: $e')),
+        );
       }
       return http.Response('Error', 500);
     }
@@ -171,8 +171,9 @@ class Webnovel implements PluginService {
       List<Novel> novels = [];
       for (var element in document.querySelectorAll(selector)) {
         try {
-              final novelName =
-                  element.querySelector('.g_thumb')?.attributes['title'] ?? 'no_title_found'.translate;
+          final novelName =
+              element.querySelector('.g_thumb')?.attributes['title'] ??
+              'no_title_found'.translate;
           final novelCover =
               element.querySelector('.g_thumb > img')?.attributes[categoryBool
                   ? 'data-original'
@@ -374,7 +375,7 @@ class Webnovel implements PluginService {
         return Novel(
           pluginId: id,
           id: novelPath,
-          title: 'Failed to Load',
+          title: 'failed_to_load_title'.translate,
           coverImageUrl: '',
           author: '',
           description: '',
@@ -393,8 +394,9 @@ class Webnovel implements PluginService {
       final novel = Novel(
         pluginId: id,
         id: novelPath,
-            title:
-                document.querySelector('.g_thumb > img')?.attributes['alt'] ?? 'no_title_found'.translate,
+        title:
+            document.querySelector('.g_thumb > img')?.attributes['alt'] ??
+            'no_title_found'.translate,
         coverImageUrl: 'https:$cover',
         author:
             document
@@ -456,7 +458,7 @@ class Webnovel implements PluginService {
       );
       if (response.statusCode != 200) {
         print('Failed to load chapter. Status code: ${response.statusCode}');
-        return 'Failed to load chapter content.';
+        return 'failed_to_load_chapter'.translate;
       }
       final data = response.body;
       final document = parse(data);
