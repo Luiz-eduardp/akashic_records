@@ -44,12 +44,12 @@ class _ShellScreenState extends State<ShellScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Akashic Records',
+                      'app_title'.translate,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'A powerful reader',
+                      'app_description'.translate,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -86,16 +86,22 @@ class _ShellScreenState extends State<ShellScreen> {
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: _onItemTapped,
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.home),
+              label: 'home'.translate,
+            ),
             NavigationDestination(
               icon: Icon(Icons.favorite),
-              label: 'Favorites',
+              label: 'favorites'.translate,
             ),
-            NavigationDestination(icon: Icon(Icons.update), label: 'Updates'),
+            NavigationDestination(
+              icon: Icon(Icons.update),
+              label: 'updates'.translate,
+            ),
             NavigationDestination(
               icon: Icon(Icons.extension),
-              label: 'Plugins',
+              label: 'plugins'.translate,
             ),
           ],
         ),
