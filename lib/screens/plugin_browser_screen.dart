@@ -53,7 +53,7 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.pluginName)),
+      appBar: AppBar(centerTitle: true, title: Text(widget.pluginName)),
       body: Column(
         children: [
           Padding(
