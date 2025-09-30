@@ -92,4 +92,12 @@
   ,"last_checked": "Last checked"
   ,"failed_to_load_title": "Failed to Load"
   ,"failed_to_load_chapter": "Failed to load chapter content."
+  ,"app_version": "App version"
+  ,"check_update_button": "Check for updates"
+  ,"open_release": "Open release"
+  ,"no_update_available": "No update available"
+  ,"latest_release": "Latest release"
+  ,"update_check_failed": "Update check failed"
+  ,"assets": "Assets"
+  ,"download": "Download"
 }

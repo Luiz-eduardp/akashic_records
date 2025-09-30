@@ -92,4 +92,12 @@
   ,"last_checked": "最終チェック"
   ,"failed_to_load_title": "読み込みに失敗しました"
   ,"failed_to_load_chapter": "チャプターの読み込みに失敗しました"
+  ,"app_version": "アプリのバージョン"
+  ,"check_update_button": "更新を確認"
+  ,"open_release": "リリースを開く"
+  ,"no_update_available": "更新はありません"
+  ,"latest_release": "最新のリリース"
+  ,"update_check_failed": "更新の確認に失敗しました"
+  ,"assets": "Assets"
+  ,"download": "ダウンロード"
 }

@@ -91,4 +91,12 @@
   ,"last_checked": "Ultimo controllo"
   ,"failed_to_load_title": "Errore di caricamento"
   ,"failed_to_load_chapter": "Errore nel caricamento del capitolo"
+  ,"app_version": "Versione dell'app"
+  ,"check_update_button": "Controlla aggiornamenti"
+  ,"open_release": "Apri release"
+  ,"no_update_available": "Nessun aggiornamento disponibile"
+  ,"latest_release": "Ultima release"
+  ,"update_check_failed": "Controllo aggiornamenti fallito"
+  ,"assets": "Assets"
+  ,"download": "Scarica"
 }

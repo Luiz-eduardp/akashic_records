@@ -92,4 +92,12 @@
   ,"last_checked": "Última verificación"
   ,"failed_to_load_title": "Error al cargar"
   ,"failed_to_load_chapter": "Error al cargar el capítulo"
+  ,"app_version": "Versión de la app"
+  ,"check_update_button": "Buscar actualizaciones"
+  ,"open_release": "Abrir release"
+  ,"no_update_available": "No hay actualizaciones disponibles"
+  ,"latest_release": "Última release"
+  ,"update_check_failed": "Fallo al checar actualizaciones"
+  ,"assets": "Assets"
+  ,"download": "Descargar"
 }
