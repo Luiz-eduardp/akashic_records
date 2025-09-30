@@ -1,580 +1,778 @@
+import 'package:flutter/material.dart';
+import 'package:akashic_records/i18n/i18n.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:akashic_records/models/model.dart';
+import 'package:http/http.dart' as http;
+import 'package:akashic_records/db/novel_database.dart';
+import 'package:akashic_records/widgets/chapter_list.dart';
+import 'package:akashic_records/services/plugin_registry.dart';
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
+import 'package:flutter/services.dart';
+import 'package:battery_plus/battery_plus.dart';
 import 'dart:async';
 import 'dart:convert';
-
-import 'package:akashic_records/i18n/i18n.dart';
-import 'package:akashic_records/models/model.dart';
-import 'package:akashic_records/screens/reader/chapter_display_widget.dart';
-import 'package:akashic_records/screens/reader/chapter_list_widget.dart';
-import 'package:akashic_records/screens/reader/chapter_navigation_widget.dart';
-import 'package:akashic_records/screens/reader/reader_app_bar_widget.dart';
-import 'package:akashic_records/screens/reader/settings/reader_settings_modal_widget.dart';
-import 'package:akashic_records/state/app_state.dart';
-import 'package:akashic_records/widgets/error_message_widget.dart';
-import 'package:akashic_records/widgets/skeleton/chapterdisplay_skeleton.dart';
-import 'package:akashic_records/helpers/novel_loading_helper.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:html/dom.dart' show Document;
-import 'package:html/parser.dart' show parse;
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:akashic_records/screens/reader/reader_subheader.dart';
+import 'package:akashic_records/screens/reader/reader_config_modal.dart';
 
 class ReaderScreen extends StatefulWidget {
-  final String pluginId;
-  final String novelId;
-  final String? chapterId;
-
-  const ReaderScreen({
-    super.key,
-    required this.pluginId,
-    required this.novelId,
-    this.chapterId,
-    String? initialChapterId,
-  });
+  const ReaderScreen({super.key});
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();
 }
 
-class _ReaderScreenState extends State<ReaderScreen>
-    with SingleTickerProviderStateMixin {
-  Novel? novel;
-  Chapter? currentChapter;
-  int currentChapterIndex = 0;
-  bool isLoading = true;
-  String? errorMessage;
-  String? _lastReadChapterId;
-  int? _wordCount;
-  final ValueNotifier<double> _scrollPercentage = ValueNotifier<double>(0.0);
-  Set<String> _readChapterIds = {};
+class _ReaderScreenState extends State<ReaderScreen> {
+  late Novel novel;
+  int selectedChapter = 0;
+  late final WebViewController _controller;
+  bool _argsHandled = false;
+  List<Map<String, dynamic>> _presets = [];
+  late Map<String, dynamic> _prefs;
+  double _scrollProgress = 0.0;
+  int _wordCountCached = 0;
+  String _currentTime = '';
+  int _batteryLevel = -1;
 
-  bool _isUiHidden = true;
+  Future<void> _removeScriptFromWebView(String scriptName) async {
+    try {
+      final uri = Uri.parse('https://api.npoint.io/bcd94c36fa7f3bf3b1e6');
+      final resp = await http.read(uri);
+      final Map<String, dynamic> data =
+          jsonDecode(resp) as Map<String, dynamic>;
+      final List scripts = data['scripts'] as List? ?? [];
+      final match = scripts.firstWhere(
+        (s) => (s['name'] ?? s['use']) == scriptName,
+        orElse: () => null,
+      );
+      if (match != null) {
+        final removeJs = '''
+          (function(){
+            try {
+              if (window['$scriptName']) { window['$scriptName'] = undefined; }
+              var style = document.getElementById('scriptstore-style-$scriptName');
+              if (style) { style.remove(); }
+              if (window['scriptstoreCleanup_$scriptName']) { window['scriptstoreCleanup_$scriptName'](); }
+            } catch(e) {}
+          })();
+        ''';
+        await _controller.runJavaScript(removeJs);
+      }
+    } catch (e) {
+      print('Falha ao remover script do WebView: $e');
+    }
+  }
 
-  late AnimationController _visibilityController;
-  late Animation<double> _animation;
+  Timer? _timeTimer;
+  Timer? _batteryTimer;
+  final Battery _battery = Battery();
+
+  Future<void> _setFullscreenMode(bool enabled) async {
+    if (enabled) {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    } else {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_argsHandled) return;
+    final arg = ModalRoute.of(context)?.settings.arguments;
+    if (arg is Map) {
+      final maybeNovel = arg['novel'];
+      final maybeIdx = arg['chapterIndex'];
+      if (maybeNovel is Novel) novel = maybeNovel;
+      if (maybeIdx is int) selectedChapter = maybeIdx;
+    } else if (arg is Novel) {
+      novel = arg;
+    } else {
+      novel = Novel(
+        id: '0',
+        title: 'unknown'.translate,
+        coverImageUrl: '',
+        author: '',
+        description: '',
+        chapters: [],
+        pluginId: '',
+        genres: [],
+      );
+    }
+    _argsHandled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadChapter());
+  }
 
   @override
   void initState() {
     super.initState();
-    _isUiHidden = true;
-    _enterFullScreen();
-    _loadData();
-    _loadReadChapters();
-    WakelockPlus.enable();
-
-    _scrollPercentage.addListener(_handleScroll);
-
-    _visibilityController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _animation = CurvedAnimation(
-      parent: _visibilityController,
-      curve: Curves.easeInOut,
-    );
-
-    if (_isUiHidden) {
-      _visibilityController.value = 0.0;
-    } else {
-      _visibilityController.value = 1.0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _exitFullScreen();
-    WakelockPlus.disable();
-    _scrollPercentage.removeListener(_handleScroll);
-    _scrollPercentage.dispose();
-    _visibilityController.dispose();
-    super.dispose();
-  }
-
-  void _handleScroll() {
-    if (_scrollPercentage.value >= 0.99 && currentChapter != null) {
-      if (!_readChapterIds.contains(currentChapter!.id)) {
-        _onMarkAsRead(currentChapter!.id);
-      }
-    }
-  }
-
-  void _enterFullScreen() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive, overlays: []);
-  }
-
-  void _exitFullScreen() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
-  }
-
-  void _handleToggleUiVisibility() {
-    setState(() {
-      _isUiHidden = !_isUiHidden;
-    });
-
-    if (_isUiHidden) {
-      _visibilityController.reverse();
-      _enterFullScreen();
-    } else {
-      _visibilityController.forward();
-      _exitFullScreen();
-    }
-  }
-
-  Future<void> _loadData() async {
+    _controller =
+        WebViewController()..setJavaScriptMode(JavaScriptMode.unrestricted);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await _loadNovel();
-      await _loadLastReadChapter(prefs);
-      _updateWordCount();
-    } catch (e, stacktrace) {
-      if (mounted) {
-        setState(() {
-          errorMessage = 'Erro ao carregar dados: $e'.translate;
-        });
-      }
-      debugPrint("Erro ao carregar dados: $e\n$stacktrace");
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
-  }
+      _controller.addJavaScriptChannel(
+        'Scroll',
+        onMessageReceived: (msg) {
+          _handleScrollMessage(msg.message);
+        },
+      );
+    } catch (_) {}
+    _controller.loadHtmlString('<html><body><h2>Loading...</h2></body></html>');
+    _buildPresets();
+    _startTimers();
 
-  Future<void> _loadNovel() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-      novel = null;
-      currentChapter = null;
-    });
-
-    try {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = Provider.of<AppState>(context, listen: false);
-      final plugin = appState.pluginServices[widget.pluginId];
-
-      if (plugin == null) {
-        if (mounted) {
-          setState(() {
-            errorMessage = 'Plugin não encontrado.'.translate;
-          });
-        }
-        return;
+      final prefs = appState.getReaderPrefs();
+      final enabledScripts =
+          (prefs['enabledScripts'] is List)
+              ? List<String>.from(prefs['enabledScripts'])
+              : <String>[];
+      if (enabledScripts.isNotEmpty) {
+        await _applyScriptsToWebView(enabledScripts);
       }
-
-      final loadedNovel = await loadNovelWithTimeout(
-        () => plugin.parseNovel(widget.novelId),
-      );
-
-      if (loadedNovel == null) {
-        if (mounted) {
-          setState(() {
-            errorMessage = 'Novel não encontrada.'.translate;
-          });
-        }
-        return;
-      }
-
-      loadedNovel.pluginId = widget.pluginId;
-      loadedNovel.chapters.sort(
-        (a, b) => (a.chapterNumber ?? 0).compareTo(b.chapterNumber ?? 0),
-      );
-
-      if (widget.chapterId != null) {
-        final chapterIndex = loadedNovel.chapters.indexWhere(
-          (chapter) => chapter.id == widget.chapterId,
-        );
-        if (chapterIndex != -1) {
-          currentChapterIndex = chapterIndex;
-          currentChapter = loadedNovel.chapters[currentChapterIndex];
-
-          if (currentChapter!.content == null ||
-              currentChapter!.content!.isEmpty) {
-            novel = loadedNovel;
-            await _loadChapterContent();
-          } else {
-            novel = loadedNovel;
-            setState(() {
-              _updateWordCount();
-            });
-          }
-        } else {
-          novel = loadedNovel;
-          await _loadLastReadChapter(await SharedPreferences.getInstance());
-        }
-      } else {
-        novel = loadedNovel;
-        await _loadLastReadChapter(await SharedPreferences.getInstance());
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          errorMessage = 'Erro ao carregar novel: $e'.translate;
-        });
-      }
-    }
-  }
-
-  Future<void> _loadChapterContent() async {
-    if (novel == null || currentChapter == null || !mounted) return;
-
-    setState(() {
-      isLoading = true;
     });
+  }
 
+  void _startTimers() {
+    _currentTime = _formatTime(DateTime.now());
+    _timeTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() => _currentTime = _formatTime(DateTime.now()));
+    });
+    _updateBattery();
+    _batteryTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _updateBattery(),
+    );
+  }
+
+  Future<void> _updateBattery() async {
     try {
-      final appState = Provider.of<AppState>(context, listen: false);
-      final plugin = appState.pluginServices[novel!.pluginId];
-
-      if (plugin == null) {
-        if (mounted) {
-          setState(() {
-            errorMessage = 'Erro: Plugin inválido.'.translate;
-          });
-        }
-        return;
-      }
-
-      final content = await plugin.parseChapter(currentChapter!.id);
-
-      if (content == null) {
-        if (mounted) {
-          setState(() {
-            errorMessage =
-                'Erro: Falha ao carregar o conteúdo do capítulo.'.translate;
-          });
-        }
-        return;
-      }
-
-      if (mounted) {
-        setState(() {
-          currentChapter = Chapter(
-            id: currentChapter!.id,
-            title: currentChapter!.title,
-            content: content as String?,
-            chapterNumber: null,
-            order: 0,
-          );
-          isLoading = false;
-          _updateWordCount();
-        });
-      }
-      final prefs = await SharedPreferences.getInstance();
-      _saveLastReadChapter(currentChapter!.id, prefs);
-      _addToHistory();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          errorMessage = 'Erro ao carregar capítulo: $e'.translate;
-        });
-      }
-    }
+      final level = await _battery.batteryLevel;
+      setState(() => _batteryLevel = level);
+    } catch (_) {}
   }
 
-  Future<void> _loadLastReadChapter(SharedPreferences prefs) async {
-    if (novel == null) return;
-
-    final lastReadChapterIdPref = prefs.getString('lastRead_${widget.novelId}');
-
-    if (lastReadChapterIdPref != null) {
-      currentChapterIndex = novel!.chapters.indexWhere(
-        (chapter) => chapter.id == lastReadChapterIdPref,
-      );
-      if (currentChapterIndex == -1) {
-        currentChapterIndex = 0;
-      }
-    } else {
-      currentChapterIndex = 0;
-    }
-
-    if (novel!.chapters.isNotEmpty) {
-      currentChapter = novel!.chapters[currentChapterIndex];
-      if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
-        await _loadChapterContent();
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          errorMessage = 'Erro: Nenhum capítulo encontrado.'.translate;
-        });
-      }
-    }
-    if (mounted) {
-      setState(() {});
-    }
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 
-  Future<void> _saveLastReadChapter(
-    String chapterId,
-    SharedPreferences prefs,
-  ) async {
-    await prefs.setString('lastRead_${widget.novelId}', chapterId);
-  }
-
-  Future<void> _loadReadChapters() async {
-    final prefs = await SharedPreferences.getInstance();
-    final readChaptersKey = 'readChapters_${widget.novelId}';
-    final readChaptersString = prefs.getString(readChaptersKey) ?? '[]';
+  void _handleScrollMessage(String message) {
     try {
-      final List<dynamic> readChaptersList = jsonDecode(readChaptersString);
-      setState(() {
-        _readChapterIds = Set<String>.from(readChaptersList);
-      });
-    } catch (e) {
-      debugPrint("Erro ao carregar capítulos lidos: $e");
-      setState(() {
-        _readChapterIds = {};
-      });
-    }
+      final Map<String, dynamic> m =
+          message.isNotEmpty
+              ? Map<String, dynamic>.from(jsonDecode(message) as Map)
+              : {};
+      final pos = (m['pos'] as num?)?.toDouble() ?? 0.0;
+      final max = (m['max'] as num?)?.toDouble() ?? 1.0;
+      final progress = max > 0 ? (pos / max).clamp(0.0, 1.0) : 0.0;
+      setState(() => _scrollProgress = progress);
+    } catch (e) {}
   }
 
-  Future<void> _saveReadChapters() async {
-    final prefs = await SharedPreferences.getInstance();
-    final readChaptersKey = 'readChapters_${widget.novelId}';
-    final readChaptersList = _readChapterIds.toList();
-    await prefs.setString(readChaptersKey, jsonEncode(readChaptersList));
-  }
-
-  void _showSettingsModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return const ReaderSettingsModal();
+  void _buildPresets() {
+    _presets = [
+      {
+        'name': 'Light 1',
+        'bg': '#FFFFFF',
+        'fg': '#222222',
+        'accent': '#1E88E5',
       },
-    );
-  }
-
-  void _goToPreviousChapter() {
-    if (currentChapterIndex > 0) {
-      setState(() {
-        isLoading = true;
-        currentChapterIndex--;
-        currentChapter = novel!.chapters[currentChapterIndex];
-      });
-      if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
-        _loadChapterContent();
-      } else {
-        setState(() {
-          isLoading = false;
-          _updateWordCount();
-        });
-      }
-    }
-  }
-
-  void _goToNextChapter() {
-    if (novel != null && currentChapterIndex < novel!.chapters.length - 1) {
-      setState(() {
-        isLoading = true;
-        currentChapterIndex++;
-        currentChapter = novel!.chapters[currentChapterIndex];
-      });
-      if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
-        _loadChapterContent();
-      } else {
-        setState(() {
-          isLoading = false;
-          _updateWordCount();
-        });
-      }
-    }
-  }
-
-  void _onChapterTap(String chapterId) {
-    if (novel == null) return;
-
-    final newIndex = novel!.chapters.indexWhere(
-      (chapter) => chapter.id == chapterId,
-    );
-    if (newIndex == -1) return;
-
-    setState(() {
-      isLoading = true;
-      currentChapterIndex = newIndex;
-      currentChapter = novel!.chapters[currentChapterIndex];
-    });
-
-    if (currentChapter!.content == null || currentChapter!.content!.isEmpty) {
-      _loadChapterContent();
-    } else {
-      setState(() {
-        isLoading = false;
-        _updateWordCount();
-      });
-    }
-    Navigator.pop(context);
-  }
-
-  void _onMarkAsRead(String chapterId) {
-    setState(() {
-      if (_readChapterIds.contains(chapterId)) {
-        _readChapterIds.remove(chapterId);
-      } else {
-        _readChapterIds.add(chapterId);
-      }
-    });
-    _saveReadChapters();
-  }
-
-  Future<void> _addToHistory() async {
-    if (novel == null || currentChapter == null || !mounted) return;
-
-    final historyKey = 'history_${widget.novelId}';
-    final historyString = await SharedPreferences.getInstance().then(
-      (prefs) => prefs.getString(historyKey) ?? '[]',
-    );
-    List<dynamic> history = List.from(jsonDecode(historyString));
-
-    final newItem = {
-      'novelId': widget.novelId,
-      'novelTitle': novel!.title,
-      'chapterId': currentChapter!.id,
-      'chapterTitle': currentChapter!.title,
-      'pluginId': novel!.pluginId,
-    };
-
-    int existingIndex = history.indexWhere(
-      (item) => item['chapterId'] == newItem['chapterId'],
-    );
-
-    if (existingIndex != -1) {
-      history[existingIndex] = {
-        ...newItem,
-        'lastRead': history[existingIndex]['lastRead'],
-      };
-    } else {
-      history.insert(0, {
-        ...newItem,
-        'lastRead': DateTime.now().toIso8601String(),
-      });
-    }
-    SharedPreferences.getInstance().then(
-      (prefs) => prefs.setString(historyKey, jsonEncode(history)),
-    );
-  }
-
-  void _updateWordCount() {
-    if (currentChapter?.content != null) {
-      Document document = parse(currentChapter!.content);
-      String text = document.body!.text;
-      setState(() {
-        _wordCount = text.split(' ').length;
-      });
-    } else {
-      setState(() {
-        _wordCount = 0;
-      });
-    }
+      {
+        'name': 'Light 2',
+        'bg': '#FAF8F6',
+        'fg': '#222222',
+        'accent': '#8E24AA',
+      },
+      {
+        'name': 'Light 3',
+        'bg': '#FFF8E1',
+        'fg': '#222222',
+        'accent': '#FB8C00',
+      },
+      {
+        'name': 'Light 4',
+        'bg': '#F0F4C3',
+        'fg': '#222222',
+        'accent': '#43A047',
+      },
+      {
+        'name': 'Light 5',
+        'bg': '#ECEFF1',
+        'fg': '#263238',
+        'accent': '#607D8B',
+      },
+      {
+        'name': 'Light 6',
+        'bg': '#FFFFFF',
+        'fg': '#333333',
+        'accent': '#607D8B',
+      },
+      {
+        'name': 'Light 7',
+        'bg': '#FFFDE7',
+        'fg': '#222222',
+        'accent': '#FBC02D',
+      },
+      {
+        'name': 'Light 8',
+        'bg': '#FFF3E0',
+        'fg': '#334155',
+        'accent': '#FB8C00',
+      },
+      {
+        'name': 'Light 10',
+        'bg': '#F7F7F7',
+        'fg': '#222222',
+        'accent': '#1976D2',
+      },
+      {'name': 'Dark 1', 'bg': '#121212', 'fg': '#E0E0E0', 'accent': '#BB86FC'},
+      {'name': 'Dark 2', 'bg': '#0D1117', 'fg': '#C9D1D9', 'accent': '#58A6FF'},
+      {'name': 'Dark 3', 'bg': '#111827', 'fg': '#E6E6E6', 'accent': '#10B981'},
+      {'name': 'Dark 4', 'bg': '#0B0F19', 'fg': '#E5E7EB', 'accent': '#F59E0B'},
+      {'name': 'Dark 5', 'bg': '#1A1A1A', 'fg': '#F3F4F6', 'accent': '#EF4444'},
+      {'name': 'Dark 6', 'bg': '#0F172A', 'fg': '#E6EEF8', 'accent': '#60A5FA'},
+      {'name': 'Dark 7', 'bg': '#141414', 'fg': '#DDDDDD', 'accent': '#9CA3AF'},
+      {'name': 'Dark 8', 'bg': '#101010', 'fg': '#EDEDED', 'accent': '#F472B6'},
+      {'name': 'Dark 9', 'bg': '#0B0B0B', 'fg': '#EAEAEA', 'accent': '#34D399'},
+      {
+        'name': 'Dark 10',
+        'bg': '#0A0A0A',
+        'fg': '#F8F8F8',
+        'accent': '#3B82F6',
+      },
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    _prefs = appState.getReaderPrefs();
+    _prefs = {
+      'presetIndex': _prefs['presetIndex'] ?? 0,
+      'fontSize':
+          (_prefs['fontSize'] is num)
+              ? (_prefs['fontSize'] as num).toDouble()
+              : 18.0,
+      'lineHeight':
+          (_prefs['lineHeight'] is num)
+              ? (_prefs['lineHeight'] as num).toDouble()
+              : 1.6,
+      'fontFamily': _prefs['fontFamily'] ?? 'serif',
+      'padding':
+          (_prefs['padding'] is num)
+              ? (_prefs['padding'] as num).toDouble()
+              : 12.0,
+      'align': _prefs['align'] ?? 'left',
+      'focusMode': _prefs['focusMode'] ?? false,
+      'focusBlur': _prefs['focusBlur'] ?? 6,
+      'textBrightness':
+          (_prefs['textBrightness'] is num)
+              ? (_prefs['textBrightness'] as num).toDouble()
+              : 1.0,
+      'fullscreen': _prefs['fullscreen'] ?? false,
+    };
+    final isFullscreen = (_prefs['fullscreen'] as bool?) ?? false;
 
-    return Scaffold(
-      backgroundColor: appState.readerSettings.backgroundColor,
-      appBar:
-          _isUiHidden
-              ? null
-              : PreferredSize(
-                preferredSize: const Size.fromHeight(kToolbarHeight * 2),
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _scrollPercentage,
-                  builder: (context, percentage, child) {
-                    return ReaderAppBar(
-                      title:
-                          isLoading ||
-                                  errorMessage != null ||
-                                  currentChapter == null
-                              ? null
-                              : currentChapter!.title,
-                      readerSettings: appState.readerSettings,
-                      onSettingsPressed: () => _showSettingsModal(context),
-                      wordCount: _wordCount,
-                      scrollPercentage: percentage,
-                      scrollController: ScrollController(),
-                      appBarColor: colorScheme.surfaceContainerHighest
-                          .withOpacity(0.7),
-                    );
-                  },
-                ),
-              ),
-      endDrawer:
-          _isUiHidden
-              ? null
-              : novel != null
-              ? Drawer(
-                backgroundColor: colorScheme.surfaceVariant,
-                child: ChapterListWidget(
-                  chapters: novel!.chapters,
-                  onChapterTap: _onChapterTap,
-                  novelId: widget.novelId,
-                  onMarkAsRead: _onMarkAsRead,
-                  readChapterIds: _readChapterIds,
-                ),
-              )
-              : null,
-      body: Stack(
-        children: [
-          Builder(
-            builder: (context) {
-              if (isLoading) {
-                return const Center(child: ChapterDisplaySkeleton());
-              } else if (errorMessage != null) {
-                return Center(
-                  child: ErrorMessageWidget(errorMessage: errorMessage!),
-                );
-              } else if (novel == null || currentChapter == null) {
-                return Center(child: Text("Erro Inesperado".translate));
-              } else {
-                return ChapterDisplay(
-                  chapterContent: currentChapter?.content,
-                  readerSettings: appState.readerSettings,
-                  chapterId: currentChapter!.id,
-                  scrollPercentageNotifier: _scrollPercentage,
-                  onToggleUiVisibility: _handleToggleUiVisibility,
-                );
-              }
-            },
-          ),
-          if (novel != null && currentChapter != null)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: FadeTransition(
-                opacity: _animation,
-                child: SizeTransition(
-                  sizeFactor: _animation,
-                  axis: Axis.vertical,
-                  child: SafeArea(
-                    child: ChapterNavigation(
-                      onPreviousChapter: _goToPreviousChapter,
-                      onNextChapter: _goToNextChapter,
-                      isLoading: isLoading,
-                      readerSettings: appState.readerSettings,
-                      currentChapterIndex: currentChapterIndex,
-                      chapters: novel!.chapters,
-                      novelId: widget.novelId,
-                      onChapterTap: _onChapterTap,
-                      lastReadChapterId: _lastReadChapterId,
-                      readChapterIds: _readChapterIds,
-                      onMarkAsRead: _onMarkAsRead,
-                      navigationColor: colorScheme.surfaceContainer,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        appBar:
+            isFullscreen
+                ? null
+                : AppBar(
+                  centerTitle: true,
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          novel.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    IconButton(
+                      tooltip: 'Previous',
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: _goToPrevious,
                     ),
+                    IconButton(
+                      tooltip: 'Chapters',
+                      icon: const Icon(Icons.list),
+                      onPressed: _openChapterSelector,
+                    ),
+                    IconButton(
+                      tooltip: 'Reader settings',
+                      icon: const Icon(Icons.settings),
+                      onPressed: _openConfigModal,
+                    ),
+                    IconButton(
+                      tooltip: 'Next',
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: _goToNext,
+                    ),
+                  ],
+                ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              if (!isFullscreen)
+                ReaderSubheader(
+                  wordCount: _wordCountCached,
+                  time: _currentTime,
+                  batteryLevel: _batteryLevel,
+                  progress: _scrollProgress,
+                  accent: appState.accentColor,
+                ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: GestureDetector(
+                    onDoubleTap: () async {
+                      final current = (_prefs['fullscreen'] as bool?) ?? false;
+                      final newVal = !current;
+                      await _setFullscreenMode(newVal);
+                      setState(() {
+                        _prefs['fullscreen'] = newVal;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            newVal
+                                ? 'Tela cheia ativada'
+                                : 'Tela cheia desativada',
+                          ),
+                        ),
+                      );
+                    },
+                    child: WebViewWidget(controller: _controller),
                   ),
                 ),
               ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  Future<void> _openConfigModal({bool fullModal = false}) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.6,
+              minChildSize: 0.3,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (c, sc) {
+                return SingleChildScrollView(
+                  controller: sc,
+                  child: ReaderConfigModal(
+                    config: _prefs,
+                    onChange: (cfg) async {
+                      _prefs = Map<String, dynamic>.from(cfg);
+                      await appState.setReaderPrefs(_prefs);
+                      setState(() {});
+                      _loadChapter();
+                    },
+                    onApplyScripts: (enabledScripts) async {
+                      _prefs['enabledScripts'] = enabledScripts;
+                      await appState.setReaderPrefs(_prefs);
+                      await _applyScriptsToWebView(enabledScripts);
+                      setState(() {});
+                    },
+                    onRemoveScript: (scriptName) async {
+                      await _removeScriptFromWebView(scriptName);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  int _wordCount(String html) {
+    final text = html.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
+    final words = text.split(RegExp(r'\s+')).where((w) => w.trim().isNotEmpty);
+    return words.length;
+  }
+
+  void _loadChapter() async {
+    if (novel.chapters.isEmpty) return;
+    final chapter = novel.chapters[selectedChapter];
+
+    if (chapter.content == null || chapter.content!.trim().isEmpty) {
+      final svc = PluginRegistry.get(novel.pluginId);
+      if (svc != null) {
+        try {
+          final fetched = await svc.parseChapter(chapter.id);
+          if (fetched != null && fetched.isNotEmpty) {
+            chapter.content = fetched;
+            try {
+              final db = await NovelDatabase.getInstance();
+              await db.upsertNovel(novel);
+            } catch (e) {
+              print('Failed to persist chapter content: $e');
+            }
+          }
+        } catch (e) {
+          print('Failed to fetch chapter content: $e');
+        }
+      }
+    }
+
+    final content = chapter.content ?? '<p>Empty</p>';
+    final presetIndex = _prefs['presetIndex'] as int;
+    final preset = _presets[presetIndex % _presets.length];
+    final bg = preset['bg'] as String;
+    final fg = preset['fg'] as String;
+    final fontSize = (_prefs['fontSize'] as double).toString();
+    final lineHeight = (_prefs['lineHeight'] as double).toString();
+    final padding = (_prefs['padding'] as double).toString();
+    final fontFamily = _prefs['fontFamily'] as String? ?? 'serif';
+
+    final align = (_prefs['align'] as String?) ?? 'left';
+    final focusMode = (_prefs['focusMode'] as bool?) ?? false;
+    final focusBlur = (_prefs['focusBlur'] as int?) ?? 6;
+
+    final fontColorPref = (_prefs['fontColor'] as String?);
+    final bgColorPref = (_prefs['bgColor'] as String?);
+    final effectiveBg = bgColorPref ?? bg;
+    final effectiveFg = fontColorPref ?? fg;
+    final brightnessVal = (_prefs['textBrightness'] as double?) ?? 1.0;
+    final opacityNorm = ((brightnessVal.clamp(0.5, 2.0) - 0.5) / (2.0 - 0.5))
+        .clamp(0.0, 1.0);
+    final textAlpha = (0.5 + opacityNorm * 0.5).clamp(0.0, 1.0);
+    String fgRgba() {
+      try {
+        final colorStr = (fontColorPref ?? fg).replaceFirst('#', '');
+        String hex = colorStr;
+        if (hex.length == 6) hex = 'ff$hex';
+        final intVal = int.parse(hex, radix: 16);
+        final r = (intVal >> 16) & 0xFF;
+        final g = (intVal >> 8) & 0xFF;
+        final b = intVal & 0xFF;
+        return 'rgba($r,$g,$b,${textAlpha.toStringAsFixed(3)})';
+      } catch (e) {
+        return effectiveFg;
+      }
+    }
+
+    final css = '''
+      body { background: $effectiveBg; color: ${fgRgba()}; font-size: ${fontSize}px; line-height: $lineHeight; padding: ${padding}px; font-family: $fontFamily; }
+      img { max-width: 100%; height: auto; }
+      a { color: ${preset['accent']}; }
+      p, div { text-align: $align; }
+  .para { transition: filter 220ms ease, opacity 220ms ease; filter: blur(${focusMode ? focusBlur : 0}px); opacity: ${textAlpha.toStringAsFixed(3)}; }
+  .para.focus { opacity: 1; filter: none; }
+    ''';
+
+    String wrapped = content;
+    if (focusMode) {
+      wrapped = content.replaceAllMapped(
+        RegExp(r'<p[^>]*>([\s\S]*?)<\/p>'),
+        (m) => '<div class="para">${m[1]}</div>',
+      );
+    }
+    final base =
+        '<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>$css</style></head><body><div class="reader-content">${focusMode ? wrapped : content}</div>';
+    final scrollJs = '''
+<script>
+(function(){
+  function send(){
+    try{
+      var pos = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      var max = Math.max(document.body.scrollHeight - window.innerHeight, 1);
+      Scroll.postMessage(JSON.stringify({pos: pos, max: max}));
+    }catch(e){}
+  }
+  var ticking = false;
+  function updateFocus(){
+    try{
+      var paras = document.querySelectorAll('.para');
+      if(!paras || paras.length==0) return;
+      var topScroll = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+      var docHeight = document.body.scrollHeight || 0;
+      if(topScroll < 200){
+        for(var i=0;i<paras.length;i++) paras[i].classList.remove('focus');
+        paras[0].classList.add('focus');
+        return;
+      }
+      if(topScroll + window.innerHeight >= docHeight - 200){
+        for(var i=0;i<paras.length;i++) paras[i].classList.remove('focus');
+        paras[paras.length-1].classList.add('focus');
+        return;
+      }
+      var mid = window.innerHeight/2 + topScroll;
+      var best = null; var bestDist = 1e9; var bestIdx = -1;
+      for(var i=0;i<paras.length;i++){
+        var r = paras[i].getBoundingClientRect();
+        if(!r || r.height===0) continue;
+        var top = r.top + topScroll;
+        var center = top + r.height/2;
+        var d = Math.abs(center - mid);
+        if(d < bestDist){ bestDist = d; best = paras[i]; bestIdx = i; }
+      }
+      for(var i=0;i<paras.length;i++){ paras[i].classList.remove('focus'); }
+      if(best) {
+        best.classList.add('focus');
+      } else if(paras.length>0) {
+        paras[0].classList.add('focus');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){
+      window.requestAnimationFrame(function(){ send(); if(${focusMode ? 'true' : 'false'}) updateFocus(); ticking = false; });
+      ticking = true;
+    }
+  }, {passive:true});
+  setTimeout(function(){ send(); if(${focusMode ? 'true' : 'false'}) updateFocus(); }, 500);
+  setInterval(function(){ send(); if(${focusMode ? 'true' : 'false'}) updateFocus(); }, 1000);
+})();
+</script>
+''';
+    final html = '$base$scrollJs</body></html>';
+    await _controller.loadHtmlString(html);
+
+    setState(() {
+      _wordCountCached = _wordCount(content);
+    });
+
+    try {
+      final db = await NovelDatabase.getInstance();
+      await db.setChapterRead(novel.id, chapter.id, true);
+      try {
+        novel.lastReadChapterId = chapter.id;
+        final appState = Provider.of<AppState>(context, listen: false);
+        await appState.addOrUpdateNovel(novel);
+      } catch (e) {
+        try {
+          await db.upsertNovel(novel);
+        } catch (_) {}
+      }
+    } catch (e) {
+      print('Failed to mark chapter read: $e');
+    }
+  }
+
+  Future<void> _openChapterSelector() async {
+    final db = await NovelDatabase.getInstance();
+    Set<String> readSet = await db.getReadChaptersForNovel(novel.id);
+    final result = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        String search = '';
+        bool asc = true;
+        List<Chapter> chapters = List.from(novel.chapters);
+        List<Chapter> filtered = List.from(chapters);
+        Timer? searchDebounce;
+
+        void applyFilters(void Function(void Function()) setStateModal) {
+          var list = List.of(chapters);
+          if (search.isNotEmpty) {
+            final q = search.toLowerCase();
+            list =
+                list.where((c) => c.title.toLowerCase().contains(q)).toList();
+          }
+          list.sort(
+            (a, b) =>
+                asc
+                    ? (a.chapterNumber ?? 0).compareTo(b.chapterNumber ?? 0)
+                    : (b.chapterNumber ?? 0).compareTo(a.chapterNumber ?? 0),
+          );
+          setStateModal(() => filtered = list);
+        }
+
+        return StatefulBuilder(
+          builder: (ctx, setStateModal) {
+            return SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.75,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Capítulos',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.search),
+                              hintText: 'Buscar capítulos...',
+                            ),
+                            onChanged: (v) {
+                              searchDebounce?.cancel();
+                              searchDebounce = Timer(
+                                const Duration(milliseconds: 200),
+                                () {
+                                  search = v;
+                                  applyFilters(setStateModal);
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(asc ? Icons.sort_by_alpha : Icons.sort),
+                          onPressed: () {
+                            setStateModal(() {
+                              asc = !asc;
+                              applyFilters(setStateModal);
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.done_all),
+                          onPressed: () async {
+                            for (final ch in chapters) {
+                              await db.setChapterRead(novel.id, ch.id, true);
+                            }
+                            readSet = await db.getReadChaptersForNovel(
+                              novel.id,
+                            );
+                            setStateModal(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: MediaQuery.of(ctx).size.height * 0.55,
+                    child: ChapterList(
+                      chapters: filtered,
+                      readChapters: readSet,
+                      onTap: (ch, idx) {
+                        Navigator.of(ctx).pop(idx);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+    if (result is int) {
+      setState(() => selectedChapter = result);
+      _loadChapter();
+    }
+  }
+
+  int _currentIndex() {
+    if (novel.chapters.isEmpty) return -1;
+    if (selectedChapter >= 0 && selectedChapter < novel.chapters.length)
+      return selectedChapter;
+    return 0;
+  }
+
+  void _goToPrevious() {
+    final idx = _currentIndex();
+    if (idx <= 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('no_previous_chapter'.translate)));
+      return;
+    }
+    setState(() => selectedChapter = idx - 1);
+    _loadChapter();
+  }
+
+  void _goToNext() {
+    final idx = _currentIndex();
+    if (idx == -1 || idx >= novel.chapters.length - 1) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('no_next_chapter'.translate)));
+      return;
+    }
+    setState(() => selectedChapter = idx + 1);
+    _loadChapter();
+  }
+
+  Future<bool> _onWillPop() async {
+    await _setFullscreenMode(false);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('fullscreen_disabled'.translate)));
+    return true;
+  }
+
+  @override
+  void dispose() {
+    _timeTimer?.cancel();
+    _batteryTimer?.cancel();
+    _setFullscreenMode(false);
+    super.dispose();
+  }
+
+  Future<void> _applyScriptsToWebView(List<String> enabledScripts) async {
+    try {
+      final uri = Uri.parse('https://api.npoint.io/bcd94c36fa7f3bf3b1e6');
+      final resp = await http.read(uri);
+      final Map<String, dynamic> data =
+          jsonDecode(resp) as Map<String, dynamic>;
+      final List scripts = data['scripts'] as List? ?? [];
+      for (final name in enabledScripts) {
+        final match = scripts.firstWhere(
+          (s) => (s['name'] ?? s['use']) == name,
+          orElse: () => null,
+        );
+        if (match != null) {
+          final code = match['code'] as String? ?? '';
+          if (code.isNotEmpty) {
+            final js =
+                "(function(){ try{ ${code.replaceAll('\n', ' ')} }catch(e){} })();";
+            try {
+              await _controller.runJavaScript(js);
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      print('Failed to fetch/apply scripts: $e');
+    }
   }
 }

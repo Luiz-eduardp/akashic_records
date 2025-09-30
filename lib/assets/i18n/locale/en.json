@@ -1,0 +1,116 @@
+{
+  "app_title": "Akashic Records",
+  "settings": "Settings",
+  "language": "Language",
+  "change_app_language": "Change app language",
+  "select_language": "Select language",
+  "theme": "Theme",
+  "current": "Current",
+  "system": "System",
+  "light": "Light",
+  "dark": "Dark",
+  "accent_color": "Accent color",
+  "tap_to_change": "Tap to change",
+  "pick_accent_color": "Pick accent color",
+  "cancel": "Cancel",
+  "select": "Select",
+  "english": "English",
+  "portuguese_br": "Português (BR)",
+  "spanish": "Español",
+  "japanese": "日本語",
+  "arabic": "العربية",
+  "italian": "Italiano",
+  "french": "Français",
+  "favorites": "Favorites",
+  "favorites_updates": "Favorites Updates",
+  "no_novels_stored": "No novels stored",
+  "welcome": "Welcome to Akashic Records",
+  "update_available": "An update is available!",
+  "continue": "Continue",
+  "left": "Left",
+  "center": "Center",
+  "justify": "Justify",
+  "font": "Font",
+  "serif": "Serif",
+  "sans": "Sans",
+  "mono": "Mono",
+  "text_color": "Text color",
+  "ok": "OK",
+  "choose": "Choose",
+  "default": "Default",
+  "activate_script": "Activate Script",
+  "confirm": "Confirm",
+  "popular": "Popular",
+  "about": "About"
+  ,
+  "words_read": "Words read",
+  "chapters_read": "Chapters read",
+  "last_novels": "Last Novels",
+  "plugins": "Plugins",
+  "search_plugins_hint": "Search plugins or site...",
+  "all": "All",
+  "only_available": "Only available",
+  "tap_to_browse": "Tap to browse",
+  "plugin_failed_to_initialize": "Plugin failed to initialize",
+  "unavailable": "Unavailable",
+  "search_scripts": "Search scripts...",
+  "script_warning": "Scripts will execute code inside the WebView. Do you accept the risks?",
+  "search_chapters_hint": "Search chapters...",
+  "mark_all_read": "Mark all as read",
+  "added_to_favorites": "Added to favorites",
+  "removed_from_favorites": "Removed from favorites",
+  "failed_update_favorite": "Failed to update favorite",
+  "failed_to_load_data": "Failed to load data",
+  "failed_to_load_popular": "Failed to load popular novels",
+  "checking": "Checking...",
+  "check_for_updates": "Check for updates",
+  "nav_always_visible": "Keep navigation visible",
+  "nav_scroll_threshold": "Navigation scroll threshold",
+  "nav_scroll_threshold_sub": "How sensitive the nav hide/show is when scrolling",
+  "nav_animation_duration": "Navigation animation duration",
+  "nav_animation_duration_sub": "Duration (ms) for nav show/hide animations",
+  "text_brightness": "Text brightness",
+  "font_size": "Font size",
+  "spacing": "Line spacing",
+  "padding": "Padding",
+  "reader_settings_title": "Reader settings",
+  "script_store": "Script store",
+  "search_plugins_or_site": "Search plugins or site...",
+  "unknown": "Unknown",
+  "chapters_short": "ch",
+  "no_previous_chapter": "No previous chapter",
+  "no_next_chapter": "No next chapter",
+  "fullscreen_disabled": "Fullscreen disabled",
+  "no_title_found": "No Title Found",
+  "no_summary_found": "No Summary Found",
+  "app_description": "A powerful reader",
+  "home": "Home",
+  "updates": "Updates"
+  ,"by": "by"
+  ,"never": "never"
+  ,"chapters": "Chapters"
+  ,"last_checked": "Last checked"
+  ,"failed_to_load_title": "Failed to Load"
+  ,"failed_to_load_chapter": "Failed to load chapter content."
+  ,"app_version": "App version"
+  ,"check_update_button": "Check for updates"
+  ,"open_release": "Open release"
+  ,"no_update_available": "No update available"
+  ,"latest_release": "Latest release"
+  ,"update_check_failed": "Update check failed"
+  ,"assets": "Assets"
+  ,"download": "Download"
+  ,"local_epubs": "EPUBs"
+  ,"local_epubs_empty": "No EPUBs imported"
+  ,"import_epub": "Import EPUB"
+  ,"importing_epub": "Importing EPUB..."
+  ,"import_success": "EPUB imported successfully"
+  ,"import_failed": "Failed to import EPUB"
+  ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
+  ,"confirm_delete_epub_title": "Confirm deletion"
+  ,"confirm_delete_epub_message": "Do you want to delete this EPUB and associated files?"
+  ,"confirm_cancel": "Cancel"
+  ,"confirm_delete": "Delete"
+  ,"open_in_reader": "Open in reader"
+  ,"failed_to_import_epub": "Failed to import EPUB"
+}

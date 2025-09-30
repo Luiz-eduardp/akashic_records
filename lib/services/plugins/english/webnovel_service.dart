@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 
@@ -12,7 +13,7 @@ class Webnovel implements PluginService {
   @override
   String get lang => 'en';
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
 
   @override
   Map<String, dynamic> get filters => {
@@ -145,9 +146,9 @@ class Webnovel implements PluginService {
     } catch (e) {
       print('Error in safeFetch: $e');
       if (context != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'failed_to_load_data'.translate}: $e')),
+        );
       }
       return http.Response('Error', 500);
     }
@@ -172,7 +173,7 @@ class Webnovel implements PluginService {
         try {
           final novelName =
               element.querySelector('.g_thumb')?.attributes['title'] ??
-              'No Title Found';
+              'no_title_found'.translate;
           final novelCover =
               element.querySelector('.g_thumb > img')?.attributes[categoryBool
                   ? 'data-original'
@@ -283,7 +284,7 @@ class Webnovel implements PluginService {
       print('Error in popularNovels: $e');
       if (context != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load popular novels: $e')),
+          SnackBar(content: Text('${'failed_to_load_popular'.translate}: $e')),
         );
       }
       return [];
@@ -339,8 +340,7 @@ class Webnovel implements PluginService {
             chapters.add(
               Chapter(
                 id: chapterPath,
-                // ignore: dead_code
-                title: locked ? '$chapterName 🔒' : chapterName,
+                title: chapterName,
                 content: '',
                 chapterNumber: chapterNumber,
               ),
@@ -375,7 +375,7 @@ class Webnovel implements PluginService {
         return Novel(
           pluginId: id,
           id: novelPath,
-          title: 'Failed to Load',
+          title: 'failed_to_load_title'.translate,
           coverImageUrl: '',
           author: '',
           description: '',
@@ -396,7 +396,7 @@ class Webnovel implements PluginService {
         id: novelPath,
         title:
             document.querySelector('.g_thumb > img')?.attributes['alt'] ??
-            'No Title Found',
+            'no_title_found'.translate,
         coverImageUrl: 'https:$cover',
         author:
             document
@@ -458,7 +458,7 @@ class Webnovel implements PluginService {
       );
       if (response.statusCode != 200) {
         print('Failed to load chapter. Status code: ${response.statusCode}');
-        return 'Failed to load chapter content.';
+        return 'failed_to_load_chapter'.translate;
       }
       final data = response.body;
       final document = parse(data);
@@ -544,7 +544,7 @@ class Webnovel implements PluginService {
       print('Error in popularNovels: $e');
       if (context != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load popular novels: $e')),
+          SnackBar(content: Text('${'failed_to_load_popular'.translate}: $e')),
         );
       }
       return [];

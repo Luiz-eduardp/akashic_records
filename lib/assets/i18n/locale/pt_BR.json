@@ -1,0 +1,116 @@
+{
+  "app_title": "Akashic Records",
+  "settings": "Configurações",
+  "language": "Idioma",
+  "change_app_language": "Mudar idioma do app",
+  "select_language": "Selecionar idioma",
+  "theme": "Tema",
+  "current": "Atual",
+  "system": "Sistema",
+  "light": "Claro",
+  "dark": "Escuro",
+  "accent_color": "Cor de destaque",
+  "tap_to_change": "Toque para alterar",
+  "pick_accent_color": "Escolha a cor de destaque",
+  "cancel": "Cancelar",
+  "select": "Selecionar",
+  "english": "English",
+  "portuguese_br": "Português (BR)",
+  "spanish": "Español",
+  "japanese": "日本語",
+  "arabic": "العربية",
+  "italian": "Italiano",
+  "french": "Français",
+  "favorites": "Favoritos",
+  "favorites_updates": "Atualizações de Favoritos",
+  "no_novels_stored": "Nenhum Novel salvo",
+  "welcome": "Bem-vindo ao Akashic Records",
+  "update_available": "Uma atualização está disponível!",
+  "continue": "Continuar",
+  "left": "Esquerda",
+  "center": "Central",
+  "justify": "Justificado",
+  "font": "Fonte",
+  "serif": "Serif",
+  "sans": "Sans",
+  "mono": "Mono",
+  "text_color": "Cor do texto",
+  "ok": "OK",
+  "choose": "Escolher",
+  "default": "Padrão",
+  "activate_script": "Ativar Script",
+  "confirm": "Confirmar",
+  "popular": "Popular",
+  "about": "Sobre"
+  ,
+  "words_read": "Palavras lidas",
+  "chapters_read": "Capítulos lidos",
+  "last_novels": "Últimas novels lidas",
+  "plugins": "Plugins",
+  "search_plugins_hint": "Buscar plugins ou site...",
+  "all": "Todos",
+  "only_available": "Apenas disponíveis",
+  "tap_to_browse": "Toque para navegar",
+  "plugin_failed_to_initialize": "Falha ao inicializar plugin",
+  "unavailable": "Indisponível",
+  "search_scripts": "Buscar scripts...",
+  "script_warning": "Os scripts executarão código dentro do WebView. Você aceita os riscos?",
+  "search_chapters_hint": "Buscar capítulos...",
+  "mark_all_read": "Marcar todos como lidos",
+  "added_to_favorites": "Adicionado aos favoritos",
+  "removed_from_favorites": "Removido dos favoritos",
+  "failed_update_favorite": "Falha ao atualizar favorito",
+  "failed_to_load_data": "Falha ao carregar dados",
+  "failed_to_load_popular": "Falha ao carregar populares",
+  "checking": "Verificando...",
+  "check_for_updates": "Checar atualizações",
+  "nav_always_visible": "Manter navegação visível",
+  "nav_scroll_threshold": "Limiar de rolagem da navegação",
+  "nav_scroll_threshold_sub": "Sensibilidade para ocultar/mostrar a barra ao rolar",
+  "nav_animation_duration": "Duração da animação da navegação",
+  "nav_animation_duration_sub": "Duração (ms) das animações de mostrar/ocultar",
+  "text_brightness": "Brilho do texto",
+  "font_size": "Tamanho da fonte",
+  "spacing": "Espaçamento",
+  "padding": "Preenchimento",
+  "reader_settings_title": "Configurações do leitor",
+  "script_store": "Loja de scripts",
+  "search_plugins_or_site": "Buscar plugins ou site..."
+  ,"unknown": "Desconhecido"
+    ,"chapters_short": "cap"
+    ,"no_previous_chapter": "Nenhum capítulo anterior"
+    ,"no_next_chapter": "Nenhum próximo capítulo"
+    ,"fullscreen_disabled": "Tela cheia desabilitada"
+    ,"no_title_found": "Título não encontrado"
+    ,"no_summary_found": "Resumo não encontrado"
+    ,"app_description": "Um leitor poderoso"
+    ,"home": "Início"
+    ,"updates": "Atualizações"
+    ,"by": "por"
+    ,"never": "nunca"
+    ,"chapters": "Capítulos"
+    ,"last_checked": "Última verificação"
+  ,"failed_to_load_title": "Falha ao carregar"
+  ,"failed_to_load_chapter": "Falha ao carregar o capítulo"
+  ,"app_version": "Versão do app"
+  ,"check_update_button": "Checar atualizações"
+  ,"open_release": "Abrir release"
+  ,"no_update_available": "Nenhuma atualização disponível"
+  ,"latest_release": "Última release"
+  ,"update_check_failed": "Falha ao checar atualizações"
+  ,"assets": "Assets"
+  ,"download": "Baixar"
+  ,"local_epubs": "EPUBs"
+  ,"local_epubs_empty": "Nenhum EPUB importado"
+  ,"import_epub": "Importar EPUB"
+  ,"importing_epub": "Importando EPUB..."
+  ,"import_success": "EPUB importado com sucesso"
+  ,"import_failed": "Falha ao importar EPUB"
+  ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
+  ,"confirm_delete_epub_title": "Confirmar exclusão"
+  ,"confirm_delete_epub_message": "Deseja deletar este EPUB e os arquivos associados?"
+  ,"confirm_cancel": "Cancelar"
+  ,"confirm_delete": "Deletar"
+  ,"open_in_reader": "Abrir no leitor"
+  ,"failed_to_import_epub": "Falha ao importar EPUB"
+}

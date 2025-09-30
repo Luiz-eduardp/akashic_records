@@ -1,0 +1,114 @@
+{
+  "app_title": "سجلات الأكاشيك",
+  "settings": "الإعدادات",
+  "language": "اللغة",
+  "change_app_language": "تغيير لغة التطبيق",
+  "select_language": "اختر اللغة",
+  "theme": "المظهر",
+  "current": "الحالي",
+  "system": "النظام",
+  "light": "فاتح",
+  "dark": "داكن",
+  "accent_color": "لون التمييز",
+  "tap_to_change": "انقر للتغيير",
+  "pick_accent_color": "اختر لون التمييز",
+  "cancel": "إلغاء",
+  "select": "اختيار",
+  "english": "English",
+  "portuguese_br": "Português (BR)",
+  "spanish": "Español",
+  "japanese": "日本語",
+  "arabic": "العربية",
+  "italian": "Italiano",
+  "french": "Français",
+  "favorites": "المفضلة",
+  "favorites_updates": "تحديثات المفضلة",
+  "no_novels_stored": "لا توجد روايات مخزنة",
+  "welcome": "مرحباً بك في سجلات الأكاشيك",
+  "update_available": "تتوفر تحديثات!",
+  "continue": "متابعة",
+  "left": "يسار",
+  "center": "وسط",
+  "justify": "ضبط",
+  "font": "الخط",
+  "serif": "Serif",
+  "sans": "Sans",
+  "mono": "Mono",
+  "text_color": "لون النص",
+  "ok": "موافق",
+  "choose": "اختر",
+  "default": "افتراضي",
+  "activate_script": "تفعيل السكربت",
+  "confirm": "تأكيد",
+  "popular": "شائع",
+  "about": "حول"
+  ,
+  "words_read": "الكلمات المقروءة",
+  "chapters_read": "الفصول المقروءة",
+  "last_novels": "أحدث الروايات",
+  "plugins": "الإضافات",
+  "search_plugins_hint": "ابحث عن إضافات أو موقع...",
+  "all": "الكل",
+  "only_available": "المتوفرة فقط",
+    "mark_all_read": "تعليم الكل كمقروء",
+  "tap_to_browse": "انقر للتصفح",
+  "plugin_failed_to_initialize": "فشل تهيئة الإضافة",
+  "unavailable": "غير متوفر",
+  "search_scripts": "ابحث عن سكربتات...",
+  "script_warning": "السكربتات ستنفذ كودًا داخل WebView. هل تقبل المخاطر؟",
+  "search_chapters_hint": "ابحث عن الفصول...",
+  "added_to_favorites": "تمت الإضافة إلى المفضلة",
+  "removed_from_favorites": "تمت الإزالة من المفضلة",
+  "failed_update_favorite": "فشل تحديث المفضلة",
+  "failed_to_load_data": "فشل في تحميل البيانات",
+  "failed_to_load_popular": "فشل في تحميل الأشهر",
+  "checking": "جار التحقق...",
+  "check_for_updates": "التحقق من التحديثات",
+  "nav_always_visible": "إبقاء التنقل مرئيًا",
+  "nav_scroll_threshold": "عتبة تمرير التنقل",
+  "nav_scroll_threshold_sub": "حساسية إخفاء/إظهار شريط التنقل عند التمرير",
+  "nav_animation_duration": "مدة رسوم التنقل",
+  "nav_animation_duration_sub": "المدة (مللي ثانية) لحركات إظهار/إخفاء التنقل",
+  "text_brightness": "سطوع النص",
+  "font_size": "حجم الخط",
+  "spacing": "تباعد الأسطر",
+  "padding": "الحشوة",
+  "reader_settings_title": "إعدادات القارئ",
+  "script_store": "متجر السكربتات",
+  "search_plugins_or_site": "ابحث عن إضافات أو موقع..."
+  ,"unknown": "غير معروف"
+  ,"chapters_short": "ف"
+  ,"no_previous_chapter": "لا يوجد فصل سابق"
+  ,"no_next_chapter": "لا يوجد فصل تالي"
+  ,"fullscreen_disabled": "ملء الشاشة معطل"
+  ,"no_title_found": "لم يتم العثور على عنوان"
+  ,"no_summary_found": "لم يتم العثور على الملخص"
+  ,"app_description": "قارئ قوي"
+  ,"home": "الرئيسية"
+  ,"updates": "التحديثات"
+  ,"by": "بواسطة"
+  ,"never": "أبدا"
+  ,"chapters": "الفصول"
+  ,"last_checked": "آخر تحقق"
+  ,"app_version": "إصدار التطبيق"
+  ,"check_update_button": "التحقق من التحديثات"
+  ,"open_release": "فتح الريليز"
+  ,"no_update_available": "لا توجد تحديثات"
+  ,"latest_release": "أحدث ريليز"
+  ,"update_check_failed": "فشل التحقق من التحديث"
+  ,"assets": "Assets"
+  ,"download": "تنزيل"
+  ,"local_epubs": "EPUBs"
+  ,"local_epubs_empty": "لا توجد EPUBs مستوردة"
+  ,"import_epub": "استيراد EPUB"
+  ,"importing_epub": "جار استيراد EPUB..."
+  ,"import_success": "تم استيراد EPUB بنجاح"
+  ,"import_failed": "فشل استيراد EPUB"
+  ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
+  ,"confirm_delete_epub_title": "تأكيد الحذف"
+  ,"confirm_delete_epub_message": "هل تريد حذف هذا EPUB والملفات المرتبطة؟"
+  ,"confirm_cancel": "إلغاء"
+  ,"confirm_delete": "حذف"
+  ,"open_in_reader": "افتح في القارئ"
+  ,"failed_to_import_epub": "فشل استيراد EPUB"
+}

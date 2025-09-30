@@ -1,8 +1,9 @@
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' show parse;
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:html/dom.dart' as dom;
 
 class Syosetu implements PluginService {
@@ -12,7 +13,7 @@ class Syosetu implements PluginService {
   @override
   String get lang => 'ja';
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
   @override
   Map<String, dynamic> get filters => {
     'ranking': {
@@ -81,6 +82,7 @@ class Syosetu implements PluginService {
     "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   };
+  late final ProxyClient _client = ProxyClient();
 
   String searchUrl(String? page, String? order) {
     return '$site/search.php?order=${order ?? "hyoka"}${page != null ? "&p=${(int.tryParse(page) ?? 1) <= 1 || (int.tryParse(page) ?? 101) > 100 ? "1" : page}" : ""}';
@@ -90,7 +92,7 @@ class Syosetu implements PluginService {
       'https://placehold.co/400x500.png?text=no+cover';
 
   Future<String> _fetchApi(String url, {Map<String, String>? headers}) async {
-    final response = await http.get(Uri.parse(url), headers: headers);
+    final response = await _client.get(Uri.parse(url), headers: headers);
     if (response.statusCode == 200) {
       return response.body;
     } else {
@@ -143,7 +145,7 @@ class Syosetu implements PluginService {
 
         final novel = Novel(
           id: _shrinkURL(path.replaceFirst(novelPrefix, '')),
-          title: name ?? 'Unknown Title',
+          title: name ?? 'unknown'.translate,
           coverImageUrl: defaultCover,
           pluginId: this.name,
           author: '',

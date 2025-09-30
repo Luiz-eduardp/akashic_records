@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
@@ -20,7 +20,7 @@ class NovelMania implements PluginService {
   @override
   String get lang => 'pt-BR';
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
   @override
   Map<String, dynamic> get filters => {
     'genres': {
@@ -107,8 +107,10 @@ class NovelMania implements PluginService {
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
+  late final ProxyClient _client = ProxyClient();
+
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return response.body;
     } else {
@@ -119,8 +121,8 @@ class NovelMania implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     return _fetchNovels(pageNo, filters: filters);
   }

@@ -11,6 +11,10 @@ class Novel {
   late String pluginId;
   late bool shouldShowNumberOfChapters;
   late NovelStatus status;
+  bool isFavorite = false;
+  String? lastChecked;
+  int lastKnownChapterCount = 0;
+  String? lastReadChapterId;
 
   String statusString = '';
 
@@ -28,6 +32,10 @@ class Novel {
     String? artist,
     this.statusString = '',
     downloads,
+    this.isFavorite = false,
+    this.lastChecked,
+    this.lastKnownChapterCount = 0,
+    this.lastReadChapterId,
   });
 
   int get numberOfChapters => shouldShowNumberOfChapters ? chapters.length : 0;
@@ -44,6 +52,10 @@ class Novel {
       'shouldShowNumberOfChapters': shouldShowNumberOfChapters,
       'status': status.index,
       'genres': genres,
+      'isFavorite': isFavorite ? 1 : 0,
+      'lastChecked': lastChecked,
+      'lastKnownChapterCount': lastKnownChapterCount,
+      'lastReadChapterId': lastReadChapterId,
     };
   }
 
@@ -66,6 +78,13 @@ class Novel {
       shouldShowNumberOfChapters:
           map['shouldShowNumberOfChapters'] as bool? ?? true,
       status: NovelStatus.values[map['status'] as int? ?? 3],
+      isFavorite:
+          (map['isFavorite'] is int
+              ? (map['isFavorite'] as int) == 1
+              : (map['isFavorite'] == true)),
+      lastChecked: map['lastChecked'] as String?,
+      lastKnownChapterCount: map['lastKnownChapterCount'] as int? ?? 0,
+      lastReadChapterId: map['lastReadChapterId'] as String?,
     );
   }
 }

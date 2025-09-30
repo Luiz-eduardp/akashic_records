@@ -1,7 +1,7 @@
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' show parse;
 
 class Kakuyomu implements PluginService {
@@ -11,7 +11,7 @@ class Kakuyomu implements PluginService {
   @override
   String get lang => 'ja';
   @override
-  String get siteUrl => baseURL; 
+  String get siteUrl => baseURL;
 
   @override
   Map<String, dynamic> get filters => {
@@ -56,9 +56,10 @@ class Kakuyomu implements PluginService {
   final String version = '1.0.3';
   final String baseURL = 'https://kakuyomu.jp';
   final String defaultCover = 'https://placehold.co/400x500.png?text=Kakuyomu';
+  late final ProxyClient _client = ProxyClient();
 
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return response.body;
     } else {
@@ -77,8 +78,8 @@ class Kakuyomu implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     String genre = filters?['genre']?['value'] ?? 'all';
     String period = filters?['period']?['value'] ?? 'entire';

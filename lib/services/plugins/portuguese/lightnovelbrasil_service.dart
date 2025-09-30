@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
@@ -20,7 +20,7 @@ class LightNovelBrasil implements PluginService {
   @override
   String get lang => 'pt-BR';
   @override
-  String get siteUrl => baseURL; 
+  String get siteUrl => baseURL;
   @override
   Map<String, dynamic> get filters => {
     'genre[]': {
@@ -117,9 +117,11 @@ class LightNovelBrasil implements PluginService {
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
 
+  late final ProxyClient _client = ProxyClient();
+
   Future<String> _fetchApi(String url) async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(url),
         headers: {
           'User-Agent':
@@ -155,8 +157,8 @@ class LightNovelBrasil implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     String url = createFilterUrl(filters, false, pageNo);
     final body = await _fetchApi(url);

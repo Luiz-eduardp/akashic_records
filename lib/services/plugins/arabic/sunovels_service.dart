@@ -2,7 +2,7 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:html/parser.dart' show parse;
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 
 class Sunovels implements PluginService {
   String get id => 'sunovels';
@@ -15,9 +15,9 @@ class Sunovels implements PluginService {
 
   @override
   String get lang => 'ar';
-  
+
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
   final String site = 'https://sunovels.com/';
 
   @override
@@ -91,8 +91,10 @@ class Sunovels implements PluginService {
     },
   };
 
+  late final ProxyClient _client = ProxyClient();
+
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return response.body;
     } else {
