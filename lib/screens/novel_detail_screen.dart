@@ -107,7 +107,15 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
               final appState = Provider.of<AppState>(context, listen: false);
               final id = (novel ?? widget.novel).id;
               try {
-                await appState.toggleFavorite(id);
+                final exists = appState.localNovels.any((n) => n.id == id);
+                if (!exists) {
+                  final toSave = novel ?? widget.novel;
+                  toSave.isFavorite = true;
+                  await appState.addOrUpdateNovel(toSave);
+                } else {
+                  await appState.toggleFavorite(id);
+                }
+
                 final updated = appState.localNovels.firstWhere(
                   (n) => n.id == id,
                   orElse: () => novel ?? widget.novel,
@@ -118,7 +126,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      (novel ?? widget.novel).isFavorite
+                      updated.isFavorite
                           ? 'added_to_favorites'.translate
                           : 'removed_from_favorites'.translate,
                     ),
@@ -144,9 +152,9 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      hintText: 'Search chapters...',
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      hintText: 'search_chapters_hint'.translate,
                     ),
                     onChanged: (v) {
                       _searchDebounce?.cancel();
@@ -170,15 +178,20 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                   },
                 ),
                 IconButton(
+                  tooltip: 'mark_all_read'.translate,
                   icon: const Icon(Icons.done_all),
                   onPressed: () async {
-                    final db = await NovelDatabase.getInstance();
-                    for (final ch in chapters)
-                      await db.setChapterRead(
+                    final appState = Provider.of<AppState>(
+                      context,
+                      listen: false,
+                    );
+                    for (final ch in chapters) {
+                      await appState.setChapterRead(
                         (novel ?? widget.novel).id,
                         ch.id,
                         true,
                       );
+                    }
                     await _loadReadStates();
                   },
                 ),
