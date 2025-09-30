@@ -3,7 +3,7 @@ import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' show parse;
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 
 class NovelBin implements PluginService {
   String get id => 'NovelBin';
@@ -15,7 +15,7 @@ class NovelBin implements PluginService {
   @override
   String get version => '1.0.7';
   @override
-  String get siteUrl => baseURL; 
+  String get siteUrl => baseURL;
 
   final String baseURL = 'https://novelbin.me/';
   final String catalogURL = 'https://novelbin.me/sort/novelbin-popular';
@@ -24,8 +24,10 @@ class NovelBin implements PluginService {
   @override
   Map<String, dynamic> get filters => {};
 
+  late final ProxyClient _client = ProxyClient();
+
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return response.body;
     } else {
