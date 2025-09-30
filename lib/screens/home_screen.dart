@@ -1,79 +1,10 @@
-import 'dart:convert';
-import 'package:akashic_records/screens/notify/notify_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:akashic_records/screens/library/library_screen.dart';
-import 'package:akashic_records/screens/favorites/favorites_screen.dart';
-import 'package:akashic_records/screens/history/history_screen.dart';
 import 'package:akashic_records/i18n/i18n.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
-import 'package:akashic_records/widgets/app_drawer.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-
-class NotificationBadge extends StatelessWidget {
-  final Future<List<Map<String, dynamic>>> notificationsFuture;
-  final VoidCallback onPressed;
-
-  const NotificationBadge({
-    super.key,
-    required this.notificationsFuture,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: notificationsFuture,
-      builder: (context, snapshot) {
-        int notificationCount = 0;
-        if (snapshot.hasData) {
-          notificationCount = snapshot.data!.length;
-        }
-
-        return IconButton(
-          icon: Stack(
-            children: [
-              Icon(Icons.notifications, color: theme.colorScheme.onSurface),
-              if (notificationCount > 0)
-                Positioned(
-                  right: 2,
-                  top: 2,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.error,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      notificationCount > 99 ? '99+' : '$notificationCount',
-                      style: TextStyle(
-                        color: theme.colorScheme.onError,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          onPressed: onPressed,
-        );
-      },
-    );
-  }
-}
+import 'package:provider/provider.dart';
+import 'package:akashic_records/state/app_state.dart';
+import 'package:akashic_records/models/model.dart';
+import 'package:akashic_records/screens/novel_detail_screen.dart';
+import 'package:akashic_records/db/novel_database.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -82,218 +13,287 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  int _selectedIndex = 0;
-  late TabController _tabController;
-  final _advancedDrawerController = AdvancedDrawerController();
-  late Future<List<Map<String, dynamic>>> _notificationsFuture;
+class _HomeScreenState extends State<HomeScreen> {
+  int _totalWordsRead = 0;
+  int _totalChaptersRead = 0;
+  AppState? _appStateRef;
+
+  Future<void> _loadStats() async {
+    final appState = _appStateRef;
+    if (appState == null) return;
+    final db = await NovelDatabase.getInstance();
+    int words = 0;
+    int chapters = 0;
+    for (final novel in appState.localNovels) {
+      final readSet = await db.getReadChaptersForNovel(novel.id);
+      chapters += readSet.length;
+      for (final ch in novel.chapters) {
+        if (readSet.contains(ch.id) &&
+            ch.content != null &&
+            ch.content!.trim().isNotEmpty) {
+          final text = ch.content!.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
+          final cnt =
+              text
+                  .split(RegExp(r'\s+'))
+                  .where((w) => w.trim().isNotEmpty)
+                  .length;
+          words += cnt;
+        }
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _totalWordsRead = words;
+      _totalChaptersRead = chapters;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(_handleTabChange);
-    _notificationsFuture = _loadNotifications();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _appStateRef = Provider.of<AppState>(context, listen: false);
+      _loadStats();
+      _appStateRef?.addListener(_loadStats);
+    });
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_handleTabChange);
-    _tabController.dispose();
+    try {
+      _appStateRef?.removeListener(_loadStats);
+      _appStateRef = null;
+    } catch (_) {}
     super.dispose();
   }
 
-  void _handleTabChange() {
-    if (_tabController.indexIsChanging) {
-      setState(() {
-        _selectedIndex = _tabController.index;
-      });
-    }
-  }
-
-  void _onItemTapped(int index) {
-    _tabController.animateTo(index);
-  }
-
-  void _handleMenuButtonPressed() {
-    _advancedDrawerController.showDrawer();
-  }
-
-  Future<List<Map<String, dynamic>>> _loadNotifications() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://api.npoint.io/a701fcdc92e490b3289c'),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        List<Map<String, dynamic>> loadedNotifications =
-            data.map((item) => item as Map<String, dynamic>).toList();
-
-        return await _filterUnreadNotifications(loadedNotifications);
-      } else {
-        throw Exception(
-          'Falha ao carregar notificações: ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      throw Exception('Erro ao carregar notificações: $e');
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> _filterUnreadNotifications(
-    List<Map<String, dynamic>> notifications,
-  ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final readNotificationIds = prefs.getStringList('readNotifications') ?? [];
-
-    return notifications
-        .where(
-          (notification) => !readNotificationIds.contains(notification['id']),
-        )
-        .toList();
+  int _chapterIndexForNovel(Novel novel) {
+    final lastId = novel.lastReadChapterId;
+    if (lastId == null) return 0;
+    final idx = novel.chapters.indexWhere((c) => c.id == lastId);
+    if (idx == -1) return 0;
+    return idx;
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final appState = Provider.of<AppState>(context);
+    final favorites = appState.favoriteNovels;
 
-    return AdvancedDrawer(
-      backdropColor: theme.colorScheme.surfaceVariant,
-      controller: _advancedDrawerController,
-      animationCurve: Curves.easeInOut,
-      animationDuration: const Duration(milliseconds: 300),
-      animateChildDecoration: true,
-      rtlOpening: false,
-      disabledGestures: false,
-      childDecoration: BoxDecoration(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
-      drawer: AppDrawer(advancedDrawerController: _advancedDrawerController),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Akashic Records'.translate,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-          foregroundColor: theme.colorScheme.onSurface,
-          centerTitle: true,
-          leading: IconButton(
-            onPressed: _handleMenuButtonPressed,
-            icon: AnimatedBuilder(
-              animation: _advancedDrawerController,
-              builder: (context, child) {
-                return Icon(
-                  _advancedDrawerController.value.visible
-                      ? Icons.close
-                      : Icons.menu,
-                  size: 28,
-                );
-              },
-            ),
-          ),
-          actions: [
-            NotificationBadge(
-              notificationsFuture: _notificationsFuture,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => NotificationScreen(
-                          notificationsFuture: _notificationsFuture,
-                          onNotificationRead: _onNotificationRead,
-                        ),
-                  ),
-                ).then((_) {
-                  setState(() {
-                    _notificationsFuture = _loadNotifications();
-                  });
-                });
-              },
-            ),
-          ],
-          elevation: 4,
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: const [LibraryScreen(), FavoritesScreen(), HistoryScreen()],
-        ),
-        bottomNavigationBar: _buildBottomNavigationBar(theme),
-        extendBody: true,
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 5,
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-            child: GNav(
-              rippleColor: theme.colorScheme.primary.withOpacity(0.1),
-              hoverColor: theme.colorScheme.primary.withOpacity(0.1),
-              gap: 10,
-              activeColor: theme.colorScheme.primary,
-              iconSize: 26,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: theme.colorScheme.primaryContainer,
-              color: theme.colorScheme.onSurfaceVariant,
-              tabs: [
-                GButton(
-                  icon: Icons.library_books,
-                  text: 'Biblioteca'.translate,
-                  textStyle: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+    return Scaffold(
+      appBar: AppBar(title: Text('app_title'.translate)),
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'words_read'.translate,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '$_totalWordsRead',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                GButton(
-                  icon: Icons.favorite,
-                  text: 'Favoritos'.translate,
-                  textStyle: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'chapters_read'.translate,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '$_totalChaptersRead',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                GButton(
-                  icon: Icons.history,
-                  text: 'Histórico'.translate,
-                  textStyle: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'favorites'.translate,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${favorites.length}',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
-              selectedIndex: _selectedIndex,
-              onTabChange: _onItemTapped,
-              curve: Curves.easeOutExpo,
             ),
-          ),
+            const SizedBox(height: 12),
+
+            if (favorites.isNotEmpty) ...[
+              Text(
+                'favorites'.translate,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 160,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemBuilder: (ctx, i) {
+                    final Novel n = favorites[i];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => NovelDetailScreen(novel: n),
+                          ),
+                        );
+                      },
+                      onLongPress: () {
+                        final idx = _chapterIndexForNovel(n);
+                        Navigator.pushNamed(
+                          context,
+                          '/reader',
+                          arguments: {'novel': n, 'chapterIndex': idx},
+                        );
+                      },
+                      child: SizedBox(
+                        width: 110,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child:
+                                    n.coverImageUrl.isNotEmpty
+                                        ? Image.network(
+                                          n.coverImageUrl,
+                                          width: 110,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (_, __, ___) => Container(
+                                                color: Colors.grey,
+                                                width: 110,
+                                                height: 120,
+                                              ),
+                                        )
+                                        : Container(
+                                          color: Colors.grey,
+                                          width: 110,
+                                        ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              n.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemCount: favorites.length,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            Text(
+              'last_novels'.translate,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child:
+                  appState.localNovels.isEmpty
+                      ? Center(child: Text('no_novels_stored'.translate))
+                      : ListView.builder(
+                        itemCount: appState.localNovels.length,
+                        itemBuilder: (context, index) {
+                          final Novel novel = appState.localNovels[index];
+                          return ListTile(
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child:
+                                  novel.coverImageUrl.isNotEmpty
+                                      ? Image.network(
+                                        novel.coverImageUrl,
+                                        width: 48,
+                                        height: 64,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (_, __, ___) => Container(
+                                              width: 48,
+                                              height: 64,
+                                              color: Colors.grey,
+                                            ),
+                                      )
+                                      : Container(
+                                        width: 48,
+                                        height: 64,
+                                        color: Colors.grey,
+                                      ),
+                            ),
+                            title: Text(novel.title),
+                            subtitle: Text(novel.author),
+                            onTap: () {
+                              final idx = _chapterIndexForNovel(novel);
+                              Navigator.pushNamed(
+                                context,
+                                '/reader',
+                                arguments: {
+                                  'novel': novel,
+                                  'chapterIndex': idx,
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+            ),
+          ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/plugins');
+        },
+        child: const Icon(Icons.add),
+      ),
     );
-  }
-
-  void _onNotificationRead(String notificationId) {
-    setState(() {
-      _notificationsFuture = _loadNotifications();
-    });
   }
 }
