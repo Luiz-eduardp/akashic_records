@@ -282,6 +282,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             isFullscreen
                 ? null
                 : AppBar(
+                  centerTitle: true,
                   title: Row(
                     children: [
                       Expanded(
