@@ -13,6 +13,9 @@ class AppState extends ChangeNotifier {
   Color accentColor = Colors.blue;
   bool showChangelog = true;
   Map<String, dynamic> readerPrefs = {};
+  bool navAlwaysVisible = false;
+  double navScrollThreshold = 6.0;
+  int navAnimationMs = 250;
 
   List<Novel> _localNovels = [];
 
@@ -56,6 +59,19 @@ class AppState extends ChangeNotifier {
       } catch (_) {}
     }
     try {
+      final navAlways = await _db.getSetting('nav_always_visible');
+      if (navAlways != null) navAlwaysVisible = navAlways == 'true';
+    } catch (_) {}
+    try {
+      final thr = await _db.getSetting('nav_scroll_threshold');
+      if (thr != null)
+        navScrollThreshold = double.tryParse(thr) ?? navScrollThreshold;
+    } catch (_) {}
+    try {
+      final ms = await _db.getSetting('nav_animation_ms');
+      if (ms != null) navAnimationMs = int.tryParse(ms) ?? navAnimationMs;
+    } catch (_) {}
+    try {
       final rp = await _db.getSetting('reader_prefs');
       if (rp != null && rp.isNotEmpty) {
         readerPrefs = json.decode(rp) as Map<String, dynamic>;
@@ -91,6 +107,30 @@ class AppState extends ChangeNotifier {
         'bgColor': null,
       };
     }
+    notifyListeners();
+  }
+
+  Future<void> setNavAlwaysVisible(bool v) async {
+    navAlwaysVisible = v;
+    try {
+      await _db.setSetting('nav_always_visible', v ? 'true' : 'false');
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> setNavScrollThreshold(double value) async {
+    navScrollThreshold = value;
+    try {
+      await _db.setSetting('nav_scroll_threshold', value.toString());
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> setNavAnimationMs(int ms) async {
+    navAnimationMs = ms;
+    try {
+      await _db.setSetting('nav_animation_ms', ms.toString());
+    } catch (_) {}
     notifyListeners();
   }
 
