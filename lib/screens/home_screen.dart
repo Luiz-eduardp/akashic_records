@@ -187,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text('local_epubs'.translate),
                         const SizedBox(height: 8),
                         Text(
-                          '$_localEpubCount epubs, $_localEpubChapters capítulos',
+                          '$_localEpubCount ${'local_epubs'.translate}, $_localEpubChapters ${'chapters'.translate}',
                         ),
                       ],
                     ),

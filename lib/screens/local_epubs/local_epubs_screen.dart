@@ -103,8 +103,12 @@ class _LocalEpubsScreenState extends State<LocalEpubsScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${_metrics()['epubs']} epubs'),
-                        Text('${_metrics()['chapters']} capítulos'),
+                        Text(
+                          '${_metrics()['epubs']} ${'local_epubs'.translate}',
+                        ),
+                        Text(
+                          '${_metrics()['chapters']} ${'chapters'.translate}',
+                        ),
                       ],
                     ),
                   ),
@@ -189,7 +193,7 @@ class _LocalEpubsScreenState extends State<LocalEpubsScreen> {
                                 IconButton(
                                   icon: const Icon(Icons.open_in_new),
                                   onPressed: () => _openEpub(item),
-                                  tooltip: 'Open in reader',
+                                  tooltip: 'open_in_reader'.translate,
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline),
