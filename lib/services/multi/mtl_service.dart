@@ -5,6 +5,7 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom;
 
@@ -16,7 +17,7 @@ class MtlNovelMulti implements PluginService {
   String get lang => _lang;
   String _lang = 'en';
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
   set lang(String newLang) {
     _lang = newLang;
   }
@@ -80,7 +81,7 @@ class MtlNovelMulti implements PluginService {
   @override
   final String version = '1.2.9';
 
-  final http.Client client = http.Client();
+  final ProxyClient client = ProxyClient();
 
   Future<http.Response> safeFetch(
     String url, {
