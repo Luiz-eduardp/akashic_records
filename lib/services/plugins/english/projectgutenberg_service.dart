@@ -13,7 +13,7 @@ class ProjectGutenberg implements PluginService {
   @override
   String get lang => 'en';
   @override
-  String get siteUrl => baseURL; 
+  String get siteUrl => baseURL;
   @override
   Map<String, dynamic> get filters => {};
 
@@ -42,10 +42,10 @@ class ProjectGutenberg implements PluginService {
   late final ProxyClient _client = ProxyClient();
 
   Novel _createNovelFromItem(dynamic item) {
-  final String author =
-    (item['agents'] != null && item['agents'].isNotEmpty)
-      ? item['agents'][0]['person'] ?? 'unknown'.translate
-      : 'unknown'.translate;
+    final String author =
+        (item['agents'] != null && item['agents'].isNotEmpty)
+            ? item['agents'][0]['person'] ?? 'unknown'.translate
+            : 'unknown'.translate;
 
     final String? coverUrl = _extractCoverUrl(item['resources']);
 
@@ -90,7 +90,7 @@ class ProjectGutenberg implements PluginService {
     print('Search URL: $url');
 
     try {
-  final response = await _client.get(Uri.parse(url));
+      final response = await _client.get(Uri.parse(url));
 
       print('Response Status Code: ${response.statusCode}');
 
@@ -163,7 +163,7 @@ class ProjectGutenberg implements PluginService {
 
   Future<List<Novel>> _fetchNovels(String url) async {
     try {
-  final response = await _client.get(Uri.parse(url));
+      final response = await _client.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
