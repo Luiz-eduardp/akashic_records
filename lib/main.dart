@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:akashic_records/screens/shell_screen.dart';
 import 'package:akashic_records/services/registry_init.dart';
 import 'package:akashic_records/screens/home_screen.dart';
+import 'package:akashic_records/screens/local_epubs/local_epubs_screen.dart';
 import 'package:akashic_records/screens/settings/settings_screen.dart';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:akashic_records/screens/favorites_screen.dart';
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
                 ),
             '/reader': (ctx) => const ReaderScreen(),
             '/favorites': (ctx) => const FavoritesScreen(),
+            '/local_epubs': (ctx) => const LocalEpubsScreen(),
             '/updates': (ctx) => const UpdatesScreen(),
             '/plugins': (ctx) => const PluginsScreen(),
           },
