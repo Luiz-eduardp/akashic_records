@@ -38,6 +38,15 @@ class I18n {
 
     currentLocate = defaultLocale;
     await _loadLocale(currentLocate);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key =
+          currentLocate.countryCode != null &&
+                  currentLocate.countryCode!.isNotEmpty
+              ? '${currentLocate.languageCode}_${currentLocate.countryCode}'
+              : currentLocate.languageCode;
+      await prefs.setString('locale', key);
+    } catch (_) {}
   }
 
   static Future<void> _loadLocale(Locale locale) async {

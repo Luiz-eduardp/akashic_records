@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class NovelHeader extends StatelessWidget {
   final Novel novel;
@@ -33,7 +34,7 @@ class NovelHeader extends StatelessWidget {
                 const SizedBox(height: 6),
                 if (novel.author.isNotEmpty)
                   Text(
-                    'by ${novel.author}',
+                    '${'by'.translate} ${novel.author}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 const SizedBox(height: 8),
