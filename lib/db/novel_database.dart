@@ -20,9 +20,6 @@ class NovelDatabase {
   Future<void> _initDb() async {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, 'akashic_records.db');
-    try {
-      await deleteDatabase(path);
-    } catch (_) {}
     _database = await openDatabase(
       path,
       version: 3,
