@@ -17,6 +17,15 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
   Map<String, int> _updates = {};
   bool _loading = false;
   final Map<String, List<String>> _cachedChapters = {};
+  final Map<String, int> _dynamicUnread = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _refreshDynamicUnread();
+    });
+  }
 
   Future<void> _check() async {
     if (!mounted) return;
@@ -40,8 +49,36 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     });
   }
 
+  Future<int> _computeUnreadForNovel(dynamic n) async {
+    final db = await NovelDatabase.getInstance();
+    final readSet = await db.getReadChaptersForNovel(n.id);
+    int unread = 0;
+    for (final ch in n.chapters) {
+      if (!readSet.contains(ch.id)) unread++;
+    }
+    return unread;
+  }
+
+  Future<void> _refreshDynamicUnread() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final favs = List.of(appState.favoriteNovels);
+    final Map<String, int> out = {};
+    for (final n in favs) {
+      try {
+        out[n.id] = await _computeUnreadForNovel(n);
+      } catch (_) {
+        out[n.id] = 0;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _dynamicUnread.clear();
+      _dynamicUnread.addAll(out);
+    });
+  }
+
   String _formatTimestamp(String? iso) {
-    if (iso == null) return 'never';
+    if (iso == null) return 'never'.translate;
     try {
       final dt = DateTime.tryParse(iso);
       if (dt == null) return iso;
@@ -58,7 +95,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
   Widget build(BuildContext context) {
     final favs = List.of(Provider.of<AppState>(context).favoriteNovels)
       ..sort((a, b) => a.title.compareTo(b.title));
-    final totalUnread = _updates.values.fold<int>(0, (a, b) => a + b);
+    final totalUnread = _dynamicUnread.values.fold<int>(0, (a, b) => a + b);
     return Scaffold(
       appBar: AppBar(
         title: Text('favorites_updates'.translate),
@@ -81,7 +118,11 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
               child: ElevatedButton.icon(
                 onPressed: _loading ? null : _check,
                 icon: const Icon(Icons.refresh),
-                label: Text(_loading ? 'Checking...' : 'Check for updates'),
+                label: Text(
+                  _loading
+                      ? 'checking'.translate
+                      : 'check_for_updates'.translate,
+                ),
               ),
             ),
             Expanded(
@@ -99,7 +140,8 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                       runSpacing: spacing,
                       children:
                           favs.map((n) {
-                            final delta = _updates[n.id] ?? 0;
+                            final delta =
+                                _dynamicUnread[n.id] ?? _updates[n.id] ?? 0;
                             return SizedBox(
                               width: cardWidth,
                               child: Card(
@@ -111,7 +153,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                         builder:
                                             (_) => NovelDetailScreen(novel: n),
                                       ),
-                                    );
+                                    ).then((_) => _refreshDynamicUnread());
                                   },
                                   onLongPress: () {
                                     final lastId = n.lastReadChapterId;
@@ -129,7 +171,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                         'novel': n,
                                         'chapterIndex': idx,
                                       },
-                                    );
+                                    ).then((_) => _refreshDynamicUnread());
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.all(12.0),
