@@ -53,6 +53,18 @@ class NovelDatabase {
               )
             ''');
         await db.execute('''
+              CREATE TABLE IF NOT EXISTS local_epubs (
+                id TEXT PRIMARY KEY,
+                filePath TEXT,
+                title TEXT,
+                author TEXT,
+                description TEXT,
+                coverPath TEXT,
+                chapters TEXT,
+                importedAt TEXT
+              )
+            ''');
+        await db.execute('''
               CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT
@@ -77,6 +89,20 @@ class NovelDatabase {
               CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT
+              )
+            ''');
+        }
+        if (oldVersion < 4) {
+          await db.execute('''
+              CREATE TABLE IF NOT EXISTS local_epubs (
+                id TEXT PRIMARY KEY,
+                filePath TEXT,
+                title TEXT,
+                author TEXT,
+                description TEXT,
+                coverPath TEXT,
+                chapters TEXT,
+                importedAt TEXT
               )
             ''');
         }
@@ -229,6 +255,44 @@ class NovelDatabase {
       map,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> upsertLocalEpub({
+    required String id,
+    required String filePath,
+    required String title,
+    required String author,
+    required String description,
+    required String coverPath,
+    required List<Map<String, dynamic>> chapters,
+    required String importedAt,
+  }) async {
+    final db = _database!;
+    await db.insert('local_epubs', {
+      'id': id,
+      'filePath': filePath,
+      'title': title,
+      'author': author,
+      'description': description,
+      'coverPath': coverPath,
+      'chapters': json.encode(chapters),
+      'importedAt': importedAt,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllLocalEpubs() async {
+    final db = _database!;
+    final rows = await db.query('local_epubs', orderBy: 'importedAt DESC');
+    return rows.map((r) {
+      final map = Map<String, dynamic>.from(r);
+      map['chapters'] = json.decode(map['chapters'] as String);
+      return map;
+    }).toList();
+  }
+
+  Future<void> deleteLocalEpub(String id) async {
+    final db = _database!;
+    await db.delete('local_epubs', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Novel>> getAllNovels() async {
