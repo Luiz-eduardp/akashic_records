@@ -5,6 +5,8 @@ import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/novel_detail_screen.dart';
 import 'package:akashic_records/db/novel_database.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:akashic_records/services/epub_import_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +18,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _totalWordsRead = 0;
   int _totalChaptersRead = 0;
+  int _localEpubCount = 0;
+  int _localEpubChapters = 0;
   AppState? _appStateRef;
 
   Future<void> _loadStats() async {
@@ -46,6 +50,20 @@ class _HomeScreenState extends State<HomeScreen> {
       _totalWordsRead = words;
       _totalChaptersRead = chapters;
     });
+    try {
+      final db = await NovelDatabase.getInstance();
+      final list = await db.getAllLocalEpubs();
+      var chaptersTotal = 0;
+      for (final it in list) {
+        final ch = it['chapters'] as List<dynamic>?;
+        if (ch != null) chaptersTotal += ch.length;
+      }
+      if (!mounted) return;
+      setState(() {
+        _localEpubCount = list.length;
+        _localEpubChapters = chaptersTotal;
+      });
+    } catch (_) {}
   }
 
   @override
@@ -157,6 +175,31 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('local_epubs'.translate),
+                        const SizedBox(height: 8),
+                        Text(
+                          '$_localEpubCount epubs, $_localEpubChapters capítulos',
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed:
+                          () => Navigator.pushNamed(context, '/local_epubs'),
+                      child: Text('local_epubs'.translate),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             if (favorites.isNotEmpty) ...[
               Text(
@@ -289,10 +332,53 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/plugins');
+        onPressed: () async {
+          try {
+            final result = await FilePicker.platform.pickFiles(
+              type: FileType.custom,
+              allowedExtensions: ['epub'],
+            );
+            if (result == null || result.files.isEmpty) return;
+            final path = result.files.first.path;
+            if (path == null) return;
+            final scaffold = ScaffoldMessenger.of(context);
+            scaffold.showSnackBar(
+              SnackBar(content: Text('importing_epub'.translate)),
+            );
+
+            final svc = EpubImportService();
+            final novel = await svc.importFromFile(path);
+            if (novel == null) {
+              scaffold.showSnackBar(
+                SnackBar(content: Text('failed_to_import_epub'.translate)),
+              );
+              return;
+            }
+
+            final db = await NovelDatabase.getInstance();
+            await db.upsertLocalEpub(
+              id: novel.id,
+              filePath: path,
+              title: novel.title,
+              author: novel.author,
+              description: novel.description,
+              coverPath: novel.coverImageUrl,
+              chapters: novel.chapters.map((c) => c.toMap()).toList(),
+              importedAt: DateTime.now().toIso8601String(),
+            );
+
+            scaffold.showSnackBar(
+              SnackBar(content: Text('import_success'.translate)),
+            );
+
+            Navigator.pushNamed(context, '/local_epubs');
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('failed_to_import_epub'.translate)),
+            );
+          }
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.file_open),
       ),
     );
   }
