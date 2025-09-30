@@ -94,6 +94,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+ centerTitle: true,
         title: Text((novel ?? widget.novel).title),
         actions: [
           IconButton(
