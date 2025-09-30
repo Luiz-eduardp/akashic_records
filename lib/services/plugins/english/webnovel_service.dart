@@ -339,7 +339,7 @@ class Webnovel implements PluginService {
             chapters.add(
               Chapter(
                 id: chapterPath,
-                title: locked ? '$chapterName 🔒' : chapterName,
+                title: chapterName,
                 content: '',
                 chapterNumber: chapterNumber,
               ),
