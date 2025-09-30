@@ -225,7 +225,7 @@ class ScribbleHub implements PluginService {
       return Novel(
         pluginId: id,
         id: novelPath,
-        title: 'Failed to Load',
+        title: 'failed_to_load_title'.translate,
         coverImageUrl: '',
         author: '',
         description: '',
@@ -355,7 +355,7 @@ class ScribbleHub implements PluginService {
       print(
         'Failed to load chapter content. Status code: ${result.statusCode}',
       );
-      return 'Failed to load chapter content.';
+      return 'failed_to_load_chapter'.translate;
     }
 
     final body = result.body;
