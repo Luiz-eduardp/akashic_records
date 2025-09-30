@@ -101,10 +101,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
       key: _scaffoldKey,
       appBar: AppBar(
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
+
         title: Text('favorites_updates'.translate),
         actions: [
           if (totalUnread > 0)
