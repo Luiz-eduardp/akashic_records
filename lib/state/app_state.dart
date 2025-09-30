@@ -13,6 +13,8 @@ class AppState extends ChangeNotifier {
   Color accentColor = Colors.blue;
   bool showChangelog = true;
   Map<String, dynamic> readerPrefs = {};
+  String? latestReleaseTag;
+  String? latestReleaseUrl;
   bool navAlwaysVisible = false;
   double navScrollThreshold = 6.0;
   int navAnimationMs = 250;
@@ -107,6 +109,61 @@ class AppState extends ChangeNotifier {
         'bgColor': null,
       };
     }
+    notifyListeners();
+  }
+
+  Future<void> loadLatestReleaseInfo() async {
+    try {
+      latestReleaseTag = await _db.getSetting('latest_release_tag');
+      latestReleaseUrl = await _db.getSetting('latest_release_url');
+      _lastShownReleaseTag = await _db.getSetting('last_shown_release_tag');
+      final d = await _db.getSetting('last_shown_release_date');
+      if (d != null && d.isNotEmpty) {
+        try {
+          _lastShownDate = DateTime.parse(d);
+        } catch (_) {
+          _lastShownDate = null;
+        }
+      }
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> saveLatestReleaseInfo(String tag, String url) async {
+    latestReleaseTag = tag;
+    latestReleaseUrl = url;
+    try {
+      await _db.setSetting('latest_release_tag', tag);
+      await _db.setSetting('latest_release_url', url);
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  String? _lastShownReleaseTag;
+  DateTime? _lastShownDate;
+
+  bool shouldShowReleaseNotes(String tag) {
+    if (_lastShownReleaseTag == null) return true;
+    if (_lastShownReleaseTag != tag) return true;
+    if (_lastShownDate == null) return true;
+    final now = DateTime.now();
+    return !_isSameDay(now, _lastShownDate!);
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Future<void> markReleaseNotesShown(String tag) async {
+    _lastShownReleaseTag = tag;
+    _lastShownDate = DateTime.now();
+    try {
+      await _db.setSetting('last_shown_release_tag', tag);
+      await _db.setSetting(
+        'last_shown_release_date',
+        _lastShownDate!.toIso8601String(),
+      );
+    } catch (_) {}
     notifyListeners();
   }
 
