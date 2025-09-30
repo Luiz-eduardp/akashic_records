@@ -18,6 +18,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
   bool _loading = false;
   final Map<String, List<String>> _cachedChapters = {};
   final Map<String, int> _dynamicUnread = {};
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -97,7 +98,13 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
       ..sort((a, b) => a.title.compareTo(b.title));
     final totalUnread = _dynamicUnread.values.fold<int>(0, (a, b) => a + b);
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text('favorites_updates'.translate),
         actions: [
           if (totalUnread > 0)
@@ -105,7 +112,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
               padding: const EdgeInsets.only(right: 12.0),
               child: Chip(
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                label: Text('+$totalUnread'),
+                label: Text('$totalUnread'),
               ),
             ),
         ],
@@ -236,7 +243,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                               ),
                                               const SizedBox(height: 6),
                                               Text(
-                                                n.author,
+                                                '${'by'.translate} ${n.author}',
                                                 style:
                                                     Theme.of(
                                                       context,
@@ -244,7 +251,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                               ),
                                               const SizedBox(height: 8),
                                               Text(
-                                                'Chapters: ${n.lastKnownChapterCount} • Last checked: ${_formatTimestamp(n.lastChecked)}',
+                                                '${'chapters'.translate}: ${n.lastKnownChapterCount} • ${'last_checked'.translate}: ${_formatTimestamp(n.lastChecked)}',
                                                 style:
                                                     Theme.of(
                                                       context,
