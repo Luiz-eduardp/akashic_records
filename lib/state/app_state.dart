@@ -28,7 +28,8 @@ class AppState extends ChangeNotifier {
       final saved = await _db.getSetting('app_locale');
       if (saved != null && saved.isNotEmpty) {
         final parts = saved.split('_');
-        currentLocale = parts.length == 2 ? Locale(parts[0], parts[1]) : Locale(parts[0]);
+        currentLocale =
+            parts.length == 2 ? Locale(parts[0], parts[1]) : Locale(parts[0]);
       }
     } catch (_) {}
 
@@ -99,9 +100,12 @@ class AppState extends ChangeNotifier {
       await I18n.updateLocate(locale);
     } catch (_) {}
     try {
-      await _db.setSetting('app_locale', locale.countryCode != null && locale.countryCode!.isNotEmpty
-          ? '${locale.languageCode}_${locale.countryCode}'
-          : locale.languageCode);
+      await _db.setSetting(
+        'app_locale',
+        locale.countryCode != null && locale.countryCode!.isNotEmpty
+            ? '${locale.languageCode}_${locale.countryCode}'
+            : locale.languageCode,
+      );
     } catch (_) {}
     notifyListeners();
   }
@@ -156,8 +160,12 @@ class AppState extends ChangeNotifier {
 
   Future<void> addOrUpdateNovel(Novel novel) async {
     await _db.upsertNovel(novel);
-    _localNovels = await _db.getAllNovels();
-    notifyListeners();
+    try {
+      print(
+        'addOrUpdateNovel: saving novel ${novel.id} fav=${novel.isFavorite}',
+      );
+    } catch (_) {}
+    await refreshLocalNovels();
   }
 
   Future<void> toggleFavorite(String id, {bool? value}) async {
@@ -166,8 +174,25 @@ class AppState extends ChangeNotifier {
     final novel = _localNovels[idx];
     novel.isFavorite = value ?? !novel.isFavorite;
     await _db.upsertNovel(novel);
+    try {
+      print('toggleFavorite: toggled ${novel.id} -> ${novel.isFavorite}');
+    } catch (_) {}
+    await refreshLocalNovels();
+  }
+
+  Future<void> refreshLocalNovels() async {
     _localNovels = await _db.getAllNovels();
     notifyListeners();
+  }
+
+  Future<void> setChapterRead(
+    String novelId,
+    String chapterId,
+    bool read,
+  ) async {
+    final db = await NovelDatabase.getInstance();
+    await db.setChapterRead(novelId, chapterId, read);
+    await refreshLocalNovels();
   }
 
   Future<Map<String, int>> checkForUpdates() async {
