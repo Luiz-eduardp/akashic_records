@@ -20,7 +20,6 @@ class NovelDatabase {
   Future<void> _initDb() async {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, 'akashic_records.db');
-    // Note: Do NOT delete the database here - it should persist between app restarts
     _database = await openDatabase(
       path,
       version: 3,
