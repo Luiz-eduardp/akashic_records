@@ -4,6 +4,7 @@ import 'package:akashic_records/db/novel_database.dart';
 import 'package:akashic_records/services/plugin_registry.dart';
 import 'package:akashic_records/widgets/chapter_list.dart';
 import 'package:akashic_records/widgets/novel_header.dart';
+import 'package:akashic_records/widgets/skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
@@ -94,7 +95,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
- centerTitle: true,
+        centerTitle: true,
         title: Text((novel ?? widget.novel).title),
         actions: [
           IconButton(
@@ -200,37 +201,50 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
             ),
           ),
           Expanded(
-            child: ChapterList(
-              chapters: filtered,
-              readChapters: readChapters,
-              onTap: (ch, index) async {
-                if (ch.content == null || ch.content!.isEmpty) {
-                  final current = novel ?? widget.novel;
-                  final svc = PluginRegistry.get(current.pluginId);
-                  String content = '';
-                  if (svc != null) {
-                    try {
-                      content = await svc.parseChapter(ch.id);
-                      ch.content = content;
-                      novel ??= current;
-                      final db = await NovelDatabase.getInstance();
-                      await db.upsertNovel(novel ?? widget.novel);
-                    } catch (e) {
-                      print('Failed to parse chapter ${ch.id}: $e');
-                    }
-                  }
-                }
-                await Navigator.pushNamed(
-                  context,
-                  '/reader',
-                  arguments: {
-                    'novel': novel ?? widget.novel,
-                    'chapterIndex': index,
-                  },
-                );
-                await _loadReadStates();
-              },
-            ),
+            child:
+                _loadingDetails
+                    ? ListView.separated(
+                      itemCount: 6,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (ctx, i) {
+                        return ListTile(
+                          leading: const LoadingSkeleton.square(),
+                          title: const LoadingSkeleton.rect(height: 14),
+                          subtitle: const LoadingSkeleton.rect(height: 12),
+                        );
+                      },
+                    )
+                    : ChapterList(
+                      chapters: filtered,
+                      readChapters: readChapters,
+                      onTap: (ch, index) async {
+                        if (ch.content == null || ch.content!.isEmpty) {
+                          final current = novel ?? widget.novel;
+                          final svc = PluginRegistry.get(current.pluginId);
+                          String content = '';
+                          if (svc != null) {
+                            try {
+                              content = await svc.parseChapter(ch.id);
+                              ch.content = content;
+                              novel ??= current;
+                              final db = await NovelDatabase.getInstance();
+                              await db.upsertNovel(novel ?? widget.novel);
+                            } catch (e) {
+                              print('Failed to parse chapter ${ch.id}: $e');
+                            }
+                          }
+                        }
+                        await Navigator.pushNamed(
+                          context,
+                          '/reader',
+                          arguments: {
+                            'novel': novel ?? widget.novel,
+                            'chapterIndex': index,
+                          },
+                        );
+                        await _loadReadStates();
+                      },
+                    ),
           ),
         ],
       ),

@@ -75,6 +75,15 @@
   "padding": "Preenchimento",
   "reader_settings_title": "Configurações do leitor",
   "script_store": "Loja de scripts",
+  "preview": "Pré-visualização",
+  "font_weight": "Peso da fonte",
+  "bold": "Negrito",
+  "merriweather": "Merriweather",
+  "lora": "Lora",
+  "roboto": "Roboto",
+  "inter": "Inter",
+  "open_sans": "Open Sans",
+  "roboto_mono": "Roboto Mono",
   "search_plugins_or_site": "Buscar plugins ou site..."
   ,"unknown": "Desconhecido"
     ,"chapters_short": "cap"

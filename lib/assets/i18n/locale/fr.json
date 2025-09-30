@@ -75,6 +75,15 @@
   "padding": "Marge intérieure",
   "reader_settings_title": "Paramètres du lecteur",
   "script_store": "Magasin de scripts",
+  "preview": "Aperçu",
+  "font_weight": "Poids de la police",
+  "bold": "Gras",
+  "merriweather": "Merriweather",
+  "lora": "Lora",
+  "roboto": "Roboto",
+  "inter": "Inter",
+  "open_sans": "Open Sans",
+  "roboto_mono": "Roboto Mono",
   "search_plugins_or_site": "Rechercher des plugins ou site..."
   ,"unknown": "Inconnu"
   ,"chapters_short": "ch"

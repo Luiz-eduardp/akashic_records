@@ -74,6 +74,15 @@
   "padding": "Padding",
   "reader_settings_title": "Impostazioni lettore",
   "script_store": "Negozio script",
+  "preview": "Anteprima",
+  "font_weight": "Peso del font",
+  "bold": "Grassetto",
+  "merriweather": "Merriweather",
+  "lora": "Lora",
+  "roboto": "Roboto",
+  "inter": "Inter",
+  "open_sans": "Open Sans",
+  "roboto_mono": "Roboto Mono",
   "search_plugins_or_site": "Cerca plugin o sito..."
   ,"unknown": "Sconosciuto"
   ,"chapters_short": "cap"

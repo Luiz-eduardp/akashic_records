@@ -475,8 +475,25 @@ class _ReaderScreenState extends State<ReaderScreen> {
       }
     }
 
+    String fontImport = '';
+    String cssFontFamily = fontFamily;
+    final googleMap = {
+      'Merriweather': 'Merriweather',
+      'Lora': 'Lora',
+      'Roboto': 'Roboto',
+      'Inter': 'Inter',
+      'Open Sans': 'Open+Sans',
+      'Roboto Mono': 'Roboto+Mono',
+    };
+    if (googleMap.containsKey(fontFamily)) {
+      fontImport =
+          "@import url('https://fonts.googleapis.com/css2?family=${googleMap[fontFamily]}:wght@100;200;300;400;500;600;700;800;900&display=swap');";
+      cssFontFamily = "'$fontFamily', serif";
+    }
+
     final css = '''
-      body { background: $effectiveBg; color: ${fgRgba()}; font-size: ${fontSize}px; line-height: $lineHeight; padding: ${padding}px; font-family: $fontFamily; }
+      $fontImport
+      body { background: $effectiveBg; color: ${fgRgba()}; font-size: ${fontSize}px; line-height: $lineHeight; padding: ${padding}px; font-family: $cssFontFamily; }
       img { max-width: 100%; height: auto; }
       a { color: ${preset['accent']}; }
       p, div { text-align: $align; }

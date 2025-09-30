@@ -75,6 +75,15 @@
   "padding": "الحشوة",
   "reader_settings_title": "إعدادات القارئ",
   "script_store": "متجر السكربتات",
+  "preview": "معاينة",
+  "font_weight": "سمك الخط",
+  "bold": "عريض",
+  "merriweather": "Merriweather",
+  "lora": "Lora",
+  "roboto": "Roboto",
+  "inter": "Inter",
+  "open_sans": "Open Sans",
+  "roboto_mono": "Roboto Mono",
   "search_plugins_or_site": "ابحث عن إضافات أو موقع..."
   ,"unknown": "غير معروف"
   ,"chapters_short": "ف"

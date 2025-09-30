@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:akashic_records/screens/reader/script_store_tab.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 typedef ReaderConfig = Map<String, dynamic>;
 
@@ -36,6 +37,120 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
     widget.onChange(Map<String, dynamic>.from(temp));
   }
 
+  TextStyle _previewStyle() {
+    final size =
+        (temp['fontSize'] is num) ? (temp['fontSize'] as num).toDouble() : 18.0;
+    final lh =
+        (temp['lineHeight'] is num)
+            ? (temp['lineHeight'] as num).toDouble()
+            : 1.6;
+    final weightVal =
+        (temp['fontWeight'] is num)
+            ? (temp['fontWeight'] as num).toInt()
+            : ((temp['fontBold'] ?? false) ? 700 : 400);
+    final bold = (temp['fontBold'] ?? false) as bool;
+    Color? color;
+    try {
+      if (temp['fontColor'] != null) {
+        color = Color(
+          int.parse((temp['fontColor'] as String).replaceFirst('#', '0xff')),
+        );
+      }
+    } catch (_) {}
+
+    final fam = (temp['fontFamily'] as String?) ?? 'serif';
+    TextStyle base;
+    switch (fam) {
+      case 'Merriweather':
+        base = GoogleFonts.merriweather(
+          fontSize: size,
+          height: lh,
+          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+        );
+        break;
+      case 'Lora':
+        base = GoogleFonts.lora(
+          fontSize: size,
+          height: lh,
+          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+        );
+        break;
+      case 'Roboto':
+        base = GoogleFonts.roboto(
+          fontSize: size,
+          height: lh,
+          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+        );
+        break;
+      case 'Inter':
+        base = GoogleFonts.inter(
+          fontSize: size,
+          height: lh,
+          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+        );
+        break;
+      case 'Open Sans':
+        base = GoogleFonts.openSans(
+          fontSize: size,
+          height: lh,
+          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+        );
+        break;
+      case 'Roboto Mono':
+        base = GoogleFonts.robotoMono(
+          fontSize: size,
+          height: lh,
+          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+        );
+        break;
+      case 'serif':
+        base = TextStyle(
+          fontSize: size,
+          height: lh,
+          fontWeight:
+              bold
+                  ? FontWeight.bold
+                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontFamily: 'serif',
+        );
+        break;
+      case 'sans-serif':
+        base = TextStyle(
+          fontSize: size,
+          height: lh,
+          fontWeight:
+              bold
+                  ? FontWeight.bold
+                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontFamily: 'sans-serif',
+        );
+        break;
+      case 'monospace':
+        base = TextStyle(
+          fontSize: size,
+          height: lh,
+          fontWeight:
+              bold
+                  ? FontWeight.bold
+                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontFamily: 'monospace',
+        );
+        break;
+      default:
+        base = TextStyle(
+          fontSize: size,
+          height: lh,
+          fontWeight:
+              bold
+                  ? FontWeight.bold
+                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontFamily: fam,
+        );
+    }
+    if (color != null) base = base.copyWith(color: color);
+    return base;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -60,17 +175,42 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'reader_settings_title'.translate,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceVariant,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('preview'.translate),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                color: Theme.of(context).colorScheme.background,
+                                child: Text(
+                                  'The quick brown fox jumps over the lazy dog',
+                                  style: _previewStyle(),
                                 ),
                               ),
-                            ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'reader_settings_title'.translate,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(child: Text('', style: const TextStyle())),
                             IconButton(
                               icon: const Icon(Icons.check),
                               onPressed: () {
@@ -150,6 +290,63 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                                 _apply();
                               },
                             ),
+                            ChoiceChip(
+                              label: Text('merriweather'.translate),
+                              selected:
+                                  (temp['fontFamily'] ?? '') == 'Merriweather',
+                              onSelected: (v) {
+                                setState(
+                                  () => temp['fontFamily'] = 'Merriweather',
+                                );
+                                _apply();
+                              },
+                            ),
+                            ChoiceChip(
+                              label: Text('lora'.translate),
+                              selected: (temp['fontFamily'] ?? '') == 'Lora',
+                              onSelected: (v) {
+                                setState(() => temp['fontFamily'] = 'Lora');
+                                _apply();
+                              },
+                            ),
+                            ChoiceChip(
+                              label: Text('roboto'.translate),
+                              selected: (temp['fontFamily'] ?? '') == 'Roboto',
+                              onSelected: (v) {
+                                setState(() => temp['fontFamily'] = 'Roboto');
+                                _apply();
+                              },
+                            ),
+                            ChoiceChip(
+                              label: Text('inter'.translate),
+                              selected: (temp['fontFamily'] ?? '') == 'Inter',
+                              onSelected: (v) {
+                                setState(() => temp['fontFamily'] = 'Inter');
+                                _apply();
+                              },
+                            ),
+                            ChoiceChip(
+                              label: Text('open_sans'.translate),
+                              selected:
+                                  (temp['fontFamily'] ?? '') == 'Open Sans',
+                              onSelected: (v) {
+                                setState(
+                                  () => temp['fontFamily'] = 'Open Sans',
+                                );
+                                _apply();
+                              },
+                            ),
+                            ChoiceChip(
+                              label: Text('roboto_mono'.translate),
+                              selected:
+                                  (temp['fontFamily'] ?? '') == 'Roboto Mono',
+                              onSelected: (v) {
+                                setState(
+                                  () => temp['fontFamily'] = 'Roboto Mono',
+                                );
+                                _apply();
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -193,6 +390,36 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                           },
                         ),
                         const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(child: Text('font_weight'.translate)),
+                            Text((temp['fontWeight'] ?? 400).toString()),
+                          ],
+                        ),
+                        Slider(
+                          min: 100,
+                          max: 900,
+                          divisions: 8,
+                          value: (temp['fontWeight'] ?? 400).toDouble(),
+                          onChanged: (v) {
+                            setState(() => temp['fontWeight'] = v.round());
+                            _apply();
+                          },
+                        ),
+                        Row(
+                          children: [
+                            Text('bold'.translate),
+                            const SizedBox(width: 8),
+                            Switch(
+                              value: (temp['fontBold'] ?? false) as bool,
+                              onChanged: (v) {
+                                setState(() => temp['fontBold'] = v);
+                                if (v) temp['fontWeight'] = 700;
+                                _apply();
+                              },
+                            ),
+                          ],
+                        ),
                         Text('text_color'.translate),
                         Row(
                           children: [
