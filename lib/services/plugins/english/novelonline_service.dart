@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' as parser;
 import 'package:html/dom.dart' as dom;
 import 'package:akashic_records/models/model.dart';
@@ -81,7 +82,7 @@ class NovelsOnline implements PluginService {
     required Map<String, String> headers,
   }) async {
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await _client.get(Uri.parse(url));
       if (response.statusCode == 200 || response.statusCode == 404) {
         return response;
       } else if (response.statusCode == 403 && context != null) {
@@ -96,6 +97,8 @@ class NovelsOnline implements PluginService {
       rethrow;
     }
   }
+
+  late final ProxyClient _client = ProxyClient();
 
   @override
   Future<List<Novel>> popularNovels(
