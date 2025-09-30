@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 class ProjectGutenberg implements PluginService {
   @override
@@ -37,11 +39,13 @@ class ProjectGutenberg implements PluginService {
     }
   }
 
+  late final ProxyClient _client = ProxyClient();
+
   Novel _createNovelFromItem(dynamic item) {
-    final String author =
-        (item['agents'] != null && item['agents'].isNotEmpty)
-            ? item['agents'][0]['person'] ?? "Unknown"
-            : "Unknown";
+  final String author =
+    (item['agents'] != null && item['agents'].isNotEmpty)
+      ? item['agents'][0]['person'] ?? 'unknown'.translate
+      : 'unknown'.translate;
 
     final String? coverUrl = _extractCoverUrl(item['resources']);
 
@@ -86,7 +90,7 @@ class ProjectGutenberg implements PluginService {
     print('Search URL: $url');
 
     try {
-      final response = await http.get(Uri.parse(url));
+  final response = await _client.get(Uri.parse(url));
 
       print('Response Status Code: ${response.statusCode}');
 
@@ -96,9 +100,9 @@ class ProjectGutenberg implements PluginService {
         print('Response Data: ${response.body}');
         List<Novel> novels =
             results.map((item) {
-              String author = "Unknown";
+              String author = 'unknown'.translate;
               if (item['agents'] != null && item['agents'].isNotEmpty) {
-                author = item['agents'][0]['person'] ?? "Unknown";
+                author = item['agents'][0]['person'] ?? 'unknown'.translate;
               }
               String? coverUrl;
 
@@ -159,7 +163,7 @@ class ProjectGutenberg implements PluginService {
 
   Future<List<Novel>> _fetchNovels(String url) async {
     try {
-      final response = await http.get(Uri.parse(url));
+  final response = await _client.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

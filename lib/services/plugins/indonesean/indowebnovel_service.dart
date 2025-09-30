@@ -2,7 +2,7 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:html/parser.dart' show parse;
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/dom.dart' as dom;
 
 class IndoWebNovel implements PluginService {
@@ -20,18 +20,20 @@ class IndoWebNovel implements PluginService {
   final String site = 'https://indowebnovel.id/';
 
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
   @override
   Map<String, dynamic> get filters => {};
 
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return response.body;
     } else {
       throw Exception('Failed to load data from: $url');
     }
   }
+
+  late final ProxyClient _client = ProxyClient();
 
   Future<List<Novel>> _parseNovels(String html) async {
     final novels = <Novel>[];

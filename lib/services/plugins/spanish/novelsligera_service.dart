@@ -4,7 +4,7 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:html/parser.dart' show parse;
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -21,7 +21,7 @@ class NovelasLigera implements PluginService {
   @override
   String get lang => 'es';
   @override
-  String get siteUrl => baseURL; 
+  String get siteUrl => baseURL;
   @override
   Map<String, dynamic> get filters => {};
 
@@ -38,10 +38,13 @@ class NovelasLigera implements PluginService {
 
   NovelasLigera() {
     HttpOverrides.global = MyHttpOverrides();
+    _client = ProxyClient();
   }
 
+  late final ProxyClient _client;
+
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return response.body;
     } else {
@@ -60,8 +63,8 @@ class NovelasLigera implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     final url = baseURL;
     final body = await _fetchApi(url);

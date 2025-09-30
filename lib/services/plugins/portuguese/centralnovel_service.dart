@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
@@ -34,10 +34,13 @@ class CentralNovel implements PluginService {
 
   CentralNovel() {
     HttpOverrides.global = MyHttpOverrides();
+    _client = ProxyClient();
   }
 
+  late final ProxyClient _client;
+
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _client.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return response.body;
     } else {

@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/parser.dart' show parse;
 
 class SkyNovels implements PluginService {
@@ -16,7 +16,7 @@ class SkyNovels implements PluginService {
   @override
   String get version => '1.0.5';
   @override
-  String get siteUrl => baseURL; 
+  String get siteUrl => baseURL;
   @override
   Map<String, dynamic> get filters => {};
 
@@ -26,10 +26,11 @@ class SkyNovels implements PluginService {
 
   static const String defaultCover =
       'https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed';
+  late final ProxyClient _client = ProxyClient();
 
   Future<dynamic> _fetchApi(String url) async {
     try {
-      final response = await http
+      final response = await _client
           .get(
             Uri.parse(url),
             headers: {
@@ -72,8 +73,8 @@ class SkyNovels implements PluginService {
   @override
   Future<List<Novel>> popularNovels(
     int pageNo, {
-    Map<String, dynamic>? filters,  
-      BuildContext? context,
+    Map<String, dynamic>? filters,
+    BuildContext? context,
   }) async {
     return _fetchNovels(pageNo, filters: filters);
   }
@@ -214,7 +215,7 @@ class SkyNovels implements PluginService {
     }
 
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('$apiURL/novel-chapter/$chapterId'),
         headers: {
           'User-Agent':
@@ -240,7 +241,7 @@ class SkyNovels implements PluginService {
       print('API request failed: $e, falling back to HTML parsing.');
     }
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(baseURL + chapterPath.replaceAll('//', '/')),
         headers: {
           'User-Agent':

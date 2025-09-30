@@ -2,7 +2,7 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:html/parser.dart' show parse;
-import 'package:http/http.dart' as http;
+import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:intl/intl.dart';
 
@@ -11,9 +11,9 @@ class Chireads implements PluginService {
 
   @override
   String get name => 'Chireads';
-  
+
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
   @override
   String get lang => 'fr';
 
@@ -109,7 +109,7 @@ class Chireads implements PluginService {
   };
 
   Future<String> _fetchApi(String url) async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse(url),
       headers: {'Accept-Encoding': 'deflate'},
     );
@@ -119,6 +119,8 @@ class Chireads implements PluginService {
       throw Exception('Failed to load data from: $url');
     }
   }
+
+  late final ProxyClient _client = ProxyClient();
 
   Future<List<Novel>> _parseNovels(String html, bool showLatestNovels) async {
     final novels = <Novel>[];

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart' as dom;
@@ -17,7 +18,7 @@ class ScribbleHub implements PluginService {
   @override
   Map<String, dynamic> get filters => _filters;
   @override
-  String get siteUrl => site; 
+  String get siteUrl => site;
 
   final String id = 'ScribbleHub';
   final String nameService = 'ScribbleHub';
@@ -66,9 +67,9 @@ class ScribbleHub implements PluginService {
     } catch (e) {
       print('Error in safeFetch: $e');
       if (context != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'failed_to_load_data'.translate}: $e')),
+        );
       }
       return http.Response('Error', 500);
     }
