@@ -13,7 +13,7 @@ class FavoritesScreen extends StatelessWidget {
       builder: (context, state, child) {
         final favs = state.favoriteNovels;
         return Scaffold(
-          appBar: AppBar(title: Text('favorites'.translate)),
+          appBar: AppBar(centerTitle: true, title: Text('favorites'.translate)),
           body: ListView.builder(
             itemCount: favs.length,
             itemBuilder: (ctx, i) {
