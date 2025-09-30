@@ -82,7 +82,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     };
 
     return Scaffold(
-      appBar: AppBar(title: Text('plugins'.translate)),
+      appBar: AppBar(centerTitle: true, title: Text('plugins'.translate)),
       body: Column(
         children: [
           Padding(
