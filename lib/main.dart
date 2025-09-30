@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
       builder: (context, state, child) {
         return MaterialApp(
           title: 'Akashic Records'.translate,
-          locale: I18n.currentLocate,
+          locale: state.currentLocale,
           supportedLocales: I18n.supportedLocales,
           localizationsDelegates: [
             I18nDelegate(),
@@ -59,7 +59,10 @@ class MyApp extends StatelessWidget {
                 (ctx) => SettingsScreen(
                   onLocaleChanged: (locale) async {
                     await I18n.updateLocate(locale);
-                    (ctx as Element).markNeedsBuild();
+                    await Provider.of<AppState>(
+                      ctx,
+                      listen: false,
+                    ).setLocale(locale);
                   },
                 ),
             '/reader': (ctx) => const ReaderScreen(),
