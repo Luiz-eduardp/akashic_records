@@ -29,7 +29,9 @@ class FavoritesScreen extends StatelessWidget {
                         )
                         : null,
                 title: Text(n.title),
-                subtitle: Text('${n.author} • ${n.numberOfChapters} ch'),
+                subtitle: Text(
+                  '${n.author} • ${n.numberOfChapters} ${'chapters_short'.translate}',
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.open_in_new),
                   onPressed: () {
