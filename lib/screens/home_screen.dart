@@ -81,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final favorites = appState.favoriteNovels;
 
     return Scaffold(
-      appBar: AppBar(title: Text('app_title'.translate)),
+      appBar: AppBar(centerTitle: true, title: Text('app_title'.translate)),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
