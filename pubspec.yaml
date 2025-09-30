@@ -57,6 +57,7 @@ dependencies:
   traffic_stats: ^0.0.2
   clarity_flutter: ^1.0.0
   version: ^3.0.2
+  android_intent_plus: ^3.0.2
 
 dev_dependencies:
   flutter_test:
