@@ -48,6 +48,7 @@
   "last_novels": "最近の小説",
   "plugins": "プラグイン",
   "search_plugins_hint": "プラグインやサイトを検索...",
+  "mark_all_read": "すべて既読にする",
   "all": "すべて",
   "only_available": "利用可能なもののみ",
   "tap_to_browse": "タップして閲覧",
@@ -81,4 +82,9 @@
   ,"home": "ホーム"
   ,"updates": "更新"
   ,"by": "by"
+  ,"never": "永遠"
+  ,"chapters": "章数"
+  ,"last_checked": "最終チェック"
+  ,"failed_to_load_title": "読み込みに失敗しました"
+  ,"failed_to_load_chapter": "チャプターの読み込みに失敗しました"
 }

@@ -50,6 +50,7 @@
   "search_plugins_hint": "ابحث عن إضافات أو موقع...",
   "all": "الكل",
   "only_available": "المتوفرة فقط",
+    "mark_all_read": "تعليم الكل كمقروء",
   "tap_to_browse": "انقر للتصفح",
   "plugin_failed_to_initialize": "فشل تهيئة الإضافة",
   "unavailable": "غير متوفر",
@@ -81,4 +82,7 @@
   ,"home": "الرئيسية"
   ,"updates": "التحديثات"
   ,"by": "بواسطة"
+  ,"never": "أبدا"
+  ,"chapters": "الفصول"
+  ,"last_checked": "آخر تحقق"
 }

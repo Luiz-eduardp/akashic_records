@@ -48,6 +48,7 @@
   "last_novels": "Derniers romans",
   "plugins": "Plugins",
   "search_plugins_hint": "Rechercher des plugins ou site...",
+  "mark_all_read": "Marquer tout comme lu",
   "all": "Tous",
   "only_available": "Disponible seulement",
   "tap_to_browse": "Appuyez pour parcourir",
@@ -79,6 +80,11 @@
   ,"no_summary_found": "Résumé introuvable"
   ,"app_description": "Un lecteur puissant"
   ,"home": "Accueil"
+    ,"never": "jamais"
+    ,"failed_to_load_title": "Échec du chargement"
+    ,"failed_to_load_chapter": "Échec du chargement du chapitre"
   ,"updates": "Mises à jour"
   ,"by": "par"
+  ,"chapters": "Chapitres"
+  ,"last_checked": "Dernier contrôle"
 }

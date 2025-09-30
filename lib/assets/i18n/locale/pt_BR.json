@@ -56,6 +56,7 @@
   "search_scripts": "Buscar scripts...",
   "script_warning": "Os scripts executarão código dentro do WebView. Você aceita os riscos?",
   "search_chapters_hint": "Buscar capítulos...",
+  "mark_all_read": "Marcar todos como lidos",
   "added_to_favorites": "Adicionado aos favoritos",
   "removed_from_favorites": "Removido dos favoritos",
   "failed_update_favorite": "Falha ao atualizar favorito",
@@ -80,5 +81,10 @@
     ,"app_description": "Um leitor poderoso"
     ,"home": "Início"
     ,"updates": "Atualizações"
-  ,"by": "por"
+    ,"by": "por"
+    ,"never": "nunca"
+    ,"chapters": "Capítulos"
+    ,"last_checked": "Última verificação"
+  ,"failed_to_load_title": "Falha ao carregar"
+  ,"failed_to_load_chapter": "Falha ao carregar o capítulo"
 }

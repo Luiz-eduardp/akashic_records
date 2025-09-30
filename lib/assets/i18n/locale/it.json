@@ -48,6 +48,7 @@
   "last_novels": "Ultimi romanzi",
   "plugins": "Plugin",
   "search_plugins_hint": "Cerca plugin o sito...",
+  "mark_all_read": "Segna tutti come letti",
   "all": "Tutti",
   "only_available": "Solo disponibili",
   "tap_to_browse": "Tocca per navigare",
@@ -55,7 +56,6 @@
   "unavailable": "Non disponibile",
   "search_scripts": "Cerca script...",
   "script_warning": "Gli script eseguiranno codice all'interno del WebView. Accetti i rischi?",
-  "search_chapters_hint": "Cerca capitoli...",
   "added_to_favorites": "Aggiunto ai preferiti",
   "removed_from_favorites": "Rimosso dai preferiti",
   "failed_update_favorite": "Impossibile aggiornare il preferito",
@@ -81,4 +81,9 @@
   ,"home": "Home"
   ,"updates": "Aggiornamenti"
   ,"by": "di"
+  ,"never": "mai"
+  ,"chapters": "Capitoli"
+  ,"last_checked": "Ultimo controllo"
+  ,"failed_to_load_title": "Errore di caricamento"
+  ,"failed_to_load_chapter": "Errore nel caricamento del capitolo"
 }

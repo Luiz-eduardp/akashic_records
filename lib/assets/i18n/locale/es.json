@@ -48,6 +48,7 @@
   "last_novels": "Últimas novelas",
   "plugins": "Plugins",
   "search_plugins_hint": "Buscar plugins o sitio...",
+  "mark_all_read": "Marcar todos como lidos",
   "all": "Todos",
   "only_available": "Solo disponibles",
   "tap_to_browse": "Toca para navegar",
@@ -81,4 +82,9 @@
   ,"home": "Inicio"
   ,"updates": "Actualizaciones"
   ,"by": "por"
+  ,"never": "nunca"
+  ,"chapters": "Capítulos"
+  ,"last_checked": "Última verificación"
+  ,"failed_to_load_title": "Error al cargar"
+  ,"failed_to_load_chapter": "Error al cargar el capítulo"
 }
