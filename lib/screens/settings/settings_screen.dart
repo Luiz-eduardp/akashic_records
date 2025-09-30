@@ -5,8 +5,8 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:akashic_records/state/app_state.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final ValueChanged<Locale> onLocaleChanged;
-  const SettingsScreen({super.key, required this.onLocaleChanged});
+  final ValueChanged<Locale>? onLocaleChanged;
+  const SettingsScreen({super.key, this.onLocaleChanged});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -14,12 +14,16 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   Color? _tempColor;
+  double? _tempNavThreshold;
+  int? _tempNavAnimMs;
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    _tempNavThreshold ??= appState.navScrollThreshold;
+    _tempNavAnimMs ??= appState.navAnimationMs;
     return Scaffold(
-      appBar: AppBar(title: Text('settings'.translate)),
+      appBar: AppBar(centerTitle: true, title: Text('settings'.translate)),
       body: ListView(
         children: [
           ListTile(
@@ -76,7 +80,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   listen: false,
                 ).setLocale(locale);
-                widget.onLocaleChanged(locale);
+                if (widget.onLocaleChanged != null)
+                  widget.onLocaleChanged!(locale);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'language'.translate + ': ' + locale.languageCode,
+                    ),
+                  ),
+                );
               }
             },
           ),
@@ -142,6 +154,108 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
               );
             },
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: Text('nav_always_visible'.translate),
+            value: appState.navAlwaysVisible,
+            onChanged: (v) async {
+              await appState.setNavAlwaysVisible(v);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('nav_always_visible'.translate)),
+              );
+            },
+          ),
+          ListTile(
+            title: Text('nav_scroll_threshold'.translate),
+            subtitle: Text('nav_scroll_threshold_sub'.translate),
+            trailing: SizedBox(
+              width: 200,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: Slider(
+                      min: 2.0,
+                      max: 20.0,
+                      divisions: 18,
+                      value: _tempNavThreshold!,
+                      label: _tempNavThreshold!.toStringAsFixed(1),
+                      onChanged: (v) => setState(() => _tempNavThreshold = v),
+                      onChangeEnd: (v) async {
+                        await appState.setNavScrollThreshold(v);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${'nav_scroll_threshold'.translate}: ${v.toStringAsFixed(1)}',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('nav_animation_duration'.translate),
+            subtitle: Text('nav_animation_duration_sub'.translate),
+            trailing: SizedBox(
+              width: 200,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: Slider(
+                      min: 100,
+                      max: 600,
+                      divisions: 50,
+                      value: (_tempNavAnimMs ?? 250).toDouble(),
+                      label: '${_tempNavAnimMs ?? 250} ms',
+                      onChanged:
+                          (v) => setState(() => _tempNavAnimMs = v.toInt()),
+                      onChangeEnd: (v) async {
+                        await appState.setNavAnimationMs(v.toInt());
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${'nav_animation_duration'.translate}: ${v.toInt()} ms',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('nav_animation_duration'.translate),
+            subtitle: Text('nav_animation_duration_sub'.translate),
+            trailing: SizedBox(
+              width: 200,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                    child: Slider(
+                      min: 50,
+                      max: 1000,
+                      divisions: 95,
+                      value: (_tempNavAnimMs ?? 250).toDouble(),
+                      label: '${_tempNavAnimMs ?? 250} ms',
+                      onChanged:
+                          (v) => setState(() => _tempNavAnimMs = v.toInt()),
+                      onChangeEnd:
+                          (v) async =>
+                              await appState.setNavAnimationMs(v.toInt()),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
