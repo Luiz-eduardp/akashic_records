@@ -79,22 +79,6 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     });
   }
 
-  // badge formatting is handled by ChapterCountBadge
-
-  String _formatTimestamp(String? iso) {
-    if (iso == null) return 'never'.translate;
-    try {
-      final dt = DateTime.tryParse(iso);
-      if (dt == null) return iso;
-      String two(int n) => n.toString().padLeft(2, '0');
-      final d = '${two(dt.day)}/${two(dt.month)}/${dt.year}';
-      final t = '${two(dt.hour)}:${two(dt.minute)}';
-      return '$d $t';
-    } catch (_) {
-      return iso;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final favs = List.of(Provider.of<AppState>(context).favoriteNovels)
@@ -184,86 +168,26 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                     padding: const EdgeInsets.all(12.0),
                                     child: Row(
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                          CrossAxisAlignment.center,
                                       children: [
-                                        Stack(
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              child:
-                                                  n.coverImageUrl.isNotEmpty
-                                                      ? Image.network(
-                                                        n.coverImageUrl,
-                                                        width: 64,
-                                                        height: 88,
-                                                        fit: BoxFit.cover,
-                                                      )
-                                                      : Container(
-                                                        width: 64,
-                                                        height: 88,
-                                                        color: Colors.grey,
-                                                      ),
-                                            ),
-                                            if (delta > 0)
-                                              Positioned(
-                                                top: 0,
-                                                right: 0,
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                      horizontal: 6, vertical: 3),
-                                                  decoration: BoxDecoration(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .primaryContainer,
-                                                    borderRadius:
-                                                        BorderRadius.circular(12),
-                                                  ),
-                                                  constraints: const BoxConstraints(
-                                                      minWidth: 24, maxWidth: 80),
-                                                  child: ChapterCountBadge(
-                                                    count: delta,
-                                                    showPlus: true,
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                        const SizedBox(width: 12),
-
                                         Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                n.title,
-                                                style:
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.titleMedium,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '${'by'.translate} ${n.author}',
-                                                style:
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.bodySmall,
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                '${'chapters'.translate}: ${n.lastKnownChapterCount} • ${'last_checked'.translate}: ${_formatTimestamp(n.lastChecked)}',
-                                                style:
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.bodySmall,
-                                              ),
-                                            ],
+                                          child: Text(
+                                            n.title,
+                                            style:
+                                                Theme.of(
+                                                  context,
+                                                ).textTheme.titleMedium,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
+                                        if (delta > 0) ...[
+                                          const SizedBox(width: 8),
+                                          ChapterCountBadge(
+                                            count: delta,
+                                            showPlus: true,
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
