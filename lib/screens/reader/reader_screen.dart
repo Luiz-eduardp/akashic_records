@@ -16,7 +16,6 @@ import 'package:akashic_records/screens/reader/reader_subheader.dart';
 import 'package:akashic_records/screens/reader/reader_config_modal.dart';
 import 'package:akashic_records/services/reader_tts.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({super.key});
@@ -41,11 +40,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
   int _wordCountCached = 0;
   String _currentTime = '';
   int _batteryLevel = -1;
-  late SharedPreferences _sharedPrefs;
   bool _isLoading = true;
 
   Future<void> _saveReaderPrefs() async {
-    await _sharedPrefs.setString('reader_prefs', json.encode(_prefs));
+    final appState = Provider.of<AppState>(context, listen: false);
+    await appState.setReaderPrefs(_prefs);
   }
 
   Map<String, dynamic> _getDefaultPrefs() {
