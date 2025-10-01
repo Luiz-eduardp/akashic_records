@@ -794,7 +794,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Future<void> _openChapterSelector() async {
     final db = await NovelDatabase.getInstance();
     Set<String> readSet = await db.getReadChaptersForNovel(novel.id);
-    final result = await showModalBottomSheet<int>(
+    final result = await showModalBottomSheet<Chapter>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
@@ -902,7 +902,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       chapters: filtered,
                       readChapters: readSet,
                       onTap: (ch, idx) {
-                        Navigator.of(ctx).pop(idx);
+                        Navigator.of(ctx).pop(ch);
                       },
                     ),
                   ),
@@ -913,9 +913,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
         );
       },
     );
-    if (result is int) {
-      setState(() => selectedChapter = result);
-      _loadChapter();
+    if (result is Chapter) {
+      final index = novel.chapters.indexWhere((ch) => ch.id == result.id);
+      if (index != -1) {
+        setState(() => selectedChapter = index);
+        _loadChapter();
+      }
     }
   }
 

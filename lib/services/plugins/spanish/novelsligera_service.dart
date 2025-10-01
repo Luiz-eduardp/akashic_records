@@ -232,6 +232,9 @@ class NovelasLigera implements PluginService {
       }
     }
     novel.chapters = novel.chapters.reversed.toList();
+    for (int i = 0; i < novel.chapters.length; i++) {
+      novel.chapters[i].chapterNumber = i + 1;
+    }
     return novel;
   }
 
