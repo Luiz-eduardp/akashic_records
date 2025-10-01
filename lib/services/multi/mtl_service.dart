@@ -292,7 +292,11 @@ class MtlNovelMulti implements PluginService {
         chapterNumber++;
       }
     });
-    return chapters.reversed.toList();
+    chapters = chapters.reversed.toList();
+    for (int i = 0; i < chapters.length; i++) {
+      chapters[i].chapterNumber = i + 1;
+    }
+    return chapters;
   }
 
   List<Novel> _parseNovelList(dom.Document $, String nameService) {
