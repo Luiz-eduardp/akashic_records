@@ -123,7 +123,7 @@ class IndoWebNovel implements PluginService {
             .toList();
 
     final chapterElements = document.querySelectorAll('.series-chapterlist li');
-    final chapters = <Chapter>[];
+    var chapters = <Chapter>[];
 
     for (final element in chapterElements) {
       final chapterName = element.querySelector('a')?.text.trim() ?? '';

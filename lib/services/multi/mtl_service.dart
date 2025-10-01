@@ -274,7 +274,7 @@ class MtlNovelMulti implements PluginService {
       headers: headers,
     ).then((res) => res.body);
     final dom.Document $ = parser.parse(data);
-    final List<Chapter> chapters = [];
+    List<Chapter> chapters = [];
     int chapterNumber = 1;
 
     $.querySelectorAll('a.ch-link').forEach((el) {
