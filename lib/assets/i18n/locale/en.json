@@ -168,4 +168,8 @@
   "select_text_color": "Select text color",
   "select_bg_color": "Select background color",
   "choose_text_color": "Choose text color",
-  "choose_bg_color": "Choose background color"}
+  "choose_bg_color": "Choose background color",
+  "details": "Details",
+  "continue_reading": "Continue reading",
+  "search_favorites_hint": "Search favorites..."
+}

@@ -163,5 +163,8 @@
   "custom_dns_sub": "DNS解決を上書き (例: 8.8.8.8)",
   "custom_user_agent": "カスタムUser-Agent",
   "custom_user_agent_sub": "リクエストにカスタムUser-Agentを設定",
-  "appearance": "外観"
+  "appearance": "外観",
+  "details": "詳細",
+  "continue_reading": "続きを読む",
+  "search_favorites_hint": "お気に入りを検索..."
 }

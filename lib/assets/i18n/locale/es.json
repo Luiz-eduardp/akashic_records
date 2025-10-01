@@ -162,5 +162,8 @@
   "custom_dns_sub": "Sobrescribir resolución DNS (ej. 8.8.8.8)",
   "custom_user_agent": "User-Agent Personalizado",
   "custom_user_agent_sub": "Establecer User-Agent personalizado para solicitudes",
-  "appearance": "Apariencia"
+  "appearance": "Apariencia",
+  "details": "Detalles",
+  "continue_reading": "Continuar leyendo",
+  "search_favorites_hint": "Buscar en favoritos..."
 }
