@@ -400,12 +400,17 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                               }
                             }
 
+                            final absoluteIndex = (novel ?? widget.novel)
+                                .chapters
+                                .indexWhere((c) => c.id == ch.id);
+
                             await Navigator.pushNamed(
                               context,
                               '/reader',
                               arguments: {
                                 'novel': novel ?? widget.novel,
-                                'chapterIndex': index,
+                                'chapterIndex':
+                                    absoluteIndex >= 0 ? absoluteIndex : 0,
                               },
                             );
                             await _loadReadStates();
