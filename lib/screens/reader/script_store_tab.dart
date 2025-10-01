@@ -122,9 +122,9 @@ class _ScriptStoreTabState extends State<ScriptStoreTab> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: TextField(
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search),
-              hintText: 'Search scripts...',
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: 'search_scripts'.translate,
             ),
             onChanged: (v) {
               _q = v;

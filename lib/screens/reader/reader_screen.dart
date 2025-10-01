@@ -77,13 +77,24 @@ class _ReaderScreenState extends State<ReaderScreen> {
         orElse: () => null,
       );
       if (match != null) {
+        final scriptId = scriptName.toString().replaceAll(
+          RegExp(r"[^a-zA-Z0-9_]"),
+          '_',
+        );
         final removeJs = '''
           (function(){
             try {
-              if (window['$scriptName']) { window['$scriptName'] = undefined; }
-              var style = document.getElementById('scriptstore-style-$scriptName');
-              if (style) { style.remove(); }
-              if (window['scriptstoreCleanup_$scriptName']) { window['scriptstoreCleanup_$scriptName'](); }
+              // unset flag
+              if (window['scriptstore_$scriptId']) { window['scriptstore_$scriptId'] = undefined; }
+              // call cleanup if provided by the script
+              if (window['scriptstoreCleanup_$scriptId']) { try { window['scriptstoreCleanup_$scriptId'](); }catch(e){} }
+              // remove injected style/script elements
+              var style = document.getElementById('scriptstore-style-$scriptId');
+              if (style && style.parentNode) { style.parentNode.removeChild(style); }
+              var scr = document.getElementById('scriptstore-script-$scriptId');
+              if (scr && scr.parentNode) { scr.parentNode.removeChild(scr); }
+              // try to remove any global var named after original script (best effort)
+              try { if (window['$scriptName']) { window['$scriptName'] = undefined; } }catch(e){}
             } catch(e) {}
           })();
         ''';
@@ -422,18 +433,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
             isFullscreen
                 ? null
                 : AppBar(
-                  centerTitle: true,
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          novel.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
                   actions: [
                     IconButton(
                       tooltip: 'Previous',
@@ -751,6 +750,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
     await _controller!.loadHtmlString(html);
 
     try {
+      final enabledScripts =
+          (_prefs['enabledScripts'] is List)
+              ? List<String>.from(_prefs['enabledScripts'])
+              : <String>[];
+      if (enabledScripts.isNotEmpty) {
+        Future.delayed(const Duration(milliseconds: 800), () async {
+          await _executeScriptsFromStore(enabledScripts);
+        });
+      }
+    } catch (_) {}
+
+    try {
       final db = await NovelDatabase.getInstance();
       final chapter = novel.chapters[selectedChapter];
       final key = 'scroll_${novel.id}_${chapter.id}';
@@ -976,16 +987,88 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<void> _applyScriptsToWebView(List<String> enabledScripts) async {
     try {
-      for (final script in enabledScripts) {
-        final js = """
-          (function() {
-            console.log('Applying script: $script');
-          })();
-        """;
-        await _controller!.runJavaScript(js);
-      }
+      await _executeScriptsFromStore(enabledScripts);
     } catch (e) {
       print('Erro ao aplicar scripts: $e');
+    }
+  }
+
+  Future<void> _executeScriptsFromStore(List<String> enabledScripts) async {
+    try {
+      final uri = Uri.parse('https://api.npoint.io/bcd94c36fa7f3bf3b1e6');
+      final resp = await http.read(uri);
+      final Map<String, dynamic> data =
+          jsonDecode(resp) as Map<String, dynamic>;
+      final List scripts = data['scripts'] as List? ?? [];
+
+      for (final scriptName in enabledScripts) {
+        try {
+          final match = scripts.firstWhere(
+            (s) => (s['name'] ?? s['use']) == scriptName,
+            orElse: () => null,
+          );
+          if (match == null) continue;
+
+          final scriptId = scriptName.toString().replaceAll(
+            RegExp(r"[^a-zA-Z0-9_]"),
+            '_',
+          );
+
+          final code = match['code'] ?? match['js'] ?? match['script'];
+          final src = match['src'] ?? match['url'];
+          final style = match['style'] ?? match['css'];
+
+          final buffer = StringBuffer();
+          buffer.writeln('(function(){');
+          buffer.writeln('  try{');
+          buffer.writeln("    if(window['scriptstore_$scriptId']){ return; }");
+          buffer.writeln("    window['scriptstore_$scriptId']=true;");
+
+          if (style != null && style is String && style.isNotEmpty) {
+            final styleJson = jsonEncode(style);
+            buffer.writeln(
+              "    var s=document.getElementById('scriptstore-style-$scriptId');",
+            );
+            buffer.writeln(
+              '    if(!s){ s=document.createElement(\'style\'); s.id=\'scriptstore-style-$scriptId\'; s.textContent = ' +
+                  styleJson +
+                  '; document.head.appendChild(s); }',
+            );
+          }
+
+          if (src != null && src is String && src.isNotEmpty) {
+            final srcJson = jsonEncode(src);
+            buffer.writeln(
+              "    var scr=document.getElementById('scriptstore-script-$scriptId');",
+            );
+            buffer.writeln(
+              '    if(!scr){ scr=document.createElement(\'script\'); scr.id=\'scriptstore-script-$scriptId\'; scr.src = ' +
+                  srcJson +
+                  '; scr.async = false; document.head.appendChild(scr); }',
+            );
+          } else if (code != null && code is String && code.isNotEmpty) {
+            final codeJson = jsonEncode(code);
+            buffer.writeln(
+              "    var sc=document.getElementById('scriptstore-script-$scriptId');",
+            );
+            buffer.writeln(
+              '    if(!sc){ sc=document.createElement(\'script\'); sc.id=\'scriptstore-script-$scriptId\'; sc.type=\'text/javascript\'; sc.text = ' +
+                  codeJson +
+                  '; document.head.appendChild(sc); }',
+            );
+          }
+
+          buffer.writeln('  }catch(e){}');
+          buffer.writeln('})();');
+
+          final injectJs = buffer.toString();
+          await _controller!.runJavaScript(injectJs);
+        } catch (e) {
+          print('Erro ao injetar script "$scriptName": $e');
+        }
+      }
+    } catch (e) {
+      print('Failed to execute scripts from store: $e');
     }
   }
 
