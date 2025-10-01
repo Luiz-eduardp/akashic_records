@@ -3,6 +3,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:akashic_records/screens/reader/script_store_tab.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:akashic_records/services/reader_tts.dart';
 
 typedef ReaderConfig = Map<String, dynamic>;
 
@@ -26,11 +27,67 @@ class ReaderConfigModal extends StatefulWidget {
 
 class _ReaderConfigModalState extends State<ReaderConfigModal> {
   late ReaderConfig temp;
+  List<String> _availableLangs = [];
+  String? _selectedLang;
+  bool _langsLoading = false;
 
   @override
   void initState() {
     super.initState();
     temp = Map<String, dynamic>.from(widget.config);
+    _loadLanguages();
+  }
+
+  Future<void> _loadLanguages() async {
+    setState(() => _langsLoading = true);
+    try {
+      final langs = await ReaderTts().getLanguages();
+      if (langs != null && langs.isNotEmpty) {
+        String normalizeLang(dynamic v) {
+          try {
+            var s = v.toString().trim();
+            s = s.replaceAll('_', '-').replaceAll(RegExp(r'-+'), '-');
+            s = s.replaceAll(RegExp(r'(^-+|-+$)'), '');
+            if (s.isEmpty) return '';
+            final parts = s.split('-');
+            if (parts.length == 1) return parts[0].toLowerCase();
+            final lang = parts[0].toLowerCase();
+            final region = parts.sublist(1).join('-').toUpperCase();
+            return '$lang-$region';
+          } catch (_) {
+            return v.toString().trim();
+          }
+        }
+
+        final seen = <String>{};
+        final list = <String>[];
+        for (final e in langs) {
+          final n = normalizeLang(e);
+          if (n.isEmpty) continue;
+          if (!seen.contains(n)) {
+            seen.add(n);
+            list.add(n);
+          }
+        }
+        _availableLangs = list;
+      }
+    } catch (_) {}
+    if (_availableLangs.isEmpty) {
+      _availableLangs = ['en-US', 'pt-BR', 'es-ES', 'fr-FR', 'ja-JP', 'ar'];
+    }
+    final prefLang =
+        (temp['tts'] is Map) ? (temp['tts']['language'] as String?) : null;
+    if (prefLang != null && _availableLangs.contains(prefLang)) {
+      _selectedLang = prefLang;
+    } else {
+      _selectedLang = _availableLangs.isNotEmpty ? _availableLangs.first : null;
+      if (prefLang != null) {
+        temp['tts'] =
+            (temp['tts'] is Map) ? Map<String, dynamic>.from(temp['tts']) : {};
+        temp['tts']['language'] = _selectedLang;
+      }
+    }
+    setState(() => _langsLoading = false);
   }
 
   void _apply() {
@@ -432,6 +489,139 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                           value: (temp['textBrightness'] ?? 1.0).toDouble(),
                           onChanged: (v) {
                             setState(() => temp['textBrightness'] = v);
+                            _apply();
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'tts_settings'.translate,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('language'.translate),
+                        _langsLoading
+                            ? const SizedBox(
+                              height: 48,
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                            : Builder(
+                              builder: (ctx) {
+                                final items =
+                                    _availableLangs
+                                        .map(
+                                          (l) => DropdownMenuItem(
+                                            value: l,
+                                            child: Text(l),
+                                          ),
+                                        )
+                                        .toList();
+                                String? effectiveValue;
+                                if (items.isNotEmpty) {
+                                  if (_selectedLang != null &&
+                                      items
+                                              .where(
+                                                (it) =>
+                                                    it.value == _selectedLang,
+                                              )
+                                              .length ==
+                                          1) {
+                                    effectiveValue = _selectedLang;
+                                  } else {
+                                    effectiveValue = items.first.value;
+                                    temp['tts'] =
+                                        (temp['tts'] is Map)
+                                            ? Map<String, dynamic>.from(
+                                              temp['tts'],
+                                            )
+                                            : {};
+                                    temp['tts']['language'] = effectiveValue;
+                                    _selectedLang = effectiveValue;
+                                  }
+                                } else {
+                                  effectiveValue = null;
+                                }
+                                return DropdownButtonFormField<String>(
+                                  isExpanded: true,
+                                  items: items,
+                                  value: effectiveValue,
+                                  onChanged: (v) {
+                                    if (v == null) return;
+                                    temp['tts'] =
+                                        (temp['tts'] is Map)
+                                            ? Map<String, dynamic>.from(
+                                              temp['tts'],
+                                            )
+                                            : {};
+                                    temp['tts']['language'] = v;
+                                    _selectedLang = v;
+                                    _apply();
+                                  },
+                                );
+                              },
+                            ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${'tts_rate'.translate}: ${((temp['tts'] is Map ? (temp['tts']['rate'] ?? 0.8) : 0.8) as num).toDouble().toStringAsFixed(2)}',
+                        ),
+                        Slider(
+                          min: 0.1,
+                          max: 1.5,
+                          value:
+                              (temp['tts'] is Map)
+                                  ? ((temp['tts']['rate'] ?? 0.8) as num)
+                                      .toDouble()
+                                  : 0.8,
+                          onChanged: (v) {
+                            temp['tts'] =
+                                (temp['tts'] is Map)
+                                    ? Map<String, dynamic>.from(temp['tts'])
+                                    : {};
+                            temp['tts']['rate'] = v;
+                            _apply();
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${'tts_volume'.translate}: ${((temp['tts'] is Map ? (temp['tts']['volume'] ?? 1.0) : 1.0) as num).toDouble().toStringAsFixed(2)}',
+                        ),
+                        Slider(
+                          min: 0.0,
+                          max: 1.0,
+                          value:
+                              (temp['tts'] is Map)
+                                  ? ((temp['tts']['volume'] ?? 1.0) as num)
+                                      .toDouble()
+                                  : 1.0,
+                          onChanged: (v) {
+                            temp['tts'] =
+                                (temp['tts'] is Map)
+                                    ? Map<String, dynamic>.from(temp['tts'])
+                                    : {};
+                            temp['tts']['volume'] = v;
+                            _apply();
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${'tts_pitch'.translate}: ${((temp['tts'] is Map ? (temp['tts']['pitch'] ?? 1.0) : 1.0) as num).toDouble().toStringAsFixed(2)}',
+                        ),
+                        Slider(
+                          min: 0.5,
+                          max: 2.0,
+                          value:
+                              (temp['tts'] is Map)
+                                  ? ((temp['tts']['pitch'] ?? 1.0) as num)
+                                      .toDouble()
+                                  : 1.0,
+                          onChanged: (v) {
+                            temp['tts'] =
+                                (temp['tts'] is Map)
+                                    ? Map<String, dynamic>.from(temp['tts'])
+                                    : {};
+                            temp['tts']['pitch'] = v;
                             _apply();
                           },
                         ),
