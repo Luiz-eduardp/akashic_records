@@ -16,7 +16,6 @@ import 'package:akashic_records/screens/reader/reader_subheader.dart';
 import 'package:akashic_records/screens/reader/reader_config_modal.dart';
 import 'package:akashic_records/services/reader_tts.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({super.key});
@@ -38,14 +37,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final ReaderTts _tts = ReaderTts();
   FlutterLocalNotificationsPlugin? _localNotif;
   bool _ttsPlaying = false;
+  bool _ttsUserRequested = false;
   int _wordCountCached = 0;
   String _currentTime = '';
   int _batteryLevel = -1;
-  late SharedPreferences _sharedPrefs;
   bool _isLoading = true;
 
   Future<void> _saveReaderPrefs() async {
-    await _sharedPrefs.setString('reader_prefs', json.encode(_prefs));
+    final appState = Provider.of<AppState>(context, listen: false);
+    await appState.setReaderPrefs(_prefs);
   }
 
   Map<String, dynamic> _getDefaultPrefs() {
@@ -63,6 +63,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       'bgColor': null,
       'fullscreen': false,
       'enabledScripts': <String>[],
+      'tts': {'language': 'en-US', 'rate': 0.8, 'volume': 1.0, 'pitch': 1.0},
     };
   }
 
@@ -78,13 +79,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
         orElse: () => null,
       );
       if (match != null) {
+        final scriptId = scriptName.toString().replaceAll(
+          RegExp(r"[^a-zA-Z0-9_]"),
+          '_',
+        );
         final removeJs = '''
           (function(){
             try {
-              if (window['$scriptName']) { window['$scriptName'] = undefined; }
-              var style = document.getElementById('scriptstore-style-$scriptName');
-              if (style) { style.remove(); }
-              if (window['scriptstoreCleanup_$scriptName']) { window['scriptstoreCleanup_$scriptName'](); }
+              if (window['scriptstore_$scriptId']) { window['scriptstore_$scriptId'] = undefined; }
+              if (window['scriptstoreCleanup_$scriptId']) { try { window['scriptstoreCleanup_$scriptId'](); }catch(e){} }
+              var style = document.getElementById('scriptstore-style-$scriptId');
+              if (style && style.parentNode) { style.parentNode.removeChild(style); }
+              var scr = document.getElementById('scriptstore-script-$scriptId');
+              if (scr && scr.parentNode) { scr.parentNode.removeChild(scr); }
+              try { if (window['$scriptName']) { window['$scriptName'] = undefined; } }catch(e){}
             } catch(e) {}
           })();
         ''';
@@ -174,8 +182,37 @@ class _ReaderScreenState extends State<ReaderScreen> {
       if (enabledScripts.isNotEmpty) {
         await _applyScriptsToWebView(enabledScripts);
       }
+      await _applyTtsPrefs();
       _initTtsAndNotifications();
     });
+  }
+
+  Future<void> _applyTtsPrefs() async {
+    try {
+      final ttsPrefs =
+          (_prefs['tts'] is Map)
+              ? Map<String, dynamic>.from(_prefs['tts'])
+              : {};
+      final lang = ttsPrefs['language'] as String? ?? 'en-US';
+      final rate =
+          (ttsPrefs['rate'] is num)
+              ? (ttsPrefs['rate'] as num).toDouble()
+              : 0.8;
+      final volume =
+          (ttsPrefs['volume'] is num)
+              ? (ttsPrefs['volume'] as num).toDouble()
+              : 1.0;
+      final pitch =
+          (ttsPrefs['pitch'] is num)
+              ? (ttsPrefs['pitch'] as num).toDouble()
+              : 1.0;
+      try {
+        await _tts.setLanguage(lang);
+        await _tts.setRate(rate);
+        await _tts.setVolume(volume);
+        await _tts.setPitch(pitch);
+      } catch (_) {}
+    } catch (_) {}
   }
 
   void _initTtsAndNotifications() async {
@@ -183,13 +220,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
       _tts.onComplete = () async {
         final idx = _currentIndex();
         if (idx >= 0 && idx < novel.chapters.length - 1) {
-          setState(() => selectedChapter = idx + 1);
-          await _loadChapter();
-          Future.delayed(const Duration(milliseconds: 800), () async {
-            await _startTtsForCurrentChapter();
-          });
+          if (_ttsUserRequested) {
+            setState(() => selectedChapter = idx + 1);
+            await _loadChapter();
+            Future.delayed(const Duration(milliseconds: 800), () async {
+              await _startTtsForCurrentChapter(userInitiated: false);
+            });
+          } else {
+            _ttsPlaying = false;
+            _showTtsNotification(false);
+          }
         } else {
           _ttsPlaying = false;
+          _ttsUserRequested = false;
           _showTtsNotification(false);
         }
       };
@@ -423,18 +466,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
             isFullscreen
                 ? null
                 : AppBar(
-                  centerTitle: true,
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          novel.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
                   actions: [
                     IconButton(
                       tooltip: 'Previous',
@@ -448,10 +479,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         try {
                           if (_ttsPlaying) {
                             await _tts.pause();
+                            _ttsUserRequested = false;
                             setState(() => _ttsPlaying = false);
                             _showTtsNotification(false);
                           } else {
-                            await _startTtsForCurrentChapter();
+                            _ttsUserRequested = true;
+                            await _startTtsForCurrentChapter(
+                              userInitiated: true,
+                            );
                             setState(() => _ttsPlaying = true);
                           }
                         } catch (e) {}
@@ -543,6 +578,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       _prefs = Map<String, dynamic>.from(cfg);
                       await _saveReaderPrefs();
                       setState(() {});
+                      try {
+                        await _applyTtsPrefs();
+                      } catch (_) {}
                       _loadChapter();
                     },
                     onApplyScripts: (enabledScripts) async {
@@ -752,6 +790,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
     await _controller!.loadHtmlString(html);
 
     try {
+      final enabledScripts =
+          (_prefs['enabledScripts'] is List)
+              ? List<String>.from(_prefs['enabledScripts'])
+              : <String>[];
+      if (enabledScripts.isNotEmpty) {
+        Future.delayed(const Duration(milliseconds: 800), () async {
+          await _executeScriptsFromStore(enabledScripts);
+        });
+      }
+    } catch (_) {}
+
+    try {
       final db = await NovelDatabase.getInstance();
       final chapter = novel.chapters[selectedChapter];
       final key = 'scroll_${novel.id}_${chapter.id}';
@@ -794,7 +844,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Future<void> _openChapterSelector() async {
     final db = await NovelDatabase.getInstance();
     Set<String> readSet = await db.getReadChaptersForNovel(novel.id);
-    final result = await showModalBottomSheet<int>(
+    final result = await showModalBottomSheet<Chapter>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
@@ -902,7 +952,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       chapters: filtered,
                       readChapters: readSet,
                       onTap: (ch, idx) {
-                        Navigator.of(ctx).pop(idx);
+                        Navigator.of(ctx).pop(ch);
+                      },
+                      onLongPressToggleRead: (ch, idx) async {
+                        final isRead = readSet.contains(ch.id);
+                        await db.setChapterRead(novel.id, ch.id, !isRead);
+                        readSet = await db.getReadChaptersForNovel(novel.id);
+                        setStateModal(() {});
                       },
                     ),
                   ),
@@ -913,9 +969,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
         );
       },
     );
-    if (result is int) {
-      setState(() => selectedChapter = result);
-      _loadChapter();
+    if (result is Chapter) {
+      final index = novel.chapters.indexWhere((ch) => ch.id == result.id);
+      if (index != -1) {
+        setState(() => selectedChapter = index);
+        _loadChapter();
+      }
     }
   }
 
@@ -952,6 +1011,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<bool> _onWillPop() async {
     await _setFullscreenMode(false);
+    try {
+      await _stopTts();
+    } catch (_) {}
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('fullscreen_disabled'.translate)));
@@ -963,31 +1025,137 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _timeTimer?.cancel();
     _batteryTimer?.cancel();
     _setFullscreenMode(false);
+    try {
+      _stopTts();
+    } catch (_) {}
     super.dispose();
   }
 
   Future<void> _applyScriptsToWebView(List<String> enabledScripts) async {
     try {
-      for (final script in enabledScripts) {
-        final js = """
-          (function() {
-            console.log('Applying script: $script');
-          })();
-        """;
-        await _controller!.runJavaScript(js);
-      }
+      await _executeScriptsFromStore(enabledScripts);
     } catch (e) {
       print('Erro ao aplicar scripts: $e');
     }
   }
 
-  Future<void> _startTtsForCurrentChapter() async {
+  Future<void> _stopTts() async {
+    try {
+      await _tts.pause();
+    } catch (_) {}
+    try {
+      _ttsUserRequested = false;
+      _ttsPlaying = false;
+      _showTtsNotification(false);
+    } catch (_) {}
+  }
+
+  Future<void> _executeScriptsFromStore(List<String> enabledScripts) async {
+    try {
+      final uri = Uri.parse('https://api.npoint.io/bcd94c36fa7f3bf3b1e6');
+      final resp = await http.read(uri);
+      final Map<String, dynamic> data =
+          jsonDecode(resp) as Map<String, dynamic>;
+      final List scripts = data['scripts'] as List? ?? [];
+
+      for (final scriptName in enabledScripts) {
+        try {
+          final match = scripts.firstWhere(
+            (s) => (s['name'] ?? s['use']) == scriptName,
+            orElse: () => null,
+          );
+          if (match == null) continue;
+
+          final scriptId = scriptName.toString().replaceAll(
+            RegExp(r"[^a-zA-Z0-9_]"),
+            '_',
+          );
+
+          final code = match['code'] ?? match['js'] ?? match['script'];
+          final src = match['src'] ?? match['url'];
+          final style = match['style'] ?? match['css'];
+
+          final buffer = StringBuffer();
+          buffer.writeln('(function(){');
+          buffer.writeln('  try{');
+          buffer.writeln("    if(window['scriptstore_$scriptId']){ return; }");
+          buffer.writeln("    window['scriptstore_$scriptId']=true;");
+
+          if (style != null && style is String && style.isNotEmpty) {
+            final styleJson = jsonEncode(style);
+            buffer.writeln(
+              "    var s=document.getElementById('scriptstore-style-$scriptId');",
+            );
+            buffer.writeln(
+              '    if(!s){ s=document.createElement(\'style\'); s.id=\'scriptstore-style-$scriptId\'; s.textContent = ' +
+                  styleJson +
+                  '; document.head.appendChild(s); }',
+            );
+          }
+
+          if (src != null && src is String && src.isNotEmpty) {
+            final srcJson = jsonEncode(src);
+            buffer.writeln(
+              "    var scr=document.getElementById('scriptstore-script-$scriptId');",
+            );
+            buffer.writeln(
+              '    if(!scr){ scr=document.createElement(\'script\'); scr.id=\'scriptstore-script-$scriptId\'; scr.src = ' +
+                  srcJson +
+                  '; scr.async = false; document.head.appendChild(scr); }',
+            );
+          } else if (code != null && code is String && code.isNotEmpty) {
+            final codeJson = jsonEncode(code);
+            buffer.writeln(
+              "    var sc=document.getElementById('scriptstore-script-$scriptId');",
+            );
+            buffer.writeln(
+              '    if(!sc){ sc=document.createElement(\'script\'); sc.id=\'scriptstore-script-$scriptId\'; sc.type=\'text/javascript\'; sc.text = ' +
+                  codeJson +
+                  '; document.head.appendChild(sc); }',
+            );
+          }
+
+          buffer.writeln('  }catch(e){}');
+          buffer.writeln('})();');
+
+          final injectJs = buffer.toString();
+          await _controller!.runJavaScript(injectJs);
+        } catch (e) {
+          print('Erro ao injetar script "$scriptName": $e');
+        }
+      }
+    } catch (e) {
+      print('Failed to execute scripts from store: $e');
+    }
+  }
+
+  Future<void> _startTtsForCurrentChapter({bool userInitiated = false}) async {
     try {
       if (novel.chapters.isEmpty) return;
       final chapter = novel.chapters[selectedChapter];
-      final content = chapter.content ?? '';
-      final text = _extractTextFromHtml(content);
+      String text = '';
+      try {
+        for (int attempt = 0; attempt < 8; attempt++) {
+          final res = await _controller!.runJavaScriptReturningResult(
+            "(function(){ try{ var el=document.querySelector('.reader-content'); if(el) return el.innerText || ''; return document.body.innerText || ''; }catch(e){ return ''; } })();",
+          );
+          final jsStr = (res is String) ? res : res.toString();
+          final cleaned = jsStr.replaceAll(RegExp(r'\\s+'), ' ').trim();
+          if (cleaned.isNotEmpty) {
+            text = cleaned;
+            break;
+          }
+          await Future.delayed(const Duration(milliseconds: 250));
+        }
+      } catch (e) {}
+
+      if (text.isEmpty) {
+        final content = chapter.content ?? '';
+        text = _extractTextFromHtml(content);
+      }
+
       if (text.trim().isEmpty) return;
+      if (userInitiated) _ttsUserRequested = true;
       await _tts.speak(text);
       _ttsPlaying = true;
       _showTtsNotification(true);

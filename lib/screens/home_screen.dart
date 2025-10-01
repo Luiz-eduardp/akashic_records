@@ -109,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final favorites = appState.favoriteNovels;
+    final displayedFavorites = List<Novel>.from(favorites)..shuffle();
 
     return Scaffold(
       appBar: AppBar(centerTitle: true, title: Text('app_title'.translate)),
@@ -224,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (ctx, i) {
-                    final Novel n = favorites[i];
+                    final Novel n = displayedFavorites[i];
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -281,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemCount: favorites.length,
+                  itemCount: displayedFavorites.length,
                 ),
               ),
               const SizedBox(height: 12),

@@ -116,174 +116,217 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       context,
                       listen: false,
                     );
-                    final shouldShow = appState.shouldShowReleaseNotes(tag);
-
-                    if (!shouldShow) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('no_update_available'.translate),
-                        ),
-                      );
-                      return;
-                    }
 
                     final assets = (latest['assets'] as List<dynamic>?) ?? [];
 
-                    await showDialog(
-                      context: context,
-                      builder: (_) {
-                        return StatefulBuilder(
-                          builder: (ctx, setSt) {
-                            double progress = 0.0;
-                            String? downloading;
-                            return AlertDialog(
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        fullscreenDialog: true,
+                        builder: (ctx) {
+                          return Scaffold(
+                            appBar: AppBar(
                               title: Text(
                                 '${'update_available'.translate} — $name',
                               ),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (author.isNotEmpty)
-                                      Text('by'.translate + ': $author'),
-                                    const SizedBox(height: 8),
-                                    if (body.isNotEmpty)
-                                      SizedBox(
-                                        height: 200,
-                                        child: MarkdownBody(data: body),
-                                      )
-                                    else
-                                      Text(
-                                        '${'latest_release'.translate}: $tag',
-                                      ),
-                                    const SizedBox(height: 12),
-                                    Text('assets'.translate),
-                                    const SizedBox(height: 8),
-                                    ...assets.map((a) {
-                                      final an =
-                                          a['name']?.toString() ?? 'asset';
-                                      final url =
-                                          a['browser_download_url']
-                                              ?.toString() ??
-                                          '';
-                                      return ListTile(
-                                        title: Text(an),
-                                        subtitle: Text(url),
-                                        trailing: ElevatedButton(
-                                          onPressed:
-                                              url.isEmpty
-                                                  ? null
-                                                  : () async {
-                                                    if (downloading != null)
-                                                      return;
-                                                    setSt(
-                                                      () => downloading = an,
-                                                    );
-                                                    try {
-                                                      final dir =
-                                                          await getApplicationDocumentsDirectory();
-                                                      final target =
-                                                          '${dir.path}/$an';
-                                                      await updateService
-                                                          .downloadAsset(
-                                                            url,
-                                                            target,
-                                                            (p) => setSt(
-                                                              () =>
-                                                                  progress = p,
-                                                            ),
-                                                          );
-                                                      setSt(
-                                                        () => progress = 1.0,
-                                                      );
-
-                                                      if (Platform.isAndroid) {
-                                                        final intent =
-                                                            AndroidIntent(
-                                                              action:
-                                                                  'action_view',
-                                                              data:
-                                                                  Uri.file(
-                                                                    target,
-                                                                  ).toString(),
-                                                              arguments: {
-                                                                'mimeType':
-                                                                    'application/vnd.android.package-archive',
-                                                              },
-                                                            );
-                                                        await intent.launch();
-                                                      } else {
-                                                        final uri = Uri.file(
-                                                          target,
-                                                        );
-                                                        if (await canLaunchUrl(
-                                                          uri,
-                                                        )) {
-                                                          await launchUrl(uri);
-                                                        } else {
-                                                          final ruri =
-                                                              Uri.parse(url);
-                                                          if (await canLaunchUrl(
-                                                            ruri,
-                                                          ))
-                                                            await launchUrl(
-                                                              ruri,
-                                                              mode:
-                                                                  LaunchMode
-                                                                      .externalApplication,
-                                                            );
-                                                        }
-                                                      }
-                                                    } catch (e) {
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            'update_check_failed'
-                                                                .translate,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    } finally {
-                                                      setSt(
-                                                        () =>
-                                                            downloading = null,
-                                                      );
-                                                    }
-                                                  },
-                                          child: Text(
-                                            downloading == an
-                                                ? '${(progress * 100).toStringAsFixed(0)}%'
-                                                : 'download'.translate,
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                  ],
-                                ),
-                              ),
                               actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: Text('cancel'.translate),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    final ruri = Uri.parse(url);
-                                    if (await canLaunchUrl(ruri))
-                                      await launchUrl(
-                                        ruri,
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                  },
-                                  child: Text('open_release'.translate),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () => Navigator.of(ctx).pop(),
                                 ),
                               ],
-                            );
-                          },
-                        );
-                      },
+                            ),
+                            body: SafeArea(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: StatefulBuilder(
+                                  builder: (ctx2, setSt) {
+                                    double progress = 0.0;
+                                    String? downloading;
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (author.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 8.0,
+                                            ),
+                                            child: Text(
+                                              'by'.translate + ': $author',
+                                            ),
+                                          ),
+                                        Expanded(
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                if (body.isNotEmpty)
+                                                  MarkdownBody(data: body)
+                                                else
+                                                  Text(
+                                                    '${'latest_release'.translate}: $tag',
+                                                  ),
+                                                const SizedBox(height: 12),
+                                                Text('assets'.translate),
+                                                const SizedBox(height: 8),
+                                                ...assets.map((a) {
+                                                  final an =
+                                                      a['name']?.toString() ??
+                                                      'asset';
+                                                  final url =
+                                                      a['browser_download_url']
+                                                          ?.toString() ??
+                                                      '';
+                                                  return ListTile(
+                                                    title: Text(an),
+                                                    subtitle: Text(url),
+                                                    trailing: ElevatedButton(
+                                                      onPressed:
+                                                          url.isEmpty
+                                                              ? null
+                                                              : () async {
+                                                                if (downloading !=
+                                                                    null)
+                                                                  return;
+                                                                setSt(
+                                                                  () =>
+                                                                      downloading =
+                                                                          an,
+                                                                );
+                                                                try {
+                                                                  final dir =
+                                                                      await getApplicationDocumentsDirectory();
+                                                                  final target =
+                                                                      '${dir.path}/$an';
+                                                                  await updateService.downloadAsset(
+                                                                    url,
+                                                                    target,
+                                                                    (
+                                                                      p,
+                                                                    ) => setSt(
+                                                                      () =>
+                                                                          progress =
+                                                                              p,
+                                                                    ),
+                                                                  );
+                                                                  setSt(
+                                                                    () =>
+                                                                        progress =
+                                                                            1.0,
+                                                                  );
+
+                                                                  if (Platform
+                                                                      .isAndroid) {
+                                                                    final intent = AndroidIntent(
+                                                                      action:
+                                                                          'action_view',
+                                                                      data:
+                                                                          Uri.file(
+                                                                            target,
+                                                                          ).toString(),
+                                                                      arguments: {
+                                                                        'mimeType':
+                                                                            'application/vnd.android.package-archive',
+                                                                      },
+                                                                    );
+                                                                    await intent
+                                                                        .launch();
+                                                                  } else {
+                                                                    final uri =
+                                                                        Uri.file(
+                                                                          target,
+                                                                        );
+                                                                    if (await canLaunchUrl(
+                                                                      uri,
+                                                                    )) {
+                                                                      await launchUrl(
+                                                                        uri,
+                                                                      );
+                                                                    } else {
+                                                                      final ruri =
+                                                                          Uri.parse(
+                                                                            url,
+                                                                          );
+                                                                      if (await canLaunchUrl(
+                                                                        ruri,
+                                                                      ))
+                                                                        await launchUrl(
+                                                                          ruri,
+                                                                          mode:
+                                                                              LaunchMode.externalApplication,
+                                                                        );
+                                                                    }
+                                                                  }
+                                                                } catch (e) {
+                                                                  ScaffoldMessenger.of(
+                                                                    context,
+                                                                  ).showSnackBar(
+                                                                    SnackBar(
+                                                                      content: Text(
+                                                                        'update_check_failed'
+                                                                            .translate,
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                } finally {
+                                                                  setSt(
+                                                                    () =>
+                                                                        downloading =
+                                                                            null,
+                                                                  );
+                                                                }
+                                                              },
+                                                      child: Text(
+                                                        downloading == an
+                                                            ? '${(progress * 100).toStringAsFixed(0)}%'
+                                                            : 'download'
+                                                                .translate,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(ctx),
+                                              child: Text('cancel'.translate),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            ElevatedButton(
+                                              onPressed: () async {
+                                                final ruri = Uri.parse(url);
+                                                if (await canLaunchUrl(ruri))
+                                                  await launchUrl(
+                                                    ruri,
+                                                    mode:
+                                                        LaunchMode
+                                                            .externalApplication,
+                                                  );
+                                              },
+                                              child: Text(
+                                                'open_release'.translate,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     );
 
                     await appState.markReleaseNotesShown(tag);

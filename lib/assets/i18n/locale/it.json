@@ -72,6 +72,10 @@
   "spacing": "Interlinea",
   "padding": "Padding",
   "reader_settings_title": "Impostazioni del lettore",
+  "tts_settings": "Impostazioni TTS",
+  "tts_rate": "Velocità",
+  "tts_volume": "Volume",
+  "tts_pitch": "Tono",
   "script_store": "Negozio script",
   "preview": "Anteprima",
   "theme_default_classic": "Default (Classic)",
@@ -161,5 +165,8 @@
   "custom_dns_sub": "Sostituisci risoluzione DNS (es. 8.8.8.8)",
   "custom_user_agent": "User-Agent Personalizzato",
   "custom_user_agent_sub": "Imposta User-Agent personalizzato per le richieste",
-  "appearance": "Aspetto"
+  "appearance": "Aspetto",
+  "details": "Dettagli",
+  "continue_reading": "Continua la lettura",
+  "search_favorites_hint": "Cerca nei preferiti..."
 }

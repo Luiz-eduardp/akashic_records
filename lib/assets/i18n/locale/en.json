@@ -73,6 +73,10 @@
   "spacing": "Line spacing",
   "padding": "Padding",
   "reader_settings_title": "Reader settings",
+  "tts_settings": "TTS settings",
+  "tts_rate": "Rate",
+  "tts_volume": "Volume",
+  "tts_pitch": "Pitch",
   "script_store": "Script store",
   "preview": "Preview",
   "theme_default_classic": "Default (Classic)",
@@ -168,4 +172,8 @@
   "select_text_color": "Select text color",
   "select_bg_color": "Select background color",
   "choose_text_color": "Choose text color",
-  "choose_bg_color": "Choose background color"}
+  "choose_bg_color": "Choose background color",
+  "details": "Details",
+  "continue_reading": "Continue reading",
+  "search_favorites_hint": "Search favorites..."
+}

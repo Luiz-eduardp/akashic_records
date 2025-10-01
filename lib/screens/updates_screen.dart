@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:provider/provider.dart';
+import 'package:akashic_records/widgets/chapter_count_badge.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/novel_detail_screen.dart';
 import 'package:akashic_records/db/novel_database.dart';
@@ -76,20 +77,6 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
       _dynamicUnread.clear();
       _dynamicUnread.addAll(out);
     });
-  }
-
-  String _formatTimestamp(String? iso) {
-    if (iso == null) return 'never'.translate;
-    try {
-      final dt = DateTime.tryParse(iso);
-      if (dt == null) return iso;
-      String two(int n) => n.toString().padLeft(2, '0');
-      final d = '${two(dt.day)}/${two(dt.month)}/${dt.year}';
-      final t = '${two(dt.hour)}:${two(dt.minute)}';
-      return '$d $t';
-    } catch (_) {
-      return iso;
-    }
   }
 
   @override
@@ -181,82 +168,26 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                     padding: const EdgeInsets.all(12.0),
                                     child: Row(
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                          CrossAxisAlignment.center,
                                       children: [
-                                        Stack(
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              child:
-                                                  n.coverImageUrl.isNotEmpty
-                                                      ? Image.network(
-                                                        n.coverImageUrl,
-                                                        width: 64,
-                                                        height: 88,
-                                                        fit: BoxFit.cover,
-                                                      )
-                                                      : Container(
-                                                        width: 64,
-                                                        height: 88,
-                                                        color: Colors.grey,
-                                                      ),
-                                            ),
-                                            if (delta > 0)
-                                              Positioned(
-                                                left: 0,
-                                                top: 0,
-                                                child: CircleAvatar(
-                                                  radius: 14,
-                                                  backgroundColor:
-                                                      Theme.of(context)
-                                                          .colorScheme
-                                                          .primaryContainer,
-                                                  child: Text(
-                                                    '+$delta',
-                                                    style: const TextStyle(
-                                                      fontSize: 11,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                        const SizedBox(width: 12),
-
                                         Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                n.title,
-                                                style:
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.titleMedium,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '${'by'.translate} ${n.author}',
-                                                style:
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.bodySmall,
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                '${'chapters'.translate}: ${n.lastKnownChapterCount} • ${'last_checked'.translate}: ${_formatTimestamp(n.lastChecked)}',
-                                                style:
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.bodySmall,
-                                              ),
-                                            ],
+                                          child: Text(
+                                            n.title,
+                                            style:
+                                                Theme.of(
+                                                  context,
+                                                ).textTheme.titleMedium,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
+                                        if (delta > 0) ...[
+                                          const SizedBox(width: 8),
+                                          ChapterCountBadge(
+                                            count: delta,
+                                            showPlus: true,
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),

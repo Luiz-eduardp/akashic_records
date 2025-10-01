@@ -73,6 +73,10 @@
   "spacing": "تباعد الأسطر",
   "padding": "الحشوة",
   "reader_settings_title": "إعدادات القارئ",
+  "tts_settings": "إعدادات تحويل النص إلى كلام",
+  "tts_rate": "السرعة",
+  "tts_volume": "مستوى الصوت",
+  "tts_pitch": "النبرة",
   "script_store": "متجر السكربتات",
   "preview": "معاينة",
   "theme_default_classic": "Default (Classic)",
@@ -159,5 +163,8 @@
   "custom_dns": "DNS مخصص",
   "custom_dns_sub": "تجاوز حل DNS (مثال: 8.8.8.8)",
   "custom_user_agent": "User-Agent مخصص",
-  "custom_user_agent_sub": "تعيين User-Agent مخصص للطلبات"
+  "custom_user_agent_sub": "تعيين User-Agent مخصص للطلبات",
+  "details": "تفاصيل",
+  "continue_reading": "متابعة القراءة",
+  "search_favorites_hint": "ابحث في المفضلة..."
 }

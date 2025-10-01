@@ -10,7 +10,7 @@ class AppState extends ChangeNotifier {
   late NovelDatabase _db;
   Locale currentLocale = const Locale('en');
   ThemeMode themeMode = ThemeMode.system;
-  Color accentColor = Colors.blue;
+  Color accentColor = const Color(0xFFD1973A);
   bool showChangelog = true;
   Map<String, dynamic> readerPrefs = {};
   String? latestReleaseTag;

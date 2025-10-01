@@ -176,7 +176,6 @@ class CentralNovel implements PluginService {
         chapterNumber++;
       }
     }
-    novel.chapters = novel.chapters.reversed.toList();
     return novel;
   }
 
