@@ -18,6 +18,8 @@ class AppState extends ChangeNotifier {
   bool navAlwaysVisible = false;
   double navScrollThreshold = 6.0;
   int navAnimationMs = 250;
+  String? customDns;
+  String? customUserAgent;
 
   List<Novel> _localNovels = [];
 
@@ -74,6 +76,14 @@ class AppState extends ChangeNotifier {
       if (ms != null) navAnimationMs = int.tryParse(ms) ?? navAnimationMs;
     } catch (_) {}
     try {
+      final dns = await _db.getSetting('custom_dns');
+      if (dns != null) customDns = dns;
+    } catch (_) {}
+    try {
+      final ua = await _db.getSetting('custom_user_agent');
+      if (ua != null) customUserAgent = ua;
+    } catch (_) {}
+    try {
       final rp = await _db.getSetting('reader_prefs');
       if (rp != null && rp.isNotEmpty) {
         readerPrefs = json.decode(rp) as Map<String, dynamic>;
@@ -109,6 +119,14 @@ class AppState extends ChangeNotifier {
         'bgColor': null,
       };
     }
+    try {
+      final dns = await _db.getSetting('custom_dns');
+      if (dns != null && dns.isNotEmpty) customDns = dns;
+    } catch (_) {}
+    try {
+      final ua = await _db.getSetting('custom_user_agent');
+      if (ua != null && ua.isNotEmpty) customUserAgent = ua;
+    } catch (_) {}
     notifyListeners();
   }
 
@@ -351,6 +369,22 @@ class AppState extends ChangeNotifier {
 
   void markChangelogAsShown() {
     showChangelog = false;
+    notifyListeners();
+  }
+
+  Future<void> setCustomDns(String? dns) async {
+    customDns = dns!;
+    try {
+      await _db.setSetting('custom_dns', dns);
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> setCustomUserAgent(String? ua) async {
+    customUserAgent = ua!;
+    try {
+      await _db.setSetting('custom_user_agent', ua);
+    } catch (_) {}
     notifyListeners();
   }
 }
