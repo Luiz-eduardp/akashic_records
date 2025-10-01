@@ -210,11 +210,19 @@ class NovelDatabase {
         PRIMARY KEY (novelId, chapterId)
       )
     ''');
-    await db.insert('chapter_reads', {
-      'novelId': novelId,
-      'chapterId': chapterId,
-      'read': read ? 1 : 0,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    if (read) {
+      await db.insert('chapter_reads', {
+        'novelId': novelId,
+        'chapterId': chapterId,
+        'read': 1,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    } else {
+      await db.delete(
+        'chapter_reads',
+        where: 'novelId = ? AND chapterId = ?',
+        whereArgs: [novelId, chapterId],
+      );
+    }
   }
 
   Future<Set<String>> getReadChaptersForNovel(String novelId) async {
