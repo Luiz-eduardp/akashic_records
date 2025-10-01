@@ -8,9 +8,9 @@ import 'dart:math' as math;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/services/http_client.dart';
-import 'package:akashic_records/widgets/skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:akashic_records/widgets/skeleton.dart';
 
 class NovelHeader extends StatefulWidget {
   final Novel novel;
@@ -24,13 +24,69 @@ class NovelHeader extends StatefulWidget {
 class _NovelHeaderState extends State<NovelHeader> {
   bool _expanded = false;
 
+  Widget _buildCoverImage(double width, double height, Novel novel) {
+    if (novel.coverImageUrl.isEmpty) {
+      return Container(
+        width: width,
+        height: height,
+        color: Colors.grey.shade400,
+        child: Icon(
+          Icons.menu_book,
+          color: Colors.grey.shade700,
+          size: height * 0.4,
+        ),
+      );
+    }
+
+    final isNetworkImage = novel.coverImageUrl.startsWith('http');
+
+    Widget imageWidget =
+        isNetworkImage
+            ? Image.network(
+              novel.coverImageUrl,
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+              errorBuilder:
+                  (_, __, ___) => Container(
+                    width: width,
+                    height: height,
+                    color: Colors.grey,
+                    child: const Icon(Icons.error_outline),
+                  ),
+            )
+            : Image.file(
+              File(novel.coverImageUrl),
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+            );
+
+    return GestureDetector(
+      onTap: () => _openFullImage(context),
+      child: Hero(tag: _heroTag(novel), child: imageWidget),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final novel = widget.novel;
     final loading = widget.loading;
     Provider.of<AppState>(context);
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final baseColor =
+        isDark
+            ? theme.colorScheme.surface.withOpacity(0.6)
+            : theme.colorScheme.surface.withOpacity(0.3);
+    final highlightColor =
+        isDark
+            ? theme.colorScheme.background.withOpacity(0.2)
+            : theme.colorScheme.background.withOpacity(0.12);
+
     return Padding(
-      padding: const EdgeInsets.all(12.0),
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -41,21 +97,28 @@ class _NovelHeaderState extends State<NovelHeader> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (!loading && novel.coverImageUrl.isNotEmpty)
-                    Positioned.fill(
-                      child:
-                          novel.coverImageUrl.startsWith('http')
-                              ? Image.network(
-                                novel.coverImageUrl,
-                                fit: BoxFit.cover,
-                              )
-                              : Image.file(
-                                File(novel.coverImageUrl),
-                                fit: BoxFit.cover,
-                              ),
-                    )
-                  else
-                    Container(color: Colors.grey.shade200),
+                  Positioned.fill(
+                    child:
+                        loading
+                            ? LoadingSkeleton.rect(
+                              height: double.infinity,
+                              width: double.infinity,
+                              baseColor: baseColor,
+                              highlightColor: highlightColor,
+                            )
+                            : (novel.coverImageUrl.isNotEmpty
+                                ? (novel.coverImageUrl.startsWith('http')
+                                    ? Image.network(
+                                      novel.coverImageUrl,
+                                      fit: BoxFit.cover,
+                                    )
+                                    : Image.file(
+                                      File(novel.coverImageUrl),
+                                      fit: BoxFit.cover,
+                                    ))
+                                : Container(color: theme.colorScheme.surface)),
+                  ),
+
                   if (!loading && novel.coverImageUrl.isNotEmpty)
                     Positioned.fill(
                       child: BackdropFilter(
@@ -74,57 +137,18 @@ class _NovelHeaderState extends State<NovelHeader> {
                                 : 200.0;
                         final coverH = math.min(available * 0.75, 200.0);
                         final coverW = coverH * 0.7;
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child:
-                                  loading
-                                      ? const LoadingSkeleton.square()
-                                      : (novel.coverImageUrl.isNotEmpty
-                                          ? GestureDetector(
-                                            onTap:
-                                                () => _openFullImage(context),
-                                            child: Hero(
-                                              tag: _heroTag(novel),
-                                              child:
-                                                  novel.coverImageUrl
-                                                          .startsWith('http')
-                                                      ? Image.network(
-                                                        novel.coverImageUrl,
-                                                        width: coverW,
-                                                        height: coverH,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder:
-                                                            (
-                                                              _,
-                                                              __,
-                                                              ___,
-                                                            ) => Container(
-                                                              width: coverW,
-                                                              height: coverH,
-                                                              color:
-                                                                  Colors.grey,
-                                                            ),
-                                                      )
-                                                      : Image.file(
-                                                        File(
-                                                          novel.coverImageUrl,
-                                                        ),
-                                                        width: coverW,
-                                                        height: coverH,
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                            ),
-                                          )
-                                          : Container(
-                                            width: coverW,
-                                            height: coverH,
-                                            color: Colors.grey,
-                                          )),
-                            ),
-                          ],
+
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child:
+                              loading
+                                  ? LoadingSkeleton.rect(
+                                    width: coverW,
+                                    height: coverH,
+                                    baseColor: baseColor,
+                                    highlightColor: highlightColor,
+                                  )
+                                  : _buildCoverImage(coverW, coverH, novel),
                         );
                       },
                     ),
@@ -133,41 +157,97 @@ class _NovelHeaderState extends State<NovelHeader> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 16),
+
           Card(
             elevation: 2,
+            margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                vertical: 10.0,
-                horizontal: 12.0,
+                vertical: 12.0,
+                horizontal: 16.0,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    novel.title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  loading
+                      ? LoadingSkeleton.rect(
+                        height: 24,
+                        width: double.infinity,
+                        baseColor: baseColor,
+                        highlightColor: highlightColor,
+                      )
+                      : Text(
+                        novel.title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                   const SizedBox(height: 6),
-                  if (!loading && novel.author.isNotEmpty)
-                    Text(
-                      '${'by'.translate} ${novel.author}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                  if (!loading)
+                    if (novel.author.isNotEmpty)
+                      Text(
+                        '${'by'.translate} ${novel.author}',
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 16,
+                        width: 120,
+                        color: Colors.transparent,
+                      )
+                  else
+                    LoadingSkeleton.rect(
+                      height: 18,
+                      width: 150,
+                      baseColor: baseColor,
+                      highlightColor: highlightColor,
                     ),
                 ],
               ),
             ),
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
+
           loading
-              ? const LoadingSkeleton.rect(height: 100)
+              ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LoadingSkeleton.rect(
+                      height: 14,
+                      baseColor: baseColor,
+                      highlightColor: highlightColor,
+                    ),
+                    const SizedBox(height: 6),
+                    LoadingSkeleton.rect(
+                      height: 14,
+                      width: 300,
+                      baseColor: baseColor,
+                      highlightColor: highlightColor,
+                    ),
+                    const SizedBox(height: 6),
+                    LoadingSkeleton.rect(
+                      height: 14,
+                      width: 250,
+                      baseColor: baseColor,
+                      highlightColor: highlightColor,
+                    ),
+                  ],
+                ),
+              )
               : GestureDetector(
                 onTap: () => setState(() => _expanded = !_expanded),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6.0),
                   child: Text(
-                    novel.description,
+                    novel.description.isNotEmpty
+                        ? novel.description
+                        : 'no_description_available'.translate,
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.start,
                     maxLines: _expanded ? 1000 : 6,
@@ -185,6 +265,9 @@ class _NovelHeaderState extends State<NovelHeader> {
   void _openFullImage(BuildContext context) {
     final novel = widget.novel;
     if (novel.coverImageUrl.isEmpty) return;
+
+    final isNetworkImage = novel.coverImageUrl.startsWith('http');
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) {
@@ -194,11 +277,11 @@ class _NovelHeaderState extends State<NovelHeader> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               actions: [
-                IconButton(
-                  tooltip: 'download_image'.translate,
-                  icon: const Icon(Icons.download),
-                  onPressed: () async {
-                    if (novel.coverImageUrl.startsWith('http')) {
+                if (isNetworkImage)
+                  IconButton(
+                    tooltip: 'download_image'.translate,
+                    icon: const Icon(Icons.download),
+                    onPressed: () async {
                       try {
                         final res = await fetch(Uri.parse(novel.coverImageUrl));
                         if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
@@ -209,10 +292,10 @@ class _NovelHeaderState extends State<NovelHeader> {
                                   .last
                                   .split('?')
                                   .first;
-                          final file = File(
-                            '${dir.path}/cover_${novel.title.hashCode}.$ext',
-                          );
+                          final fileName = 'cover_${novel.title.hashCode}.$ext';
+                          final file = File('${dir.path}/$fileName');
                           await file.writeAsBytes(res.bodyBytes);
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
@@ -232,13 +315,8 @@ class _NovelHeaderState extends State<NovelHeader> {
                           SnackBar(content: Text('download_failed'.translate)),
                         );
                       }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('no_remote_image'.translate)),
-                      );
-                    }
-                  },
-                ),
+                    },
+                  ),
                 IconButton(
                   tooltip: 'upload_image'.translate,
                   icon: const Icon(Icons.upload_file),
@@ -250,9 +328,13 @@ class _NovelHeaderState extends State<NovelHeader> {
                       if (res != null && res.files.single.path != null) {
                         final src = File(res.files.single.path!);
                         final dir = await getApplicationDocumentsDirectory();
-                        final dest = File(
-                          '${dir.path}/cover_upload_${novel.title.hashCode}${src.path.substring(src.path.lastIndexOf('.'))}',
+                        final ext = src.path.substring(
+                          src.path.lastIndexOf('.'),
                         );
+                        final dest = File(
+                          '${dir.path}/cover_upload_${novel.title.hashCode}$ext',
+                        );
+
                         await dest.writeAsBytes(await src.readAsBytes());
 
                         final appState = Provider.of<AppState>(
@@ -262,12 +344,14 @@ class _NovelHeaderState extends State<NovelHeader> {
                         final updated = Novel.fromMap(novel.toMap());
                         updated.coverImageUrl = dest.path;
                         await appState.addOrUpdateNovel(updated);
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('cover_updated'.translate)),
                         );
-                        Navigator.of(context).pop();
+                        if (mounted) Navigator.of(context).pop();
                       }
                     } catch (e) {
+                      debugPrint('Upload failed: $e');
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('upload_failed'.translate)),
                       );
@@ -282,7 +366,7 @@ class _NovelHeaderState extends State<NovelHeader> {
                 child: InteractiveViewer(
                   maxScale: 5.0,
                   child:
-                      novel.coverImageUrl.startsWith('http')
+                      isNetworkImage
                           ? Image.network(
                             novel.coverImageUrl,
                             fit: BoxFit.contain,
