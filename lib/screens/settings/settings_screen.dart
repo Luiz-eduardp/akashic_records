@@ -533,6 +533,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
+          const Divider(),
+          ListTile(
+            title: Text('custom_dns'.translate),
+            subtitle: Text('custom_dns_sub'.translate),
+            trailing: SizedBox(
+              width: 200,
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String?>(
+                  value: appState.customDns,
+                  isExpanded: true,
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('none')),
+                    const DropdownMenuItem(
+                      value: '1.1.1.1',
+                      child: Text('1.1.1.1'),
+                    ),
+                    const DropdownMenuItem(
+                      value: '8.8.8.8',
+                      child: Text('8.8.8.8'),
+                    ),
+                    const DropdownMenuItem(
+                      value: '9.9.9.9',
+                      child: Text('9.9.9.9'),
+                    ),
+                  ],
+                  onChanged: (v) async {
+                    await appState.setCustomDns(v);
+                  },
+                ),
+              ),
+            ),
+          ),
+          ListTile(
+            title: Text('custom_user_agent'.translate),
+            subtitle: Text('custom_user_agent_sub'.translate),
+            trailing: SizedBox(
+              width: 150,
+              child: TextField(
+                controller: TextEditingController(
+                  text: appState.customUserAgent ?? '',
+                ),
+                onChanged: (v) async {
+                  await appState.setCustomUserAgent(v.isEmpty ? null : v);
+                },
+                decoration: InputDecoration(
+                  hintText: 'e.g. MyApp/1.0',
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 
+# Akashic Records
 <img src="lib/src/banner.png" width="100%">
 
 ---
@@ -15,122 +16,74 @@ An open-source, cross-platform novel reader built to offer a rich and customizab
 
 > Join our community on [Discord](https://discord.gg/eSuc2znz5V)
 
----
+Akashic Records is a Flutter application for reading novels, webnovels and local EPUB files. It supports multiple source plugins, local EPUB import, favorites management, offline reading, and internationalization.
 
-## 📖 Description
+## Key features
 
-**Akashic Records** is a mobile application for reading and managing digital novels. It supports offline usage, customizable themes, content sourcing from multiple web platforms (including scraping), and tools to personalize your reading journey. Designed with accessibility and flexibility in mind, it aims to make digital reading enjoyable for all.
+- **Novel & Webnovel Reading** — Browse and read novels from multiple plugin sources, view chapters, mark favorites and track reading progress.
+- **Local EPUB Import** — Import EPUB files from device storage. The app extracts metadata and chapters, attempts to extract the cover (falls back to an online search or a placeholder), and stores local EPUBs in a dedicated list with metrics and deletion support.
+- **Favorites & Progress** — Save favorites and keep reading progress across sessions.
+- **Internationalization (i18n)** — App strings are stored in JSON files and replicated across supported locales (en, pt_BR, es, fr, ja, it, ar).
+- **Customizable Reader** — Adjust font, line height, alignment, colors, focus mode, and other reader settings; preferences are persisted.
+- **Plugin-based Sources** — Multiple built-in plugins (Syosetu, Kakuyomu, Tsundoku, NovelMania, BlogDoAmonNovels, CentralNovel, LightNovelBrasil, MtlNovelMulti, ProjectGutenberg, NovelsOnline, NovelBin, RoyalRoad, ScribbleHub, Webnovel, etc.).
+- **Global Search** — Search across all active plugins at once and aggregate results.
+- **Modern UI** — Novel header shows a centered cover, blurred background, expandable synopsis and card-styled title/author area.
+- **Cover Management** — Download or upload cover images for local novels; uploaded covers are saved locally and update the novel record.
+- **Local Persistence** — Uses SQLite (sqflite) for novels, chapters, local EPUBs and app settings.
+- **Cross-platform** — Targets Android, iOS, Web, Windows, macOS and Linux.
 
----
+## Project structure
 
-## ✨ Features
+- `lib/`
+  - `main.dart` — application entry point
+  - `models/` — data models (Novel, Chapter, etc.)
+  - `db/` — SQLite helpers and schema (novels, chapters, local_epubs, settings)
+  - `screens/` — UI screens (home, reader, novel detail, plugin browser, local EPUBs)
+  - `services/` — importers, network helpers, plugin adapters, epub processing
+  - `state/` — global app state using Provider (`AppState`)
+  - `widgets/` — reusable widgets (NovelHeader, loading skeletons, etc.)
+  - `assets/i18n/locale/` — i18n JSON files
+- `pubspec.yaml` — dependencies, assets and Flutter configuration
 
-- **Offline Mode** – Read without an internet connection using local storage.
-- **Content Sourcing** – Fetch data from various web sources (scrapers included).
-- **Favorites & History** – Save and track your favorite novels and your reading progress.
-- **Reader Customization**
-  - Adjust font size, line spacing, alignment, and themes
-  - Switch between day/night modes
-  - Supports different formats like HTML & Markdown
+## Main flows
 
----
+### EPUB import
 
-## 🛠️ Roadmap
+- User selects an EPUB file to import.
+- The importer extracts OPF metadata, builds chapter objects, and attempts to extract an embedded cover image.
+- If the cover extraction fails, the importer tries an online image search via the app proxy and uses the first valid result; otherwise a placeholder image URL is used.
+- Imported EPUBs are stored in a dedicated `local_epubs` table and shown in a Local EPUBs screen with metrics (count, total chapters). Users can delete imported EPUBs (removing DB row and files) or open them in the reader.
 
-### Features & Functionality
+### Plugin search & reading
 
-- [ ] Advanced search (filters, keywords, dates)
-- [ ] Content filtering and browsing enhancements
-- [x] Markdown/HTML format support
-- [ ] Text-to-speech
-- [x] Night mode and additional themes
-- [ ] Page turning animation options
+- Search queries are executed across all active plugins concurrently and results are aggregated.
+- Users can open a novel from a plugin result, read chapters, mark chapters as read, and favorite the novel for later.
 
-### Content & Management
+### Internationalization
 
-- [ ] User-created notebooks or collections
-- [ ] Tag-based categorization system
+- All UI strings are loaded from JSON files located in `assets/i18n/locale/`.
+- When adding new strings, they should be replicated to all active locales.
 
-### User Experience
+## Main dependencies
 
-- [ ] UI/UX refinements
-- [ ] Onboarding for new users
-- [ ] User feedback/report system
-- [ ] Notifications for updates and new chapters
+- `provider`, `sqflite`, `path_provider`, `file_picker`, `http`, `archive`, `xml`, `html`, `flutter_epub_viewer`, `shimmer`, `cached_network_image`, `intl`, `permission_handler`, `package_info_plus`, and others listed in `pubspec.yaml`.
 
-### Performance & Storage
+## Running the app
 
-- [ ] Database optimization and caching improvements
-- [ ] Data compression support
+Install dependencies and run on a connected device or emulator:
 
-### Data & Security
+```bash
+flutter pub get
+flutter run
+```
 
-- [ ] Cloud backup integration
-- [ ] Data encryption for user privacy
+## Notes
 
-### Accessibility & Localization
+- Screenshots and badges were removed from this README by request.
+- For Android/iOS builds, make sure to configure platform-specific permissions and signing keys.
+- The app uses a local database for state persistence; backups and cloud sync are not enabled by default.
+- When adding new user-facing text, replicate the key across i18n JSON files.
 
-- [ ] Screen reader compatibility
-- [ ] Adjustable font sizes and high-contrast mode
-- [ ] Multi-language support
+## License
 
----
-
-## 🖼️ Screenshots
-
-<div align="center">
-    <img src="lib/src/screenshots/sc1.png" width="30%">
-    <img src="lib/src/screenshots/sc2.png" width="30%">
-    <img src="lib/src/screenshots/sc3.png" width="30%">
-    <img src="lib/src/screenshots/sc4.png" width="30%">
-    <img src="lib/src/screenshots/sc5.png" width="30%">
-    <img src="lib/src/screenshots/sc5.png" width="30%">
-    <img src="lib/src/screenshots/sc7.png" width="30%">
-    <img src="lib/src/screenshots/sc8.png" width="30%">
-    <img src="lib/src/screenshots/sc9.png" width="30%">
-    <img src="lib/src/screenshots/sc10.png" width="30%">
-    <img src="lib/src/screenshots/sc11.png" width="30%">
-    <img src="lib/src/screenshots/sc12.png" width="30%">
-    <img src="lib/src/screenshots/sc13.png" width="30%">
-    
-</div>
-
----
-
-## 📚 The Meaning Behind the Name
-
-The term **"Akashic Records"** originates from theosophy and mysticism, referring to a universal archive of knowledge, emotions, and events. This concept aligns with our goal of providing a dynamic and personalized information hub for readers, wherever they are.
-
----
-
-## 🧰 Tech Stack
-
-- **Flutter** – Cross-platform framework for building mobile and desktop apps
-- **Dart** – Core language for Flutter development
-- **Hive** – Local data storage engine
-- **Provider** – State management solution for Flutter
-
----
-
-## 🤝 Contributing
-
-We welcome all contributions! Whether you're fixing bugs, adding new features, or improving documentation—your help is appreciated.
-
-👉 Check out our [Contribution Guidelines](Contribution.md)
-
----
-
-## 🔗 Links
-
-- **Repository:** [github.com/AkashicRecordsApp/akashic_records](https://github.com/AkashicRecordsApp/akashic_records)
-- **Discord Community:** [discord.gg/eSuc2znz5V](https://discord.gg/eSuc2znz5V)
-
----
-
-## Stargazers over time
-
-[![Stargazers over time](https://starchart.cc/AkashicRecordsApp/akashic_records.svg?variant=adaptive)](https://starchart.cc/AkashicRecordsApp/akashic_records)
-
-## 📌 Topics
-
-`android` `app` `novels` `novelreader`
+See the `LICENSE` file for license details.

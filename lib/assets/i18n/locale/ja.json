@@ -32,8 +32,8 @@
   "justify": "両端揃え",
   "font": "フォント",
   "serif": "セリフ",
-  "sans": "サン",
-  "mono": "等幅",
+  "sans": "サンセリフ",
+  "mono": "モノスペース",
   "text_color": "文字色",
   "ok": "OK",
   "choose": "選ぶ",
@@ -41,8 +41,7 @@
   "activate_script": "スクリプトを有効化",
   "confirm": "確認",
   "popular": "人気",
-  "about": "アプリについて"
-  ,
+  "about": "アプリについて",
   "words_read": "読んだ語数",
   "chapters_read": "読んだ章数",
   "last_novels": "最近の小説",
@@ -75,42 +74,94 @@
   "padding": "余白",
   "reader_settings_title": "リーダー設定",
   "script_store": "スクリプトストア",
+  "preview": "プレビュー",
+  "alignment": "配置",
+  "font_weight": "フォントの太さ",
+  "bold": "太字",
+  "theme_presets": "テーマプリセット",
+  "custom_colors": "カスタムカラー",
+  "select_text_color": "テキストの色を選択",
+  "select_bg_color": "背景色を選択",
+  "choose_text_color": "テキストの色を選ぶ",
+  "choose_bg_color": "背景色を選ぶ",
+  "theme_default_classic": "Default (Classic)",
+  "theme_aged_sepia": "Aged Sepia",
+  "theme_deep_night": "Deep Night",
+  "theme_solar_terminal": "Solar Terminal",
+  "theme_midnight_nebula": "Midnight Nebula",
+  "theme_old_wood": "Old Wood",
+  "theme_soft_vanilla": "Soft Vanilla",
+  "theme_noble_ivory": "Noble Ivory",
+  "theme_papyrus_scroll": "Papyrus Scroll",
+  "theme_antique_print": "Antique Print",
+  "theme_morning_mist": "Morning Mist",
+  "theme_calm_horizon": "Calm Horizon",
+  "theme_atlantic_depth": "Atlantic Depth",
+  "theme_forest_moss": "Forest Moss",
+  "theme_mint_breeze": "Mint Breeze",
+  "theme_violet_dusk": "Violet Dusk",
+  "theme_rose_petal": "Rose Petal",
+  "theme_afternoon_blush": "Afternoon Blush",
+  "theme_grey_stone": "Grey Stone",
+  "theme_activated_charcoal": "Activated Charcoal",
+  "theme_night_slate": "Night Slate",
+  "theme_green_tea": "Green Tea",
+  "theme_hot_cocoa": "Hot Cocoa",
+  "theme_aged_copper": "Aged Copper",
+  "theme_ebony_high_contrast": "Ebony (High Contrast)",
+  "theme_open_sky": "Open Sky",
+  "theme_orange_sunset": "Orange Sunset",
+  "theme_golden_honey": "Golden Honey",
+  "theme_ancient_parchment": "Ancient Parchment",
+  "theme_soft_olive": "Soft Olive",
+  "theme_deep_navy": "Deep Navy",
+  "theme_light_granite": "Light Granite",
+  "theme_pure_vanilla": "Pure Vanilla",
+  "theme_soft_coral": "Soft Coral",
+  "theme_water_moss": "Water Moss",
+  "theme_midnight_blue": "Midnight Blue",
+  "theme_sketch_paper": "Sketch Paper",
   "search_plugins_or_site": "プラグインやサイトを検索...",
   "unknown": "不明",
   "chapters_short": "章",
   "no_previous_chapter": "前の章はありません",
   "no_next_chapter": "次の章はありません",
-  "fullscreen_disabled": "全画面表示は無効です"
-  ,"no_title_found": "タイトルが見つかりません"
-  ,"no_summary_found": "要約が見つかりません"
-  ,"app_description": "強力なリーダー"
-  ,"home": "ホーム"
-  ,"updates": "更新"
-  ,"by": "by"
-  ,"never": "永遠"
-  ,"chapters": "章数"
-  ,"last_checked": "最終チェック"
-  ,"failed_to_load_title": "読み込みに失敗しました"
-  ,"failed_to_load_chapter": "チャプターの読み込みに失敗しました"
-  ,"app_version": "アプリのバージョン"
-  ,"check_update_button": "更新を確認"
-  ,"open_release": "リリースを開く"
-  ,"no_update_available": "更新はありません"
-  ,"latest_release": "最新のリリース"
-  ,"update_check_failed": "更新の確認に失敗しました"
-  ,"assets": "Assets"
-  ,"download": "ダウンロード"
-  ,"local_epubs": "EPUBs"
-  ,"local_epubs_empty": "インポートされたEPUBはありません"
-  ,"import_epub": "EPUBをインポート"
-  ,"importing_epub": "EPUBをインポート中..."
-  ,"import_success": "EPUBが正常にインポートされました"
-  ,"import_failed": "EPUBのインポートに失敗しました"
-  ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
-  ,"confirm_delete_epub_title": "削除を確認"
-  ,"confirm_delete_epub_message": "このEPUBと関連ファイルを削除しますか？"
-  ,"confirm_cancel": "キャンセル"
-  ,"confirm_delete": "削除"
-  ,"open_in_reader": "リーダーで開く"
-  ,"failed_to_import_epub": "EPUBのインポートに失敗しました"
+  "fullscreen_disabled": "全画面表示は無効です",
+  "no_title_found": "タイトルが見つかりません",
+  "no_summary_found": "要約が見つかりません",
+  "app_description": "強力なリーダー",
+  "home": "ホーム",
+  "updates": "更新",
+  "by": "by",
+  "never": "永遠",
+  "chapters": "章数",
+  "last_checked": "最終チェック",
+  "failed_to_load_title": "読み込みに失敗しました",
+  "failed_to_load_chapter": "チャプターの読み込みに失敗しました",
+  "app_version": "アプリのバージョン",
+  "check_update_button": "更新を確認",
+  "open_release": "リリースを開く",
+  "no_update_available": "更新はありません",
+  "latest_release": "最新のリリース",
+  "update_check_failed": "更新の確認に失敗しました",
+  "assets": "Assets",
+  "download": "ダウンロード",
+  "local_epubs": "EPUBs",
+  "local_epubs_empty": "インポートされたEPUBはありません",
+  "import_epub": "EPUBをインポート",
+  "importing_epub": "EPUBをインポート中...",
+  "import_success": "EPUBが正常にインポートされました",
+  "import_failed": "EPUBのインポートに失敗しました",
+  "placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}",
+  "confirm_delete_epub_title": "削除を確認",
+  "confirm_delete_epub_message": "このEPUBと関連ファイルを削除しますか？",
+  "confirm_cancel": "キャンセル",
+  "confirm_delete": "削除",
+  "open_in_reader": "リーダーで開く",
+  "failed_to_import_epub": "EPUBのインポートに失敗しました",
+  "custom_dns": "カスタムDNS",
+  "custom_dns_sub": "DNS解決を上書き (例: 8.8.8.8)",
+  "custom_user_agent": "カスタムUser-Agent",
+  "custom_user_agent_sub": "リクエストにカスタムUser-Agentを設定",
+  "appearance": "外観"
 }

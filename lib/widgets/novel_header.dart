@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 
 import 'dart:math' as math;
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/services/http_client.dart';
 import 'package:akashic_records/widgets/skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
@@ -200,9 +200,7 @@ class _NovelHeaderState extends State<NovelHeader> {
                   onPressed: () async {
                     if (novel.coverImageUrl.startsWith('http')) {
                       try {
-                        final res = await http.get(
-                          Uri.parse(novel.coverImageUrl),
-                        );
+                        final res = await fetch(Uri.parse(novel.coverImageUrl));
                         if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
                           final dir = await getApplicationDocumentsDirectory();
                           final ext =

@@ -14,6 +14,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:akashic_records/screens/reader/reader_subheader.dart';
 import 'package:akashic_records/screens/reader/reader_config_modal.dart';
+import 'package:akashic_records/services/reader_tts.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({super.key});
@@ -25,14 +28,43 @@ class ReaderScreen extends StatefulWidget {
 class _ReaderScreenState extends State<ReaderScreen> {
   late Novel novel;
   int selectedChapter = 0;
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _argsHandled = false;
   List<Map<String, dynamic>> _presets = [];
   late Map<String, dynamic> _prefs;
   double _scrollProgress = 0.0;
+  double _lastSavedProgress = 0.0;
+  DateTime _lastSavedAt = DateTime.fromMillisecondsSinceEpoch(0);
+  final ReaderTts _tts = ReaderTts();
+  FlutterLocalNotificationsPlugin? _localNotif;
+  bool _ttsPlaying = false;
   int _wordCountCached = 0;
   String _currentTime = '';
   int _batteryLevel = -1;
+  late SharedPreferences _sharedPrefs;
+  bool _isLoading = true;
+
+  Future<void> _saveReaderPrefs() async {
+    await _sharedPrefs.setString('reader_prefs', json.encode(_prefs));
+  }
+
+  Map<String, dynamic> _getDefaultPrefs() {
+    return {
+      'presetIndex': 0,
+      'fontSize': 18.0,
+      'lineHeight': 1.6,
+      'fontFamily': 'serif',
+      'padding': 12.0,
+      'align': 'left',
+      'focusMode': false,
+      'focusBlur': 6,
+      'textBrightness': 1.0,
+      'fontColor': null,
+      'bgColor': null,
+      'fullscreen': false,
+      'enabledScripts': <String>[],
+    };
+  }
 
   Future<void> _removeScriptFromWebView(String scriptName) async {
     try {
@@ -56,7 +88,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             } catch(e) {}
           })();
         ''';
-        await _controller.runJavaScript(removeJs);
+        await _controller!.runJavaScript(removeJs);
       }
     } catch (e) {
       print('Falha ao remover script do WebView: $e');
@@ -100,29 +132,41 @@ class _ReaderScreenState extends State<ReaderScreen> {
       );
     }
     _argsHandled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadChapter());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _initReader();
+      _loadChapter();
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _controller =
-        WebViewController()..setJavaScriptMode(JavaScriptMode.unrestricted);
-    try {
-      _controller.addJavaScriptChannel(
-        'Scroll',
-        onMessageReceived: (msg) {
-          _handleScrollMessage(msg.message);
-        },
+  Future<void> _initReader() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+
+    final prefs = appState.getReaderPrefs();
+    _prefs = prefs.isNotEmpty ? prefs : _getDefaultPrefs();
+
+    if (_controller == null) {
+      _controller =
+          WebViewController()..setJavaScriptMode(JavaScriptMode.unrestricted);
+      try {
+        _controller!.addJavaScriptChannel(
+          'Scroll',
+          onMessageReceived: (msg) {
+            _handleScrollMessage(msg.message);
+          },
+        );
+      } catch (_) {}
+      await _controller!.loadHtmlString(
+        '<html><body><h2>Loading...</h2></body></html>',
       );
-    } catch (_) {}
-    _controller.loadHtmlString('<html><body><h2>Loading...</h2></body></html>');
+    }
+
     _buildPresets();
     _startTimers();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final appState = Provider.of<AppState>(context, listen: false);
-      final prefs = appState.getReaderPrefs();
       final enabledScripts =
           (prefs['enabledScripts'] is List)
               ? List<String>.from(prefs['enabledScripts'])
@@ -130,7 +174,54 @@ class _ReaderScreenState extends State<ReaderScreen> {
       if (enabledScripts.isNotEmpty) {
         await _applyScriptsToWebView(enabledScripts);
       }
+      _initTtsAndNotifications();
     });
+  }
+
+  void _initTtsAndNotifications() async {
+    try {
+      _tts.onComplete = () async {
+        final idx = _currentIndex();
+        if (idx >= 0 && idx < novel.chapters.length - 1) {
+          setState(() => selectedChapter = idx + 1);
+          await _loadChapter();
+          Future.delayed(const Duration(milliseconds: 800), () async {
+            await _startTtsForCurrentChapter();
+          });
+        } else {
+          _ttsPlaying = false;
+          _showTtsNotification(false);
+        }
+      };
+      _tts.onStart = () {
+        _ttsPlaying = true;
+        _showTtsNotification(true);
+      };
+      _localNotif = FlutterLocalNotificationsPlugin();
+      final androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      final iosInit = DarwinInitializationSettings();
+      await _localNotif!.initialize(
+        InitializationSettings(android: androidInit, iOS: iosInit),
+        onDidReceiveNotificationResponse: (resp) async {
+          final payload = resp.payload ?? '';
+          if (payload == 'toggle') {
+            if (_ttsPlaying) {
+              await _tts.pause();
+              _ttsPlaying = false;
+              _showTtsNotification(false);
+            } else {
+              await _tts.resume();
+              _ttsPlaying = true;
+              _showTtsNotification(true);
+            }
+          } else if (payload == 'next_para') {
+            await _scrollToNextParagraph();
+          } else if (payload == 'prev_para') {
+            await _scrollToPreviousParagraph();
+          }
+        },
+      );
+    } catch (_) {}
   }
 
   void _startTimers() {
@@ -168,7 +259,56 @@ class _ReaderScreenState extends State<ReaderScreen> {
       final max = (m['max'] as num?)?.toDouble() ?? 1.0;
       final progress = max > 0 ? (pos / max).clamp(0.0, 1.0) : 0.0;
       setState(() => _scrollProgress = progress);
+
+      try {
+        final now = DateTime.now();
+        final diff = (progress - _lastSavedProgress).abs();
+        final elapsed = now.difference(_lastSavedAt).inMilliseconds;
+        if (diff >= 0.01 || elapsed > 5000) {
+          _lastSavedProgress = progress;
+          _lastSavedAt = now;
+          if (novel != null && novel.chapters.isNotEmpty) {
+            final chapter = novel.chapters[selectedChapter];
+            final key = 'scroll_${novel.id}_${chapter.id}';
+            NovelDatabase.getInstance().then((db) async {
+              try {
+                await db.setSetting(key, progress.toString());
+              } catch (_) {}
+            });
+          }
+        }
+      } catch (_) {}
     } catch (e) {}
+  }
+
+  Future<void> _showTtsNotification(bool playing) async {
+    try {
+      if (_localNotif == null) return;
+      final androidDetails = AndroidNotificationDetails(
+        'tts_channel',
+        'TTS',
+        channelDescription: 'Reader TTS controls',
+        importance: Importance.low,
+        playSound: false,
+        ongoing: true,
+        styleInformation: MediaStyleInformation(),
+      );
+      final iosDetails = DarwinNotificationDetails();
+      final settings = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      final action = playing ? 'Pause' : 'Play';
+      await _localNotif!.show(
+        777,
+        'TTS: ${novel.title}',
+        action,
+        settings,
+        payload: 'toggle',
+      );
+    } catch (e) {
+      print('Failed to show notification: $e');
+    }
   }
 
   void _buildPresets() {
@@ -246,33 +386,34 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _initializeReader();
+  }
+
+  Future<void> _initializeReader() async {
+    await _initReader();
+    setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_controller == null) {
+      return const Center(
+        child: Text('Erro ao inicializar o WebViewController'),
+      );
+    }
+
     final appState = Provider.of<AppState>(context);
-    _prefs = appState.getReaderPrefs();
-    _prefs = {
-      'presetIndex': _prefs['presetIndex'] ?? 0,
-      'fontSize':
-          (_prefs['fontSize'] is num)
-              ? (_prefs['fontSize'] as num).toDouble()
-              : 18.0,
-      'lineHeight':
-          (_prefs['lineHeight'] is num)
-              ? (_prefs['lineHeight'] as num).toDouble()
-              : 1.6,
-      'fontFamily': _prefs['fontFamily'] ?? 'serif',
-      'padding':
-          (_prefs['padding'] is num)
-              ? (_prefs['padding'] as num).toDouble()
-              : 12.0,
-      'align': _prefs['align'] ?? 'left',
-      'focusMode': _prefs['focusMode'] ?? false,
-      'focusBlur': _prefs['focusBlur'] ?? 6,
-      'textBrightness':
-          (_prefs['textBrightness'] is num)
-              ? (_prefs['textBrightness'] as num).toDouble()
-              : 1.0,
-      'fullscreen': _prefs['fullscreen'] ?? false,
-    };
+
+    if (_prefs == null || _prefs.isEmpty) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     final isFullscreen = (_prefs['fullscreen'] as bool?) ?? false;
 
     return WillPopScope(
@@ -299,6 +440,22 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       tooltip: 'Previous',
                       icon: const Icon(Icons.chevron_left),
                       onPressed: _goToPrevious,
+                    ),
+                    IconButton(
+                      tooltip: 'TTS play/pause',
+                      icon: Icon(_ttsPlaying ? Icons.pause : Icons.play_arrow),
+                      onPressed: () async {
+                        try {
+                          if (_ttsPlaying) {
+                            await _tts.pause();
+                            setState(() => _ttsPlaying = false);
+                            _showTtsNotification(false);
+                          } else {
+                            await _startTtsForCurrentChapter();
+                            setState(() => _ttsPlaying = true);
+                          }
+                        } catch (e) {}
+                      },
                     ),
                     IconButton(
                       tooltip: 'Chapters',
@@ -351,7 +508,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         ),
                       );
                     },
-                    child: WebViewWidget(controller: _controller),
+                    child: WebViewWidget(controller: _controller!),
                   ),
                 ),
               ),
@@ -363,7 +520,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Future<void> _openConfigModal({bool fullModal = false}) async {
-    final appState = Provider.of<AppState>(context, listen: false);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -385,13 +541,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     config: _prefs,
                     onChange: (cfg) async {
                       _prefs = Map<String, dynamic>.from(cfg);
-                      await appState.setReaderPrefs(_prefs);
+                      await _saveReaderPrefs();
                       setState(() {});
                       _loadChapter();
                     },
                     onApplyScripts: (enabledScripts) async {
                       _prefs['enabledScripts'] = enabledScripts;
-                      await appState.setReaderPrefs(_prefs);
+                      await _saveReaderPrefs();
                       await _applyScriptsToWebView(enabledScripts);
                       setState(() {});
                     },
@@ -414,7 +570,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
     return words.length;
   }
 
-  void _loadChapter() async {
+  Future<void> _loadChapter() async {
+    if (_prefs == null) {
+      await _initReader();
+    }
     if (novel.chapters.isEmpty) return;
     final chapter = novel.chapters[selectedChapter];
 
@@ -439,18 +598,31 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
 
     final content = chapter.content ?? '<p>Empty</p>';
-    final presetIndex = _prefs['presetIndex'] as int;
+    final presetIndex =
+        (_prefs['presetIndex'] is num)
+            ? (_prefs['presetIndex'] as num).toInt()
+            : 0;
     final preset = _presets[presetIndex % _presets.length];
     final bg = preset['bg'] as String;
     final fg = preset['fg'] as String;
-    final fontSize = (_prefs['fontSize'] as double).toString();
-    final lineHeight = (_prefs['lineHeight'] as double).toString();
-    final padding = (_prefs['padding'] as double).toString();
+    final fontSize =
+        (_prefs['fontSize'] is num)
+            ? (_prefs['fontSize'] as num).toDouble().toString()
+            : '18.0';
+    final lineHeight =
+        (_prefs['lineHeight'] is num)
+            ? (_prefs['lineHeight'] as num).toDouble().toString()
+            : '1.6';
+    final padding =
+        (_prefs['padding'] is num)
+            ? (_prefs['padding'] as num).toDouble().toString()
+            : '12.0';
     final fontFamily = _prefs['fontFamily'] as String? ?? 'serif';
 
     final align = (_prefs['align'] as String?) ?? 'left';
     final focusMode = (_prefs['focusMode'] as bool?) ?? false;
-    final focusBlur = (_prefs['focusBlur'] as int?) ?? 6;
+    final focusBlur =
+        (_prefs['focusBlur'] is num) ? (_prefs['focusBlur'] as num).toInt() : 6;
 
     final fontColorPref = (_prefs['fontColor'] as String?);
     final bgColorPref = (_prefs['bgColor'] as String?);
@@ -475,8 +647,25 @@ class _ReaderScreenState extends State<ReaderScreen> {
       }
     }
 
+    String fontImport = '';
+    String cssFontFamily = fontFamily;
+    final googleMap = {
+      'Merriweather': 'Merriweather',
+      'Lora': 'Lora',
+      'Roboto': 'Roboto',
+      'Inter': 'Inter',
+      'Open Sans': 'Open+Sans',
+      'Roboto Mono': 'Roboto+Mono',
+    };
+    if (googleMap.containsKey(fontFamily)) {
+      fontImport =
+          "@import url('https://fonts.googleapis.com/css2?family=${googleMap[fontFamily]}:wght@100;200;300;400;500;600;700;800;900&display=swap');";
+      cssFontFamily = "'$fontFamily', serif";
+    }
+
     final css = '''
-      body { background: $effectiveBg; color: ${fgRgba()}; font-size: ${fontSize}px; line-height: $lineHeight; padding: ${padding}px; font-family: $fontFamily; }
+      $fontImport
+      body { background: $effectiveBg; color: ${fgRgba()}; font-size: ${fontSize}px; line-height: $lineHeight; padding: ${padding}px; font-family: $cssFontFamily; }
       img { max-width: 100%; height: auto; }
       a { color: ${preset['accent']}; }
       p, div { text-align: $align; }
@@ -496,6 +685,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final scrollJs = '''
 <script>
 (function(){
+  function findParagraphOffsets(){
+    try{
+      var paras = Array.from(document.querySelectorAll('p,div.para'));
+      var offs = paras.map(function(p){ var r=p.getBoundingClientRect(); var top = (r.top + (window.scrollY||0)); return Math.floor(top); });
+      return offs;
+    }catch(e){ return []; }
+  }
+  function scrollToParagraph(offset){ try{ window.scrollTo(0, offset); }catch(e){} }
+  window._akashic_findParagraphOffsets = findParagraphOffsets;
+  window._akashic_scrollToParagraph = scrollToParagraph;
   function send(){
     try{
       var pos = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -550,7 +749,26 @@ class _ReaderScreenState extends State<ReaderScreen> {
 </script>
 ''';
     final html = '$base$scrollJs</body></html>';
-    await _controller.loadHtmlString(html);
+    await _controller!.loadHtmlString(html);
+
+    try {
+      final db = await NovelDatabase.getInstance();
+      final chapter = novel.chapters[selectedChapter];
+      final key = 'scroll_${novel.id}_${chapter.id}';
+      final saved = await db.getSetting(key);
+      if (saved != null && saved.isNotEmpty) {
+        final val = double.tryParse(saved);
+        if (val != null && val > 0.0 && val <= 1.0) {
+          Future.delayed(const Duration(milliseconds: 600), () async {
+            try {
+              final js =
+                  "(function(){ try{ var y = Math.floor((document.body.scrollHeight - window.innerHeight) * ${val.toStringAsFixed(6)}); window.scrollTo(0, y); }catch(e){} })();";
+              await _controller!.runJavaScript(js);
+            } catch (_) {}
+          });
+        }
+      }
+    } catch (_) {}
 
     setState(() {
       _wordCountCached = _wordCount(content);
@@ -750,29 +968,113 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<void> _applyScriptsToWebView(List<String> enabledScripts) async {
     try {
-      final uri = Uri.parse('https://api.npoint.io/bcd94c36fa7f3bf3b1e6');
-      final resp = await http.read(uri);
-      final Map<String, dynamic> data =
-          jsonDecode(resp) as Map<String, dynamic>;
-      final List scripts = data['scripts'] as List? ?? [];
-      for (final name in enabledScripts) {
-        final match = scripts.firstWhere(
-          (s) => (s['name'] ?? s['use']) == name,
-          orElse: () => null,
-        );
-        if (match != null) {
-          final code = match['code'] as String? ?? '';
-          if (code.isNotEmpty) {
-            final js =
-                "(function(){ try{ ${code.replaceAll('\n', ' ')} }catch(e){} })();";
-            try {
-              await _controller.runJavaScript(js);
-            } catch (_) {}
-          }
-        }
+      for (final script in enabledScripts) {
+        final js = """
+          (function() {
+            console.log('Applying script: $script');
+          })();
+        """;
+        await _controller!.runJavaScript(js);
       }
     } catch (e) {
-      print('Failed to fetch/apply scripts: $e');
+      print('Erro ao aplicar scripts: $e');
+    }
+  }
+
+  Future<void> _startTtsForCurrentChapter() async {
+    try {
+      if (novel.chapters.isEmpty) return;
+      final chapter = novel.chapters[selectedChapter];
+      final content = chapter.content ?? '';
+      final text = _extractTextFromHtml(content);
+      if (text.trim().isEmpty) return;
+      await _tts.speak(text);
+      _ttsPlaying = true;
+      _showTtsNotification(true);
+    } catch (e) {
+      print('Failed to start TTS: $e');
+    }
+  }
+
+  String _extractTextFromHtml(String html) {
+    try {
+      final text = html.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
+      return text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    } catch (e) {
+      return html;
+    }
+  }
+
+  Future<void> _scrollToNextParagraph() async {
+    try {
+      final res = await _controller!.runJavaScriptReturningResult(
+        "(function(){ try{ return JSON.stringify(window._akashic_findParagraphOffsets()); }catch(e){ return '[]'; } })();",
+      );
+      final jsonStr = (res is String) ? res : res.toString();
+      final List offs = jsonDecode(jsonStr) as List? ?? [];
+      final currRes = await _controller!.runJavaScriptReturningResult(
+        "(function(){ try{ return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0; }catch(e){ return 0; } })();",
+      );
+      final curr =
+          (currRes is num)
+              ? currRes.toDouble()
+              : double.tryParse(currRes.toString()) ?? 0.0;
+      dynamic next;
+      for (final o in offs) {
+        final val =
+            (o is num) ? o.toDouble() : double.tryParse(o.toString()) ?? 0.0;
+        if (val > curr + 10) {
+          next = val;
+          break;
+        }
+      }
+      if (next != null) {
+        await _controller!.runJavaScript(
+          "window.scrollTo({top: ${next.toString()}, behavior:'smooth'}); put = true;",
+        );
+      } else {
+        await _controller!.runJavaScript(
+          "window.scrollTo(0, document.body.scrollHeight);",
+        );
+      }
+    } catch (e) {
+      print('Failed to jump to next paragraph: $e');
+    }
+  }
+
+  Future<void> _scrollToPreviousParagraph() async {
+    try {
+      final res = await _controller!.runJavaScriptReturningResult(
+        "(function(){ try{ return JSON.stringify(window._akashic_findParagraphOffsets()); }catch(e){ return '[]'; } })();",
+      );
+      final jsonStr = (res is String) ? res : res.toString();
+      final List offs = jsonDecode(jsonStr) as List? ?? [];
+      final currRes = await _controller!.runJavaScriptReturningResult(
+        "(function(){ try{ return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0; }catch(e){ return 0; } })();",
+      );
+      final curr =
+          (currRes is num)
+              ? currRes.toDouble()
+              : double.tryParse(currRes.toString()) ?? 0.0;
+      dynamic prev;
+      for (int i = offs.length - 1; i >= 0; i--) {
+        final o = offs[i];
+        final val =
+            (o is num) ? o.toDouble() : double.tryParse(o.toString()) ?? 0.0;
+        if (val < curr - 10) {
+          prev = val;
+          break;
+        }
+      }
+      if (prev != null) {
+        await _controller!.runJavaScript(
+          "window.scrollTo({top: ${prev.toString()}, behavior:'smooth'}); put = true;",
+        );
+      } else {
+        await _controller!.runJavaScript("window.scrollTo(0, 0);");
+      }
+    } catch (e) {
+      print('Failed to jump to previous paragraph: $e');
     }
   }
 }

@@ -41,8 +41,7 @@
   "activate_script": "تفعيل السكربت",
   "confirm": "تأكيد",
   "popular": "شائع",
-  "about": "حول"
-  ,
+  "about": "حول",
   "words_read": "الكلمات المقروءة",
   "chapters_read": "الفصول المقروءة",
   "last_novels": "أحدث الروايات",
@@ -50,7 +49,7 @@
   "search_plugins_hint": "ابحث عن إضافات أو موقع...",
   "all": "الكل",
   "only_available": "المتوفرة فقط",
-    "mark_all_read": "تعليم الكل كمقروء",
+  "mark_all_read": "تعليم الكل كمقروء",
   "tap_to_browse": "انقر للتصفح",
   "plugin_failed_to_initialize": "فشل تهيئة الإضافة",
   "unavailable": "غير متوفر",
@@ -75,40 +74,90 @@
   "padding": "الحشوة",
   "reader_settings_title": "إعدادات القارئ",
   "script_store": "متجر السكربتات",
-  "search_plugins_or_site": "ابحث عن إضافات أو موقع..."
-  ,"unknown": "غير معروف"
-  ,"chapters_short": "ف"
-  ,"no_previous_chapter": "لا يوجد فصل سابق"
-  ,"no_next_chapter": "لا يوجد فصل تالي"
-  ,"fullscreen_disabled": "ملء الشاشة معطل"
-  ,"no_title_found": "لم يتم العثور على عنوان"
-  ,"no_summary_found": "لم يتم العثور على الملخص"
-  ,"app_description": "قارئ قوي"
-  ,"home": "الرئيسية"
-  ,"updates": "التحديثات"
-  ,"by": "بواسطة"
-  ,"never": "أبدا"
-  ,"chapters": "الفصول"
-  ,"last_checked": "آخر تحقق"
-  ,"app_version": "إصدار التطبيق"
-  ,"check_update_button": "التحقق من التحديثات"
-  ,"open_release": "فتح الريليز"
-  ,"no_update_available": "لا توجد تحديثات"
-  ,"latest_release": "أحدث ريليز"
-  ,"update_check_failed": "فشل التحقق من التحديث"
-  ,"assets": "Assets"
-  ,"download": "تنزيل"
-  ,"local_epubs": "EPUBs"
-  ,"local_epubs_empty": "لا توجد EPUBs مستوردة"
-  ,"import_epub": "استيراد EPUB"
-  ,"importing_epub": "جار استيراد EPUB..."
-  ,"import_success": "تم استيراد EPUB بنجاح"
-  ,"import_failed": "فشل استيراد EPUB"
-  ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
-  ,"confirm_delete_epub_title": "تأكيد الحذف"
-  ,"confirm_delete_epub_message": "هل تريد حذف هذا EPUB والملفات المرتبطة؟"
-  ,"confirm_cancel": "إلغاء"
-  ,"confirm_delete": "حذف"
-  ,"open_in_reader": "افتح في القارئ"
-  ,"failed_to_import_epub": "فشل استيراد EPUB"
+  "preview": "معاينة",
+  "theme_default_classic": "Default (Classic)",
+  "theme_aged_sepia": "Aged Sepia",
+  "theme_deep_night": "Deep Night",
+  "theme_solar_terminal": "Solar Terminal",
+  "theme_midnight_nebula": "Midnight Nebula",
+  "theme_old_wood": "Old Wood",
+  "theme_soft_vanilla": "Soft Vanilla",
+  "theme_noble_ivory": "Noble Ivory",
+  "theme_papyrus_scroll": "Papyrus Scroll",
+  "theme_antique_print": "Antique Print",
+  "theme_morning_mist": "Morning Mist",
+  "theme_calm_horizon": "Calm Horizon",
+  "theme_atlantic_depth": "Atlantic Depth",
+  "theme_forest_moss": "Forest Moss",
+  "theme_mint_breeze": "Mint Breeze",
+  "theme_violet_dusk": "Violet Dusk",
+  "theme_rose_petal": "Rose Petal",
+  "theme_afternoon_blush": "Afternoon Blush",
+  "theme_grey_stone": "Grey Stone",
+  "theme_activated_charcoal": "Activated Charcoal",
+  "theme_night_slate": "Night Slate",
+  "theme_green_tea": "Green Tea",
+  "theme_hot_cocoa": "Hot Cocoa",
+  "theme_aged_copper": "Aged Copper",
+  "theme_ebony_high_contrast": "Ebony (High Contrast)",
+  "theme_open_sky": "Open Sky",
+  "theme_orange_sunset": "Orange Sunset",
+  "theme_golden_honey": "Golden Honey",
+  "theme_ancient_parchment": "Ancient Parchment",
+  "theme_soft_olive": "Soft Olive",
+  "theme_deep_navy": "Deep Navy",
+  "theme_light_granite": "Light Granite",
+  "theme_pure_vanilla": "Pure Vanilla",
+  "theme_soft_coral": "Soft Coral",
+  "theme_water_moss": "Water Moss",
+  "theme_midnight_blue": "Midnight Blue",
+  "theme_sketch_paper": "Sketch Paper",
+  "font_weight": "سمك الخط",
+  "bold": "عريض",
+  "merriweather": "Merriweather",
+  "lora": "Lora",
+  "roboto": "Roboto",
+  "inter": "Inter",
+  "open_sans": "Open Sans",
+  "roboto_mono": "Roboto Mono",
+  "search_plugins_or_site": "ابحث عن إضافات أو موقع...",
+  "unknown": "غير معروف",
+  "chapters_short": "ف",
+  "no_previous_chapter": "لا يوجد فصل سابق",
+  "no_next_chapter": "لا يوجد فصل تالي",
+  "fullscreen_disabled": "ملء الشاشة معطل",
+  "no_title_found": "لم يتم العثور على عنوان",
+  "no_summary_found": "لم يتم العثور على الملخص",
+  "app_description": "قارئ قوي",
+  "home": "الرئيسية",
+  "updates": "التحديثات",
+  "by": "بواسطة",
+  "never": "أبدا",
+  "chapters": "الفصول",
+  "last_checked": "آخر تحقق",
+  "app_version": "إصدار التطبيق",
+  "check_update_button": "التحقق من التحديثات",
+  "open_release": "فتح الريليز",
+  "no_update_available": "لا توجد تحديثات",
+  "latest_release": "أحدث ريليز",
+  "update_check_failed": "فشل التحقق من التحديث",
+  "assets": "Assets",
+  "download": "تنزيل",
+  "local_epubs": "EPUBs",
+  "local_epubs_empty": "لا توجد EPUBs مستوردة",
+  "import_epub": "استيراد EPUB",
+  "importing_epub": "جار استيراد EPUB...",
+  "import_success": "تم استيراد EPUB بنجاح",
+  "import_failed": "فشل استيراد EPUB",
+  "placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}",
+  "confirm_delete_epub_title": "تأكيد الحذف",
+  "confirm_delete_epub_message": "هل تريد حذف هذا EPUB والملفات المرتبطة؟",
+  "confirm_cancel": "إلغاء",
+  "confirm_delete": "حذف",
+  "open_in_reader": "افتح في القارئ",
+  "failed_to_import_epub": "فشل استيراد EPUB",
+  "custom_dns": "DNS مخصص",
+  "custom_dns_sub": "تجاوز حل DNS (مثال: 8.8.8.8)",
+  "custom_user_agent": "User-Agent مخصص",
+  "custom_user_agent_sub": "تعيين User-Agent مخصص للطلبات"
 }

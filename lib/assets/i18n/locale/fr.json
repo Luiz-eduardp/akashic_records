@@ -41,8 +41,7 @@
   "activate_script": "Activer le script",
   "confirm": "Confirmer",
   "popular": "Populaire",
-  "about": "À propos"
-  ,
+  "about": "À propos",
   "words_read": "Mots lus",
   "chapters_read": "Chapitres lus",
   "last_novels": "Derniers romans",
@@ -75,42 +74,94 @@
   "padding": "Marge intérieure",
   "reader_settings_title": "Paramètres du lecteur",
   "script_store": "Magasin de scripts",
-  "search_plugins_or_site": "Rechercher des plugins ou site..."
-  ,"unknown": "Inconnu"
-  ,"chapters_short": "ch"
-  ,"no_previous_chapter": "Pas de chapitre précédent"
-  ,"no_next_chapter": "Pas de chapitre suivant"
-  ,"fullscreen_disabled": "Plein écran désactivé"
-  ,"no_title_found": "Titre introuvable"
-  ,"no_summary_found": "Résumé introuvable"
-  ,"app_description": "Un lecteur puissant"
-  ,"home": "Accueil"
-    ,"never": "jamais"
-    ,"failed_to_load_title": "Échec du chargement"
-    ,"failed_to_load_chapter": "Échec du chargement du chapitre"
-      ,"app_version": "Version de l'app"
-      ,"check_update_button": "Vérifier les mises à jour"
-      ,"open_release": "Ouvrir la release"
-      ,"no_update_available": "Aucune mise à jour disponible"
-      ,"latest_release": "Dernière release"
-      ,"update_check_failed": "Échec de la vérification"
-      ,"assets": "Assets"
-      ,"download": "Télécharger"
-        ,"local_epubs": "EPUBs"
-        ,"local_epubs_empty": "Aucun EPUB importé"
-        ,"import_epub": "Importer EPUB"
-        ,"importing_epub": "Importation EPUB..."
-        ,"import_success": "EPUB importé avec succès"
-        ,"import_failed": "Échec de l'importation EPUB"
-        ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
-        ,"confirm_delete_epub_title": "Confirmer la suppression"
-        ,"confirm_delete_epub_message": "Voulez-vous supprimer cet EPUB et les fichiers associés ?"
-        ,"confirm_cancel": "Annuler"
-        ,"confirm_delete": "Supprimer"
-        ,"open_in_reader": "Ouvrir dans le lecteur"
-        ,"failed_to_import_epub": "Échec de l'importation EPUB"
-  ,"updates": "Mises à jour"
-  ,"by": "par"
-  ,"chapters": "Chapitres"
-  ,"last_checked": "Dernier contrôle"
+  "preview": "Aperçu",
+  "alignment": "Alignement",
+  "font_weight": "Poids de la police",
+  "bold": "Gras",
+  "theme_presets": "Thèmes prédéfinis",
+  "custom_colors": "Couleurs personnalisées",
+  "select_text_color": "Sélectionner la couleur du texte",
+  "select_bg_color": "Sélectionner la couleur de fond",
+  "choose_text_color": "Choisir la couleur du texte",
+  "choose_bg_color": "Choisir la couleur de fond",
+  "theme_default_classic": "Default (Classic)",
+  "theme_aged_sepia": "Aged Sepia",
+  "theme_deep_night": "Deep Night",
+  "theme_solar_terminal": "Solar Terminal",
+  "theme_midnight_nebula": "Midnight Nebula",
+  "theme_old_wood": "Old Wood",
+  "theme_soft_vanilla": "Soft Vanilla",
+  "theme_noble_ivory": "Noble Ivory",
+  "theme_papyrus_scroll": "Papyrus Scroll",
+  "theme_antique_print": "Antique Print",
+  "theme_morning_mist": "Morning Mist",
+  "theme_calm_horizon": "Calm Horizon",
+  "theme_atlantic_depth": "Atlantic Depth",
+  "theme_forest_moss": "Forest Moss",
+  "theme_mint_breeze": "Mint Breeze",
+  "theme_violet_dusk": "Violet Dusk",
+  "theme_rose_petal": "Rose Petal",
+  "theme_afternoon_blush": "Afternoon Blush",
+  "theme_grey_stone": "Grey Stone",
+  "theme_activated_charcoal": "Activated Charcoal",
+  "theme_night_slate": "Night Slate",
+  "theme_green_tea": "Green Tea",
+  "theme_hot_cocoa": "Hot Cocoa",
+  "theme_aged_copper": "Aged Copper",
+  "theme_ebony_high_contrast": "Ebony (High Contrast)",
+  "theme_open_sky": "Open Sky",
+  "theme_orange_sunset": "Orange Sunset",
+  "theme_golden_honey": "Golden Honey",
+  "theme_ancient_parchment": "Ancient Parchment",
+  "theme_soft_olive": "Soft Olive",
+  "theme_deep_navy": "Deep Navy",
+  "theme_light_granite": "Light Granite",
+  "theme_pure_vanilla": "Pure Vanilla",
+  "theme_soft_coral": "Soft Coral",
+  "theme_water_moss": "Water Moss",
+  "theme_midnight_blue": "Midnight Blue",
+  "theme_sketch_paper": "Sketch Paper",
+  "search_plugins_or_site": "Rechercher des plugins ou site...",
+  "unknown": "Inconnu",
+  "chapters_short": "ch",
+  "no_previous_chapter": "Pas de chapitre précédent",
+  "no_next_chapter": "Pas de chapitre suivant",
+  "fullscreen_disabled": "Plein écran désactivé",
+  "no_title_found": "Titre introuvable",
+  "no_summary_found": "Résumé introuvable",
+  "app_description": "Un lecteur puissant",
+  "home": "Accueil",
+  "never": "jamais",
+  "failed_to_load_title": "Échec du chargement",
+  "failed_to_load_chapter": "Échec du chargement du chapitre",
+  "app_version": "Version de l'app",
+  "check_update_button": "Vérifier les mises à jour",
+  "open_release": "Ouvrir la release",
+  "no_update_available": "Aucune mise à jour disponible",
+  "latest_release": "Dernière release",
+  "update_check_failed": "Échec de la vérification",
+  "assets": "Assets",
+  "download": "Télécharger",
+  "local_epubs": "EPUBs",
+  "local_epubs_empty": "Aucun EPUB importé",
+  "import_epub": "Importer EPUB",
+  "importing_epub": "Importation EPUB...",
+  "import_success": "EPUB importé avec succès",
+  "import_failed": "Échec de l'importation EPUB",
+  "placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}",
+  "confirm_delete_epub_title": "Confirmer la suppression",
+  "confirm_delete_epub_message": "Voulez-vous supprimer cet EPUB et les fichiers associés ?",
+  "confirm_cancel": "Annuler",
+  "confirm_delete": "Supprimer",
+  "open_in_reader": "Ouvrir dans le lecteur",
+  "failed_to_import_epub": "Échec de l'importation EPUB",
+  "updates": "Mises à jour",
+  "by": "par",
+  "chapters": "Chapitres",
+  "last_checked": "Dernier contrôle",
+  "custom_dns": "DNS Personnalisé",
+  "custom_dns_sub": "Remplacer la résolution DNS (ex. 8.8.8.8)",
+  "custom_user_agent": "User-Agent Personnalisé",
+  "custom_user_agent_sub": "Définir un User-Agent personnalisé pour les requêtes",
+  "appearance": "Apparence"
 }
