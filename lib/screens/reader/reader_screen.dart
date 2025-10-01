@@ -903,6 +903,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       onTap: (ch, idx) {
                         Navigator.of(ctx).pop(ch);
                       },
+                      onLongPressToggleRead: (ch, idx) async {
+                        final isRead = readSet.contains(ch.id);
+                        await db.setChapterRead(novel.id, ch.id, !isRead);
+                        readSet = await db.getReadChaptersForNovel(novel.id);
+                        setStateModal(() {});
+                      },
                     ),
                   ),
                 ],
