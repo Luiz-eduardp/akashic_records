@@ -58,6 +58,8 @@ dependencies:
   clarity_flutter: ^1.0.0
   version: ^3.0.2
   android_intent_plus: ^6.0.0
+  flutter_tts: ^3.5.0
+  flutter_local_notifications: ^19.4.2
 
 dev_dependencies:
   flutter_test:
