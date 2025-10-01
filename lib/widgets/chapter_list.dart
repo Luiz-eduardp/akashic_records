@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 
 typedef ChapterTap = void Function(Chapter chapter, int index);
+typedef ChapterLongPress = void Function(Chapter chapter, int index);
 
 class ChapterList extends StatefulWidget {
   final List<Chapter> chapters;
   final Set<String> readChapters;
   final ChapterTap onTap;
+  final ChapterLongPress? onLongPressToggleRead;
 
   const ChapterList({
     super.key,
     required this.chapters,
     required this.readChapters,
     required this.onTap,
+    this.onLongPressToggleRead,
   });
 
   @override
@@ -64,6 +67,10 @@ class _ChapterListState extends State<ChapterList> {
                   ? const Icon(Icons.check_circle, color: Colors.green)
                   : null,
           onTap: () => widget.onTap(ch, originalIndex),
+          onLongPress:
+              widget.onLongPressToggleRead == null
+                  ? null
+                  : () => widget.onLongPressToggleRead!(ch, originalIndex),
         );
       },
     );
