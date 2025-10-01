@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:provider/provider.dart';
+import 'package:akashic_records/widgets/chapter_count_badge.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/novel_detail_screen.dart';
 import 'package:akashic_records/db/novel_database.dart';
@@ -77,6 +78,8 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
       _dynamicUnread.addAll(out);
     });
   }
+
+  // badge formatting is handled by ChapterCountBadge
 
   String _formatTimestamp(String? iso) {
     if (iso == null) return 'never'.translate;
@@ -204,19 +207,23 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                             ),
                                             if (delta > 0)
                                               Positioned(
-                                                left: 0,
                                                 top: 0,
-                                                child: CircleAvatar(
-                                                  radius: 14,
-                                                  backgroundColor:
-                                                      Theme.of(context)
-                                                          .colorScheme
-                                                          .primaryContainer,
-                                                  child: Text(
-                                                    '+$delta',
-                                                    style: const TextStyle(
-                                                      fontSize: 11,
-                                                    ),
+                                                right: 0,
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 6, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .primaryContainer,
+                                                    borderRadius:
+                                                        BorderRadius.circular(12),
+                                                  ),
+                                                  constraints: const BoxConstraints(
+                                                      minWidth: 24, maxWidth: 80),
+                                                  child: ChapterCountBadge(
+                                                    count: delta,
+                                                    showPlus: true,
                                                   ),
                                                 ),
                                               ),
