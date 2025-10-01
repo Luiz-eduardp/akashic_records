@@ -41,8 +41,7 @@
   "activate_script": "Ativar Script",
   "confirm": "Confirmar",
   "popular": "Popular",
-  "about": "Sobre"
-  ,
+  "about": "Sobre",
   "words_read": "Palavras lidas",
   "chapters_read": "Capítulos lidos",
   "last_novels": "Últimas novels lidas",
@@ -76,6 +75,35 @@
   "reader_settings_title": "Configurações do leitor",
   "script_store": "Loja de scripts",
   "preview": "Pré-visualização",
+  "theme_default_classic": "Padrão (Clássico)",
+  "theme_aged_sepia": "Sépia Envelhecida",
+  "theme_deep_night": "Noite Profunda",
+  "theme_solar_terminal": "Terminal Solar",
+  "theme_midnight_nebula": "Nebulosa da Meia-noite",
+  "theme_old_wood": "Madeira Antiga",
+  "theme_soft_vanilla": "Baunilha Suave",
+  "theme_noble_ivory": "Marfim Nobre",
+  "theme_papyrus_scroll": "Papiro Rolado",
+  "theme_antique_print": "Impressão Antiga",
+  "theme_morning_mist": "Névoa da Manhã",
+  "theme_calm_horizon": "Horizonte Calmo",
+  "theme_atlantic_depth": "Profundezas Atlânticas",
+  "theme_forest_moss": "Musgo da Floresta",
+  "theme_mint_breeze": "Brisa de Menta",
+  "theme_violet_dusk": "Crepúsculo Violeta",
+  "theme_rose_petal": "Pétala de Rosa",
+  "theme_afternoon_blush": "Rubor da Tarde",
+  "theme_grey_stone": "Pedra Cinzenta",
+  "theme_activated_charcoal": "Carvão Ativado",
+  "theme_night_slate": "Ardósia Noturna",
+  "theme_green_tea": "Chá Verde",
+  "theme_hot_cocoa": "Chocolate Quente",
+  "theme_aged_copper": "Cobre Envelhecido",
+  "theme_ebony_high_contrast": "Ébano (Alto Contraste)",
+  "theme_open_sky": "Céu Aberto",
+  "theme_orange_sunset": "Pôr-do-sol Laranja",
+  "theme_golden_honey": "Mel Dourado",
+  "theme_sketch_paper": "Sketch Paper",
   "font_weight": "Peso da fonte",
   "bold": "Negrito",
   "merriweather": "Merriweather",
@@ -84,42 +112,47 @@
   "inter": "Inter",
   "open_sans": "Open Sans",
   "roboto_mono": "Roboto Mono",
-  "search_plugins_or_site": "Buscar plugins ou site..."
-  ,"unknown": "Desconhecido"
-    ,"chapters_short": "cap"
-    ,"no_previous_chapter": "Nenhum capítulo anterior"
-    ,"no_next_chapter": "Nenhum próximo capítulo"
-    ,"fullscreen_disabled": "Tela cheia desabilitada"
-    ,"no_title_found": "Título não encontrado"
-    ,"no_summary_found": "Resumo não encontrado"
-    ,"app_description": "Um leitor poderoso"
-    ,"home": "Início"
-    ,"updates": "Atualizações"
-    ,"by": "por"
-    ,"never": "nunca"
-    ,"chapters": "Capítulos"
-    ,"last_checked": "Última verificação"
-  ,"failed_to_load_title": "Falha ao carregar"
-  ,"failed_to_load_chapter": "Falha ao carregar o capítulo"
-  ,"app_version": "Versão do app"
-  ,"check_update_button": "Checar atualizações"
-  ,"open_release": "Abrir release"
-  ,"no_update_available": "Nenhuma atualização disponível"
-  ,"latest_release": "Última release"
-  ,"update_check_failed": "Falha ao checar atualizações"
-  ,"assets": "Assets"
-  ,"download": "Baixar"
-  ,"local_epubs": "EPUBs"
-  ,"local_epubs_empty": "Nenhum EPUB importado"
-  ,"import_epub": "Importar EPUB"
-  ,"importing_epub": "Importando EPUB..."
-  ,"import_success": "EPUB importado com sucesso"
-  ,"import_failed": "Falha ao importar EPUB"
-  ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
-  ,"confirm_delete_epub_title": "Confirmar exclusão"
-  ,"confirm_delete_epub_message": "Deseja deletar este EPUB e os arquivos associados?"
-  ,"confirm_cancel": "Cancelar"
-  ,"confirm_delete": "Deletar"
-  ,"open_in_reader": "Abrir no leitor"
-  ,"failed_to_import_epub": "Falha ao importar EPUB"
+  "search_plugins_or_site": "Buscar plugins ou site...",
+  "unknown": "Desconhecido",
+  "chapters_short": "cap",
+  "no_previous_chapter": "Nenhum capítulo anterior",
+  "no_next_chapter": "Nenhum próximo capítulo",
+  "fullscreen_disabled": "Tela cheia desabilitada",
+  "no_title_found": "Título não encontrado",
+  "no_summary_found": "Resumo não encontrado",
+  "app_description": "Um leitor poderoso",
+  "home": "Início",
+  "updates": "Atualizações",
+  "by": "por",
+  "never": "nunca",
+  "chapters": "Capítulos",
+  "last_checked": "Última verificação",
+  "failed_to_load_title": "Falha ao carregar",
+  "failed_to_load_chapter": "Falha ao carregar o capítulo",
+  "app_version": "Versão do app",
+  "check_update_button": "Checar atualizações",
+  "open_release": "Abrir release",
+  "no_update_available": "Nenhuma atualização disponível",
+  "latest_release": "Última release",
+  "update_check_failed": "Falha ao checar atualizações",
+  "assets": "Assets",
+  "download": "Baixar",
+  "local_epubs": "EPUBs",
+  "local_epubs_empty": "Nenhum EPUB importado",
+  "import_epub": "Importar EPUB",
+  "importing_epub": "Importando EPUB...",
+  "import_success": "EPUB importado com sucesso",
+  "import_failed": "Falha ao importar EPUB",
+  "placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}",
+  "confirm_delete_epub_title": "Confirmar exclusão",
+  "confirm_delete_epub_message": "Deseja deletar este EPUB e os arquivos associados?",
+  "confirm_cancel": "Cancelar",
+  "confirm_delete": "Deletar",
+  "open_in_reader": "Abrir no leitor",
+  "failed_to_import_epub": "Falha ao importar EPUB",
+  "custom_dns": "DNS Personalizado",
+  "custom_dns_sub": "Substituir resolução DNS (ex. 8.8.8.8)",
+  "custom_user_agent": "User-Agent Personalizado",
+  "custom_user_agent_sub": "Definir User-Agent personalizado para requisições",
+  "appearance": "Aparência"
 }

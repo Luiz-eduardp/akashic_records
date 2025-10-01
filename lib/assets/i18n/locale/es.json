@@ -41,8 +41,7 @@
   "activate_script": "Activar Script",
   "confirm": "Confirmar",
   "popular": "Popular",
-  "about": "Acerca de"
-  ,
+  "about": "Acerca de",
   "words_read": "Palabras leídas",
   "chapters_read": "Capítulos leídos",
   "last_novels": "Últimas novelas",
@@ -73,9 +72,46 @@
   "font_size": "Tamaño de fuente",
   "spacing": "Espaciado",
   "padding": "Relleno",
-  "reader_settings_title": "Configuración de lectura",
+  "reader_settings_title": "Configuración del lector",
   "script_store": "Tienda de scripts",
   "preview": "Vista previa",
+  "theme_default_classic": "Default (Classic)",
+  "theme_aged_sepia": "Aged Sepia",
+  "theme_deep_night": "Deep Night",
+  "theme_solar_terminal": "Solar Terminal",
+  "theme_midnight_nebula": "Midnight Nebula",
+  "theme_old_wood": "Old Wood",
+  "theme_soft_vanilla": "Soft Vanilla",
+  "theme_noble_ivory": "Noble Ivory",
+  "theme_papyrus_scroll": "Papyrus Scroll",
+  "theme_antique_print": "Antique Print",
+  "theme_morning_mist": "Morning Mist",
+  "theme_calm_horizon": "Calm Horizon",
+  "theme_atlantic_depth": "Atlantic Depth",
+  "theme_forest_moss": "Forest Moss",
+  "theme_mint_breeze": "Mint Breeze",
+  "theme_violet_dusk": "Violet Dusk",
+  "theme_rose_petal": "Rose Petal",
+  "theme_afternoon_blush": "Afternoon Blush",
+  "theme_grey_stone": "Grey Stone",
+  "theme_activated_charcoal": "Activated Charcoal",
+  "theme_night_slate": "Night Slate",
+  "theme_green_tea": "Green Tea",
+  "theme_hot_cocoa": "Hot Cocoa",
+  "theme_aged_copper": "Aged Copper",
+  "theme_ebony_high_contrast": "Ebony (High Contrast)",
+  "theme_open_sky": "Open Sky",
+  "theme_orange_sunset": "Orange Sunset",
+  "theme_golden_honey": "Golden Honey",
+  "theme_ancient_parchment": "Ancient Parchment",
+  "theme_soft_olive": "Soft Olive",
+  "theme_deep_navy": "Deep Navy",
+  "theme_light_granite": "Light Granite",
+  "theme_pure_vanilla": "Pure Vanilla",
+  "theme_soft_coral": "Soft Coral",
+  "theme_water_moss": "Water Moss",
+  "theme_midnight_blue": "Midnight Blue",
+  "theme_sketch_paper": "Sketch Paper",
   "font_weight": "Peso de la fuente",
   "bold": "Negrita",
   "merriweather": "Merriweather",
@@ -84,42 +120,47 @@
   "inter": "Inter",
   "open_sans": "Open Sans",
   "roboto_mono": "Roboto Mono",
-  "search_plugins_or_site": "Buscar plugins o sitio..."
-  ,"unknown": "Desconocido"
-  ,"chapters_short": "cap"
-  ,"no_previous_chapter": "No hay capítulo anterior"
-  ,"no_next_chapter": "No hay siguiente capítulo"
-  ,"fullscreen_disabled": "Pantalla completa deshabilitada"
-  ,"no_title_found": "Título no encontrado"
-  ,"no_summary_found": "Resumen no encontrado"
-  ,"app_description": "Un lector potente"
-  ,"home": "Inicio"
-  ,"updates": "Actualizaciones"
-  ,"by": "por"
-  ,"never": "nunca"
-  ,"chapters": "Capítulos"
-  ,"last_checked": "Última verificación"
-  ,"failed_to_load_title": "Error al cargar"
-  ,"failed_to_load_chapter": "Error al cargar el capítulo"
-  ,"app_version": "Versión de la app"
-  ,"check_update_button": "Buscar actualizaciones"
-  ,"open_release": "Abrir release"
-  ,"no_update_available": "No hay actualizaciones disponibles"
-  ,"latest_release": "Última release"
-  ,"update_check_failed": "Fallo al checar actualizaciones"
-  ,"assets": "Assets"
-  ,"download": "Descargar"
-  ,"local_epubs": "EPUBs"
-  ,"local_epubs_empty": "No EPUBs importados"
-  ,"import_epub": "Importar EPUB"
-  ,"importing_epub": "Importando EPUB..."
-  ,"import_success": "EPUB importado con éxito"
-  ,"import_failed": "Error al importar EPUB"
-  ,"placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}"
-  ,"confirm_delete_epub_title": "Confirmar eliminación"
-  ,"confirm_delete_epub_message": "¿Deseas eliminar este EPUB y los archivos asociados?"
-  ,"confirm_cancel": "Cancelar"
-  ,"confirm_delete": "Eliminar"
-  ,"open_in_reader": "Abrir en el lector"
-  ,"failed_to_import_epub": "Error al importar EPUB"
+  "search_plugins_or_site": "Buscar plugins o sitio...",
+  "unknown": "Desconocido",
+  "chapters_short": "cap",
+  "no_previous_chapter": "No hay capítulo anterior",
+  "no_next_chapter": "No hay siguiente capítulo",
+  "fullscreen_disabled": "Pantalla completa deshabilitada",
+  "no_title_found": "Título no encontrado",
+  "no_summary_found": "Resumen no encontrado",
+  "app_description": "Un lector potente",
+  "home": "Inicio",
+  "updates": "Actualizaciones",
+  "by": "por",
+  "never": "nunca",
+  "chapters": "Capítulos",
+  "last_checked": "Última verificación",
+  "failed_to_load_title": "Error al cargar",
+  "failed_to_load_chapter": "Error al cargar el capítulo",
+  "app_version": "Versión de la app",
+  "check_update_button": "Buscar actualizaciones",
+  "open_release": "Abrir release",
+  "no_update_available": "No hay actualizaciones disponibles",
+  "latest_release": "Última release",
+  "update_check_failed": "Fallo al checar actualizaciones",
+  "assets": "Assets",
+  "download": "Descargar",
+  "local_epubs": "EPUBs",
+  "local_epubs_empty": "No EPUBs importados",
+  "import_epub": "Importar EPUB",
+  "importing_epub": "Importando EPUB...",
+  "import_success": "EPUB importado con éxito",
+  "import_failed": "Error al importar EPUB",
+  "placeholder_cover_template": "https://placehold.co/400x450.png?text=Cover%20Scrap%20Failed%20-%20{NAME}",
+  "confirm_delete_epub_title": "Confirmar eliminación",
+  "confirm_delete_epub_message": "¿Deseas eliminar este EPUB y los archivos asociados?",
+  "confirm_cancel": "Cancelar",
+  "confirm_delete": "Eliminar",
+  "open_in_reader": "Abrir en el lector",
+  "failed_to_import_epub": "Error al importar EPUB",
+  "custom_dns": "DNS Personalizado",
+  "custom_dns_sub": "Sobrescribir resolución DNS (ej. 8.8.8.8)",
+  "custom_user_agent": "User-Agent Personalizado",
+  "custom_user_agent_sub": "Establecer User-Agent personalizado para solicitudes",
+  "appearance": "Apariencia"
 }
