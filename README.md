@@ -77,13 +77,6 @@ flutter pub get
 flutter run
 ```
 
-## Notes
-
-- Screenshots and badges were removed from this README by request.
-- For Android/iOS builds, make sure to configure platform-specific permissions and signing keys.
-- The app uses a local database for state persistence; backups and cloud sync are not enabled by default.
-- When adding new user-facing text, replicate the key across i18n JSON files.
-
 ## License
 
 See the `LICENSE` file for license details.
