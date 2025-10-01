@@ -330,6 +330,19 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                             );
                             await _loadReadStates();
                           },
+                          onLongPressToggleRead: (ch, index) async {
+                            final appState = Provider.of<AppState>(
+                              context,
+                              listen: false,
+                            );
+                            final isRead = readChapters.contains(ch.id);
+                            await appState.setChapterRead(
+                              (novel ?? widget.novel).id,
+                              ch.id,
+                              !isRead,
+                            );
+                            await _loadReadStates();
+                          },
                         )),
           ),
         ],
