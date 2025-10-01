@@ -37,6 +37,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   final ReaderTts _tts = ReaderTts();
   FlutterLocalNotificationsPlugin? _localNotif;
   bool _ttsPlaying = false;
+  bool _ttsUserRequested = false;
   int _wordCountCached = 0;
   String _currentTime = '';
   int _batteryLevel = -1;
@@ -62,6 +63,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       'bgColor': null,
       'fullscreen': false,
       'enabledScripts': <String>[],
+      'tts': {'language': 'en-US', 'rate': 0.8, 'volume': 1.0, 'pitch': 1.0},
     };
   }
 
@@ -84,16 +86,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
         final removeJs = '''
           (function(){
             try {
-              // unset flag
               if (window['scriptstore_$scriptId']) { window['scriptstore_$scriptId'] = undefined; }
-              // call cleanup if provided by the script
               if (window['scriptstoreCleanup_$scriptId']) { try { window['scriptstoreCleanup_$scriptId'](); }catch(e){} }
-              // remove injected style/script elements
               var style = document.getElementById('scriptstore-style-$scriptId');
               if (style && style.parentNode) { style.parentNode.removeChild(style); }
               var scr = document.getElementById('scriptstore-script-$scriptId');
               if (scr && scr.parentNode) { scr.parentNode.removeChild(scr); }
-              // try to remove any global var named after original script (best effort)
               try { if (window['$scriptName']) { window['$scriptName'] = undefined; } }catch(e){}
             } catch(e) {}
           })();
@@ -184,8 +182,37 @@ class _ReaderScreenState extends State<ReaderScreen> {
       if (enabledScripts.isNotEmpty) {
         await _applyScriptsToWebView(enabledScripts);
       }
+      await _applyTtsPrefs();
       _initTtsAndNotifications();
     });
+  }
+
+  Future<void> _applyTtsPrefs() async {
+    try {
+      final ttsPrefs =
+          (_prefs['tts'] is Map)
+              ? Map<String, dynamic>.from(_prefs['tts'])
+              : {};
+      final lang = ttsPrefs['language'] as String? ?? 'en-US';
+      final rate =
+          (ttsPrefs['rate'] is num)
+              ? (ttsPrefs['rate'] as num).toDouble()
+              : 0.8;
+      final volume =
+          (ttsPrefs['volume'] is num)
+              ? (ttsPrefs['volume'] as num).toDouble()
+              : 1.0;
+      final pitch =
+          (ttsPrefs['pitch'] is num)
+              ? (ttsPrefs['pitch'] as num).toDouble()
+              : 1.0;
+      try {
+        await _tts.setLanguage(lang);
+        await _tts.setRate(rate);
+        await _tts.setVolume(volume);
+        await _tts.setPitch(pitch);
+      } catch (_) {}
+    } catch (_) {}
   }
 
   void _initTtsAndNotifications() async {
@@ -193,13 +220,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
       _tts.onComplete = () async {
         final idx = _currentIndex();
         if (idx >= 0 && idx < novel.chapters.length - 1) {
-          setState(() => selectedChapter = idx + 1);
-          await _loadChapter();
-          Future.delayed(const Duration(milliseconds: 800), () async {
-            await _startTtsForCurrentChapter();
-          });
+          if (_ttsUserRequested) {
+            setState(() => selectedChapter = idx + 1);
+            await _loadChapter();
+            Future.delayed(const Duration(milliseconds: 800), () async {
+              await _startTtsForCurrentChapter(userInitiated: false);
+            });
+          } else {
+            _ttsPlaying = false;
+            _showTtsNotification(false);
+          }
         } else {
           _ttsPlaying = false;
+          _ttsUserRequested = false;
           _showTtsNotification(false);
         }
       };
@@ -446,10 +479,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         try {
                           if (_ttsPlaying) {
                             await _tts.pause();
+                            _ttsUserRequested = false;
                             setState(() => _ttsPlaying = false);
                             _showTtsNotification(false);
                           } else {
-                            await _startTtsForCurrentChapter();
+                            _ttsUserRequested = true;
+                            await _startTtsForCurrentChapter(
+                              userInitiated: true,
+                            );
                             setState(() => _ttsPlaying = true);
                           }
                         } catch (e) {}
@@ -541,6 +578,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       _prefs = Map<String, dynamic>.from(cfg);
                       await _saveReaderPrefs();
                       setState(() {});
+                      try {
+                        await _applyTtsPrefs();
+                      } catch (_) {}
                       _loadChapter();
                     },
                     onApplyScripts: (enabledScripts) async {
@@ -971,6 +1011,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Future<bool> _onWillPop() async {
     await _setFullscreenMode(false);
+    try {
+      await _stopTts();
+    } catch (_) {}
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('fullscreen_disabled'.translate)));
@@ -982,6 +1025,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _timeTimer?.cancel();
     _batteryTimer?.cancel();
     _setFullscreenMode(false);
+    try {
+      _stopTts();
+    } catch (_) {}
     super.dispose();
   }
 
@@ -991,6 +1037,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
     } catch (e) {
       print('Erro ao aplicar scripts: $e');
     }
+  }
+
+  Future<void> _stopTts() async {
+    try {
+      await _tts.pause();
+    } catch (_) {}
+    try {
+      _ttsUserRequested = false;
+      _ttsPlaying = false;
+      _showTtsNotification(false);
+    } catch (_) {}
   }
 
   Future<void> _executeScriptsFromStore(List<String> enabledScripts) async {
@@ -1072,13 +1129,33 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  Future<void> _startTtsForCurrentChapter() async {
+  Future<void> _startTtsForCurrentChapter({bool userInitiated = false}) async {
     try {
       if (novel.chapters.isEmpty) return;
       final chapter = novel.chapters[selectedChapter];
-      final content = chapter.content ?? '';
-      final text = _extractTextFromHtml(content);
+      String text = '';
+      try {
+        for (int attempt = 0; attempt < 8; attempt++) {
+          final res = await _controller!.runJavaScriptReturningResult(
+            "(function(){ try{ var el=document.querySelector('.reader-content'); if(el) return el.innerText || ''; return document.body.innerText || ''; }catch(e){ return ''; } })();",
+          );
+          final jsStr = (res is String) ? res : res.toString();
+          final cleaned = jsStr.replaceAll(RegExp(r'\\s+'), ' ').trim();
+          if (cleaned.isNotEmpty) {
+            text = cleaned;
+            break;
+          }
+          await Future.delayed(const Duration(milliseconds: 250));
+        }
+      } catch (e) {}
+
+      if (text.isEmpty) {
+        final content = chapter.content ?? '';
+        text = _extractTextFromHtml(content);
+      }
+
       if (text.trim().isEmpty) return;
+      if (userInitiated) _ttsUserRequested = true;
       await _tts.speak(text);
       _ttsPlaying = true;
       _showTtsNotification(true);
