@@ -4,9 +4,10 @@ import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/i18n/i18n.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart' show Response;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart' as dom;
+import 'package:akashic_records/services/core/proxy_client.dart';
 
 class ScribbleHub implements PluginService {
   @override
@@ -33,7 +34,7 @@ class ScribbleHub implements PluginService {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.63 Safari/537.36',
   };
 
-  Future<http.Response> safeFetch(
+  Future<Response> safeFetch(
     String url, {
     BuildContext? context,
     Map<String, String>? headers,
@@ -42,7 +43,7 @@ class ScribbleHub implements PluginService {
     headers ??= _headers;
     try {
       print('Fetching: $url');
-      final response = await http
+      final response = await ProxyClient()
           .get(Uri.parse(url), headers: headers)
           .timeout(const Duration(seconds: 10));
       print('Response Status Code: ${response.statusCode}');
@@ -71,7 +72,7 @@ class ScribbleHub implements PluginService {
           SnackBar(content: Text('${'failed_to_load_data'.translate}: $e')),
         );
       }
-      return http.Response('Error', 500);
+      return Response('Error', 500);
     }
   }
 
@@ -275,7 +276,7 @@ class ScribbleHub implements PluginService {
       'mypostid': novelId,
     };
 
-    final chapterResult = await http.post(
+    final chapterResult = await ProxyClient().post(
       Uri.parse('${site}wp-admin/admin-ajax.php'),
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: _mapToQueryParameters(formData),
