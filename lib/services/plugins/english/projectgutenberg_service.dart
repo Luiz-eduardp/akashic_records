@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:akashic_records/services/core/proxy_client.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/models/plugin_service.dart';
@@ -188,7 +187,7 @@ class ProjectGutenberg implements PluginService {
   Future<Novel> parseNovel(String novelId) async {
     final url = '$baseURL/book/$novelId/';
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await ProxyClient().get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final item = jsonDecode(response.body);
@@ -227,7 +226,7 @@ class ProjectGutenberg implements PluginService {
   @override
   Future<String> parseChapter(String chapterUri) async {
     try {
-      final response = await http.get(Uri.parse(chapterUri));
+      final response = await ProxyClient().get(Uri.parse(chapterUri));
 
       if (response.statusCode == 200) {
         return response.body;
