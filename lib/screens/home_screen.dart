@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _totalChaptersRead = 0;
   int _localEpubCount = 0;
   int _localEpubChapters = 0;
+  List<Map<String, dynamic>> _recentReadChapters = [];
   AppState? _appStateRef;
 
   Future<void> _loadStats() async {
@@ -28,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final db = await NovelDatabase.getInstance();
     int words = 0;
     int chapters = 0;
+    final recent = <Map<String, dynamic>>[];
     for (final novel in appState.localNovels) {
       final readSet = await db.getReadChaptersForNovel(novel.id);
       chapters += readSet.length;
@@ -42,6 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   .where((w) => w.trim().isNotEmpty)
                   .length;
           words += cnt;
+        }
+      }
+      for (var i = 0; i < novel.chapters.length; i++) {
+        final ch = novel.chapters[i];
+        if (readSet.contains(ch.id)) {
+          recent.add({'novel': novel, 'chapter': ch, 'index': i});
         }
       }
     }
@@ -64,6 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _localEpubChapters = chaptersTotal;
       });
     } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _recentReadChapters = recent.reversed.toList();
+    });
   }
 
   @override
@@ -282,48 +294,64 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             Expanded(
               child:
-                  appState.localNovels.isEmpty
+                  _recentReadChapters.isEmpty
                       ? Center(child: Text('no_novels_stored'.translate))
-                      : ListView.builder(
-                        itemCount: appState.localNovels.length,
+                      : ListView.separated(
+                        itemCount: _recentReadChapters.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        padding: const EdgeInsets.only(bottom: 120),
                         itemBuilder: (context, index) {
-                          final Novel novel = appState.localNovels[index];
-                          return ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child:
-                                  novel.coverImageUrl.isNotEmpty
-                                      ? Image.network(
-                                        novel.coverImageUrl,
-                                        width: 48,
-                                        height: 64,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (_, __, ___) => Container(
-                                              width: 48,
-                                              height: 64,
-                                              color: Colors.grey,
-                                            ),
-                                      )
-                                      : Container(
-                                        width: 48,
-                                        height: 64,
-                                        color: Colors.grey,
-                                      ),
+                          final entry = _recentReadChapters[index];
+                          final Novel novel = entry['novel'] as Novel;
+                          final chapter = entry['chapter'] as Chapter;
+                          final chapIndex = entry['index'] as int;
+                          return Card(
+                            child: ListTile(
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child:
+                                    novel.coverImageUrl.isNotEmpty
+                                        ? Image.network(
+                                          novel.coverImageUrl,
+                                          width: 64,
+                                          height: 84,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (_, __, ___) => Container(
+                                                width: 64,
+                                                height: 84,
+                                                color: Colors.grey,
+                                              ),
+                                        )
+                                        : Container(
+                                          width: 64,
+                                          height: 84,
+                                          color: Colors.grey,
+                                        ),
+                              ),
+                              title: Text(novel.title),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(chapter.title),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    novel.author,
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/reader',
+                                  arguments: {
+                                    'novel': novel,
+                                    'chapterIndex': chapIndex,
+                                  },
+                                );
+                              },
                             ),
-                            title: Text(novel.title),
-                            subtitle: Text(novel.author),
-                            onTap: () {
-                              final idx = _chapterIndexForNovel(novel);
-                              Navigator.pushNamed(
-                                context,
-                                '/reader',
-                                arguments: {
-                                  'novel': novel,
-                                  'chapterIndex': idx,
-                                },
-                              );
-                            },
                           );
                         },
                       ),
