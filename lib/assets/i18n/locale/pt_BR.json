@@ -73,6 +73,9 @@
   "spacing": "Espaçamento",
   "padding": "Preenchimento",
   "reader_settings_title": "Configurações do leitor",
+  "navigation_settings": "Configurações de navegação",
+  "advanced_network": "Rede avançada",
+  "data_management": "Gerenciamento de dados",
   "tts_settings": "Configurações de TTS",
   "tts_rate": "Velocidade",
   "tts_volume": "Volume",
@@ -83,6 +86,7 @@
   "theme_aged_sepia": "Sépia Envelhecida",
   "theme_deep_night": "Noite Profunda",
   "theme_solar_terminal": "Terminal Solar",
+    "app_info": "Informações do app",
   "theme_midnight_nebula": "Nebulosa da Meia-noite",
   "theme_old_wood": "Madeira Antiga",
   "theme_soft_vanilla": "Baunilha Suave",
@@ -161,5 +165,17 @@
   "appearance": "Aparência",
   "details": "Detalhes",
   "continue_reading": "Continuar leitura",
-  "search_favorites_hint": "Buscar favoritos..."
+  "search_favorites_hint": "Buscar favoritos...",
+  "sort_ascending": "Ordenar crescente",
+  "sort_descending": "Ordenar decrescente",
+  "no_chapters_found": "Nenhum capítulo encontrado",
+  "marked_all_chapters_read": "Todos os capítulos marcados como lidos"
+,
+  "storage_manager_title": "Gerenciador de armazenamento",
+  "storage_manager_sub": "Escolha capítulos para deletar do armazenamento local",
+  "storage_manager_empty": "Nenhuma novel com capítulos armazenados",
+  "select_all": "Selecionar tudo",
+  "clear_selection": "Limpar seleção",
+  "delete_selected": "Deletar selecionados",
+  "storage_manager_deleted": "Capítulos selecionados deletados do armazenamento"
 }
