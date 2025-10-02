@@ -26,6 +26,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _refreshDynamicUnread();
+      await _check();
     });
   }
 
