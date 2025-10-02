@@ -75,40 +75,60 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
 
   Future<void> _ensureDetails() async {
     final current = novel ?? widget.novel;
-    if (current.chapters.isNotEmpty &&
-        (current.description.isNotEmpty || current.author.isNotEmpty)) {
+    final svc = PluginRegistry.get(current.pluginId);
+    if (svc == null) {
       _applyFilters();
       return;
     }
 
-    final svc = PluginRegistry.get(current.pluginId);
-    if (svc == null) return;
-
     setState(() => _loadingDetails = true);
     try {
-      final full = await svc
-          .parseNovel(current.id)
-          .timeout(const Duration(seconds: 20));
+      final full = await svc.parseNovel(current.id).timeout(
+        const Duration(seconds: 20),
+      );
 
-      novel ??= current;
-      novel!.title = full.title;
-      novel!.coverImageUrl = full.coverImageUrl;
-      novel!.author = full.author;
-      novel!.description = full.description;
-      novel!.genres = full.genres;
-      novel!.chapters = full.chapters;
+      if (full != null) {
+        novel ??= current;
 
-      chapters = List.from(novel!.chapters);
-      _applyFilters();
+        if (full.title.isNotEmpty) novel!.title = full.title;
+        if (full.coverImageUrl.isNotEmpty) novel!.coverImageUrl = full.coverImageUrl;
+        if (full.author.isNotEmpty) novel!.author = full.author;
+        if (full.description.isNotEmpty) novel!.description = full.description;
+        if (full.genres.isNotEmpty) novel!.genres = full.genres;
 
-      final db = await NovelDatabase.getInstance();
-      await db.upsertNovel(novel ?? widget.novel);
+        final existingById = <String, Chapter>{};
+        for (final c in novel!.chapters) {
+          existingById[c.id] = c;
+        }
+
+        final merged = <Chapter>[];
+        for (final c in full.chapters) {
+          final existing = existingById[c.id];
+          if (existing != null) {
+            c.content = (existing.content != null && existing.content!.isNotEmpty)
+                ? existing.content
+                : c.content;
+            c.chapterNumber = c.chapterNumber ?? existing.chapterNumber;
+          }
+          merged.add(c);
+        }
+
+        novel!.chapters = merged;
+        chapters = List.from(novel!.chapters);
+        _applyFilters();
+
+        final db = await NovelDatabase.getInstance();
+        await db.upsertNovel(novel ?? widget.novel);
+      } else {
+        _applyFilters();
+      }
     } catch (e) {
       debugPrint(
         'Failed to fetch full novel details for ${(novel ?? widget.novel).id}: $e',
       );
+      _applyFilters();
     } finally {
-      setState(() => _loadingDetails = false);
+      if (mounted) setState(() => _loadingDetails = false);
     }
   }
 
