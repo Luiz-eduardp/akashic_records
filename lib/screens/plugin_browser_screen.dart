@@ -171,7 +171,7 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
                     controller: _searchCtrl,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search),
-                      hintText: 'search_plugin_hint'.translate,
+                      hintText: 'search_novels_hint'.translate,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
                         borderSide: BorderSide.none,
