@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:provider/provider.dart';
-import 'package:akashic_records/widgets/chapter_count_badge.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/novel_detail_screen.dart';
 import 'package:akashic_records/db/novel_database.dart';
@@ -15,7 +14,6 @@ class UpdatesScreen extends StatefulWidget {
 }
 
 class _UpdatesScreenState extends State<UpdatesScreen> {
-  Map<String, int> _updates = {};
   bool _loading = false;
   final Map<String, List<String>> _cachedChapters = {};
   final Map<String, int> _dynamicUnread = {};
@@ -34,7 +32,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
     if (!mounted) return;
     setState(() => _loading = true);
     final appState = Provider.of<AppState>(context, listen: false);
-    final updates = await appState.checkForUpdates();
+    await appState.checkForUpdates();
 
     try {
       final db = await NovelDatabase.getInstance();
@@ -47,7 +45,6 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
 
     if (!mounted) return;
     setState(() {
-      _updates = updates;
       _loading = false;
     });
   }
@@ -132,8 +129,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                       runSpacing: spacing,
                       children:
                           favs.map((n) {
-                            final delta =
-                                _dynamicUnread[n.id] ?? _updates[n.id] ?? 0;
+                            final delta = _dynamicUnread[n.id] ?? 0;
                             return SizedBox(
                               width: cardWidth,
                               child: Card(
@@ -167,29 +163,67 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.all(12.0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            n.title,
-                                            style:
-                                                Theme.of(
-                                                  context,
-                                                ).textTheme.titleMedium,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
+                                    child: IntrinsicHeight(
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Expanded(
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                n.title,
+                                                style:
+                                                    Theme.of(
+                                                      context,
+                                                    ).textTheme.titleMedium,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                        if (delta > 0) ...[
-                                          const SizedBox(width: 8),
-                                          ChapterCountBadge(
-                                            count: delta,
-                                            showPlus: true,
-                                          ),
+                                          if (delta > 0) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              width: 64,
+                                              height: double.infinity,
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .primary
+                                                        .withOpacity(0.2),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                (delta > 99) ? '99+' : '$delta',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      color:
+                                                          Theme.of(context)
+                                                              .colorScheme
+                                                              .onPrimary,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),
