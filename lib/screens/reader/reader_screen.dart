@@ -829,6 +829,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
       await db.setChapterRead(novel.id, chapter.id, true);
       try {
         novel.lastReadChapterId = chapter.id;
+
+        if (novel.pluginId == 'local_epub') {
+          try {
+            await db.setSetting('local_epub_last_${novel.id}', chapter.id);
+          } catch (_) {}
+        }
+
         final appState = Provider.of<AppState>(context, listen: false);
         await appState.addOrUpdateNovel(novel);
       } catch (e) {
@@ -960,6 +967,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         readSet = await db.getReadChaptersForNovel(novel.id);
                         setStateModal(() {});
                       },
+                      novelId: novel.id,
                     ),
                   ),
                 ],
