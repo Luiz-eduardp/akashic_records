@@ -106,6 +106,10 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
             ? (temp['fontWeight'] as num).toInt()
             : ((temp['fontBold'] ?? false) ? 700 : 400);
     final bold = (temp['fontBold'] ?? false) as bool;
+  int weightIdx = (weightVal ~/ 100) - 1;
+  if (weightIdx < 0) weightIdx = 0;
+  if (weightIdx >= FontWeight.values.length) weightIdx = FontWeight.values.length - 1;
+  final resolvedWeight = bold ? FontWeight.bold : FontWeight.values[weightIdx];
     Color? color;
     try {
       if (temp['fontColor'] != null) {
@@ -122,52 +126,49 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
         base = GoogleFonts.merriweather(
           fontSize: size,
           height: lh,
-          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
         );
         break;
       case 'Lora':
         base = GoogleFonts.lora(
           fontSize: size,
           height: lh,
-          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
         );
         break;
       case 'Roboto':
         base = GoogleFonts.roboto(
           fontSize: size,
           height: lh,
-          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
         );
         break;
       case 'Inter':
         base = GoogleFonts.inter(
           fontSize: size,
           height: lh,
-          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
         );
         break;
       case 'Open Sans':
         base = GoogleFonts.openSans(
           fontSize: size,
           height: lh,
-          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
         );
         break;
       case 'Roboto Mono':
         base = GoogleFonts.robotoMono(
           fontSize: size,
           height: lh,
-          fontWeight: FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
         );
         break;
       case 'serif':
         base = TextStyle(
           fontSize: size,
           height: lh,
-          fontWeight:
-              bold
-                  ? FontWeight.bold
-                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
           fontFamily: 'serif',
         );
         break;
@@ -175,10 +176,7 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
         base = TextStyle(
           fontSize: size,
           height: lh,
-          fontWeight:
-              bold
-                  ? FontWeight.bold
-                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
           fontFamily: 'sans-serif',
         );
         break;
@@ -186,10 +184,7 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
         base = TextStyle(
           fontSize: size,
           height: lh,
-          fontWeight:
-              bold
-                  ? FontWeight.bold
-                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
           fontFamily: 'monospace',
         );
         break;
@@ -197,10 +192,7 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
         base = TextStyle(
           fontSize: size,
           height: lh,
-          fontWeight:
-              bold
-                  ? FontWeight.bold
-                  : FontWeight.values[(weightVal ~/ 100) - 1],
+          fontWeight: resolvedWeight,
           fontFamily: fam,
         );
     }
@@ -460,7 +452,11 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                           divisions: 8,
                           value: (temp['fontWeight'] ?? 400).toDouble(),
                           onChanged: (v) {
-                            setState(() => temp['fontWeight'] = v.round());
+                            final w = v.round();
+                            setState(() {
+                              temp['fontWeight'] = w;
+                              temp['fontBold'] = (w >= 700);
+                            });
                             _apply();
                           },
                         ),
@@ -471,8 +467,10 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                             Switch(
                               value: (temp['fontBold'] ?? false) as bool,
                               onChanged: (v) {
-                                setState(() => temp['fontBold'] = v);
-                                if (v) temp['fontWeight'] = 700;
+                                setState(() {
+                                  temp['fontBold'] = v;
+                                  temp['fontWeight'] = v ? 700 : 400;
+                                });
                                 _apply();
                               },
                             ),

@@ -40,7 +40,7 @@ class _LocalEpubsScreenState extends State<LocalEpubsScreen> {
     return {'epubs': totalEpubs, 'chapters': totalChapters};
   }
 
-  void _openEpub(Map<String, dynamic> item) {
+  Future<void> _openEpub(Map<String, dynamic> item) async {
     final chapters =
         (item['chapters'] as List<dynamic>)
             .map((c) => Chapter.fromMap(c as Map<String, dynamic>))
@@ -58,9 +58,23 @@ class _LocalEpubsScreenState extends State<LocalEpubsScreen> {
       isFavorite: false,
     );
 
-    Navigator.of(
-      context,
-    ).pushNamed('/reader', arguments: {'novel': novel, 'chapterIndex': 0});
+    try {
+      final db = await NovelDatabase.getInstance();
+      final key = 'local_epub_last_${novel.id}';
+      final lastId = await db.getSetting(key);
+      int idx = 0;
+      if (lastId != null && lastId.isNotEmpty) {
+        final found = novel.chapters.indexWhere((c) => c.id == lastId);
+        if (found != -1) idx = found;
+      }
+      Navigator.of(
+        context,
+      ).pushNamed('/reader', arguments: {'novel': novel, 'chapterIndex': idx});
+    } catch (e) {
+      Navigator.of(
+        context,
+      ).pushNamed('/reader', arguments: {'novel': novel, 'chapterIndex': 0});
+    }
   }
 
   Future<void> _deleteEpub(

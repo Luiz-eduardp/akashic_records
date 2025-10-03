@@ -656,6 +656,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
             ? (_prefs['padding'] as num).toDouble().toString()
             : '12.0';
     final fontFamily = _prefs['fontFamily'] as String? ?? 'serif';
+    final fontBold = (_prefs['fontBold'] ?? false) as bool;
+    final weightVal =
+        (_prefs['fontWeight'] is num)
+            ? (_prefs['fontWeight'] as num).toInt()
+            : (fontBold ? 700 : 400);
 
     final align = (_prefs['align'] as String?) ?? 'left';
     final focusMode = (_prefs['focusMode'] as bool?) ?? false;
@@ -703,12 +708,22 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     final css = '''
       $fontImport
-      body { background: $effectiveBg; color: ${fgRgba()}; font-size: ${fontSize}px; line-height: $lineHeight; padding: ${padding}px; font-family: $cssFontFamily; }
+      html, body, .reader-content, .reader-content * {
+        background: $effectiveBg !important;
+        color: ${fgRgba()} !important;
+        font-size: ${fontSize}px !important;
+        line-height: $lineHeight !important;
+        padding: ${padding}px !important;
+        font-family: $cssFontFamily !important;
+        font-weight: $weightVal !important;
+        -webkit-text-size-adjust: 100% !important;
+      }
+      body { margin:0; }
       img { max-width: 100%; height: auto; }
       a { color: ${preset['accent']}; }
       p, div { text-align: $align; }
-  .para { transition: filter 220ms ease, opacity 220ms ease; filter: blur(${focusMode ? focusBlur : 0}px); opacity: ${textAlpha.toStringAsFixed(3)}; }
-  .para.focus { opacity: 1; filter: none; }
+      .para { transition: filter 220ms ease, opacity 220ms ease; filter: blur(${focusMode ? focusBlur : 0}px); opacity: ${textAlpha.toStringAsFixed(3)}; }
+      .para.focus { opacity: 1; filter: none; }
     ''';
 
     String wrapped = content;
@@ -829,6 +844,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
       await db.setChapterRead(novel.id, chapter.id, true);
       try {
         novel.lastReadChapterId = chapter.id;
+
+        if (novel.pluginId == 'local_epub') {
+          try {
+            await db.setSetting('local_epub_last_${novel.id}', chapter.id);
+          } catch (_) {}
+        }
+
         final appState = Provider.of<AppState>(context, listen: false);
         await appState.addOrUpdateNovel(novel);
       } catch (e) {
@@ -960,6 +982,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         readSet = await db.getReadChaptersForNovel(novel.id);
                         setStateModal(() {});
                       },
+                      novelId: novel.id,
                     ),
                   ),
                 ],

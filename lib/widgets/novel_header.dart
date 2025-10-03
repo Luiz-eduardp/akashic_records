@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -121,10 +120,7 @@ class _NovelHeaderState extends State<NovelHeader> {
 
                   if (!loading && novel.coverImageUrl.isNotEmpty)
                     Positioned.fill(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                        child: Container(color: Colors.black.withOpacity(0.35)),
-                      ),
+                      child: Container(color: Colors.black.withOpacity(0.35)),
                     ),
 
                   Align(

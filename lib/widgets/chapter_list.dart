@@ -9,6 +9,8 @@ class ChapterList extends StatefulWidget {
   final Set<String> readChapters;
   final ChapterTap onTap;
   final ChapterLongPress? onLongPressToggleRead;
+  final String novelId;
+  final bool sliver;
 
   const ChapterList({
     super.key,
@@ -16,6 +18,8 @@ class ChapterList extends StatefulWidget {
     required this.readChapters,
     required this.onTap,
     this.onLongPressToggleRead,
+    required this.novelId,
+    this.sliver = false,
   });
 
   @override
@@ -25,6 +29,39 @@ class ChapterList extends StatefulWidget {
 class _ChapterListState extends State<ChapterList> {
   @override
   Widget build(BuildContext context) {
+    if (widget.sliver) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate((ctx, i) {
+          final ch = widget.chapters[i];
+          final originalIndex = i;
+          final isRead = widget.readChapters.contains(ch.id);
+          return Column(
+            children: [
+              ListTile(
+                title: Text(
+                  ch.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: ch.releaseDate != null ? Text(ch.releaseDate!) : null,
+                trailing:
+                    isRead
+                        ? const Icon(Icons.check_circle, color: Colors.green)
+                        : null,
+                onTap: () => widget.onTap(ch, originalIndex),
+                onLongPress:
+                    widget.onLongPressToggleRead == null
+                        ? null
+                        : () =>
+                            widget.onLongPressToggleRead!(ch, originalIndex),
+              ),
+              if (i != widget.chapters.length - 1) const Divider(height: 1),
+            ],
+          );
+        }, childCount: widget.chapters.length),
+      );
+    }
+
     return ListView.separated(
       itemCount: widget.chapters.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
