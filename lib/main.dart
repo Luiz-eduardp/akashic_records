@@ -12,6 +12,7 @@ import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:akashic_records/screens/favorites_screen.dart';
 import 'package:akashic_records/screens/updates_screen.dart';
 import 'package:akashic_records/screens/plugins_screen.dart';
+import 'package:akashic_records/screens/backups_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,21 +52,45 @@ class MyApp extends StatelessWidget {
             colorSchemeSeed: state.accentColor,
           ),
           builder: (context, child) {
-            return SafeArea(child: child ?? const SizedBox.shrink());
+            final widget = child ?? const SizedBox.shrink();
+            return Stack(
+              children: [
+                SafeArea(child: widget),
+                if (!state.isOnline)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SafeArea(
+                      child: Container(
+                        color: Colors.amber.shade700,
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                        child: Center(
+                          child: Text(
+                            'Offline mode: some features may be unavailable',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
           },
           home: const ShellScreen(),
           routes: {
             '/home': (ctx) => const HomeScreen(),
+            '/backups': (ctx) => const BackupsScreen(),
             '/settings':
                 (ctx) => SettingsScreen(
-                  onLocaleChanged: (locale) async {
-                    await I18n.updateLocate(locale);
-                    await Provider.of<AppState>(
-                      ctx,
-                      listen: false,
-                    ).setLocale(locale);
-                  },
-                ),
+                      onLocaleChanged: (locale) async {
+                        await I18n.updateLocate(locale);
+                        await Provider.of<AppState>(
+                          ctx,
+                          listen: false,
+                        ).setLocale(locale);
+                      },
+                    ),
             '/reader': (ctx) => const ReaderScreen(),
             '/favorites': (ctx) => const FavoritesScreen(),
             '/local_epubs': (ctx) => const LocalEpubsScreen(),

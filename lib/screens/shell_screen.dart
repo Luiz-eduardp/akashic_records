@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'dart:math' as math;
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,7 @@ import 'package:akashic_records/screens/favorites_screen.dart';
 import 'package:akashic_records/screens/updates_screen.dart';
 import 'package:akashic_records/screens/plugins_screen.dart';
 import 'package:akashic_records/screens/settings/settings_screen.dart';
+import 'package:akashic_records/screens/offline_library_screen.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
@@ -21,7 +24,7 @@ class _ShellScreenState extends State<ShellScreen> {
   bool _navVisible = true;
   double _lastScrollOffset = 0.0;
 
-  static const List<Widget> _pages = <Widget>[
+  List<Widget> _basePages() => const [
     HomeScreen(),
     FavoritesScreen(),
     UpdatesScreen(),
@@ -29,6 +32,8 @@ class _ShellScreenState extends State<ShellScreen> {
   ];
 
   void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+    HapticFeedback.selectionClick();
     setState(() {
       _selectedIndex = index;
     });
@@ -36,129 +41,330 @@ class _ShellScreenState extends State<ShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-  const double navBarHeight = 56.0;
-  const double navBarBottom = 16.0;
-  final double navWidth = math.min(MediaQuery.of(context).size.width * 0.95, 600);
-  final double screenWidth = MediaQuery.of(context).size.width;
-  final appState = Provider.of<AppState>(context);
-  final bool alwaysVisible = appState.navAlwaysVisible;
-  final double scrollThreshold = appState.navScrollThreshold;
-  final Duration animDuration = Duration(milliseconds: appState.navAnimationMs);
-    final double dynamicHeight = screenWidth < 360 ? 52 : (screenWidth < 600 ? 56 : 64);
-    final double dynamicRadius = screenWidth < 360 ? 16 : (screenWidth < 600 ? 20 : 28);
-    final labelBehavior = screenWidth < 360
-        ? NavigationDestinationLabelBehavior.alwaysHide
-        : NavigationDestinationLabelBehavior.alwaysShow;
-    return SafeArea(
-      child: Scaffold(
-        body: NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (alwaysVisible) return false;
-            if (notification is ScrollUpdateNotification) {
-              final pixels = notification.metrics.pixels;
-              final delta = pixels - _lastScrollOffset;
-              _lastScrollOffset = pixels;
-              if (delta > scrollThreshold && _navVisible) {
-                setState(() => _navVisible = false);
-              } else if (delta < -scrollThreshold && !_navVisible) {
-                setState(() => _navVisible = true);
-              }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+
+    final alwaysVisible = context.select((AppState s) => s.navAlwaysVisible);
+    final scrollThreshold = context.select(
+      (AppState s) => s.navScrollThreshold,
+    );
+    final animDuration = Duration(
+      milliseconds: context.select((AppState s) => s.navAnimationMs),
+    );
+
+    final double navWidth = math.min(screenWidth * 0.98, 600);
+    final double dynamicHeight = screenWidth < 360 ? 60 : 66;
+    final double dynamicRadius = 32.0;
+
+    return Scaffold(
+      extendBody: true,
+      appBar: AppBar(
+        elevation: 0,
+        actions: [
+          Builder(
+            builder: (ctx) {
+              final pendingCount = ctx.select(
+                (AppState s) => s.downloadQueue.pendingCount,
+              );
+              final downloadingCount = ctx.select(
+                (AppState s) => s.downloadQueue.downloadingCount,
+              );
+              final totalActive = pendingCount + downloadingCount;
+              
+              return totalActive > 0
+                  ? Stack(
+                    children: [
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.cloud_download_outlined,
+                          ),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Downloads: $downloadingCount em andamento, $pendingCount na fila',
+                                ),
+                                behavior:
+                                    SnackBarBehavior.floating,
+                                duration: const Duration(
+                                  seconds: 2,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius:
+                                BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            totalActive.toString(),
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight:
+                                      FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                  : const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (alwaysVisible) return false;
+          if (notification is ScrollUpdateNotification) {
+            final pixels = notification.metrics.pixels;
+            final delta = pixels - _lastScrollOffset;
+
+            if (delta > scrollThreshold && _navVisible && pixels > 50) {
+              setState(() => _navVisible = false);
+            } else if (delta < -scrollThreshold && !_navVisible) {
+              setState(() => _navVisible = true);
             }
-            return false;
-          },
-          child: Stack(
-            children: [
-              Padding(
-                padding: EdgeInsets.only(
-                  bottom: navBarHeight + navBarBottom + MediaQuery.of(context).padding.bottom,
-                ),
-                child: _pages[_selectedIndex],
+            _lastScrollOffset = pixels;
+          }
+          return false;
+        },
+        child: Stack(
+          children: [
+            Builder(
+              builder: (ctx) {
+                final pages = <Widget>[..._basePages()];
+                final destinations = <NavigationDestination>[
+                  _buildNavDest(Icons.home_outlined, Icons.home, 'home'),
+                  _buildNavDest(
+                    Icons.favorite_border,
+                    Icons.favorite,
+                    'favorites',
+                  ),
+                  _buildNavDest(
+                    Icons.auto_awesome_outlined,
+                    Icons.auto_awesome,
+                    'updates',
+                  ),
+                  _buildNavDest(
+                    Icons.extension_outlined,
+                    Icons.extension,
+                    'plugins',
+                  ),
+                ];
+                pages.add(const OfflineLibraryScreen());
+                destinations.add(
+                  _buildNavDest(Icons.cloud_off, Icons.cloud_off, 'offline'),
+                );
+
+                if (_selectedIndex >= pages.length) _selectedIndex = 0;
+
+                return IndexedStack(index: _selectedIndex, children: pages);
+              },
+            ),
+
+            _buildFloatingNavBar(
+              context: context,
+              isVisible: _navVisible || alwaysVisible,
+              width: navWidth,
+              height: dynamicHeight,
+              radius: dynamicRadius,
+              duration: animDuration,
+              colorScheme: colorScheme,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassIconButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return ClipOval(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          color: Theme.of(context).colorScheme.surface.withOpacity(0.6),
+          child: IconButton(
+            icon: Icon(icon),
+            onPressed: onPressed,
+            visualDensity: VisualDensity.compact,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingNavBar({
+    required BuildContext context,
+    required bool isVisible,
+    required double width,
+    required double height,
+    required double radius,
+    required Duration duration,
+    required ColorScheme colorScheme,
+  }) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 20 + MediaQuery.of(context).padding.bottom,
+      child: Center(
+        child: AnimatedSlide(
+          duration: duration,
+          offset: isVisible ? Offset.zero : const Offset(0, 2.0),
+          curve: Curves.easeInOutCubic,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: isVisible ? 1.0 : 0.0,
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-              Positioned(
-                top: 8,
-                left: 8,
-                child: SafeArea(
-                  child: IconButton(
-                    tooltip: 'settings'.translate,
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SettingsScreen(
-                            onLocaleChanged: (locale) async {
-                              await I18n.updateLocate(locale);
-                              (context as Element).markNeedsBuild();
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(radius),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    color: colorScheme.surface.withOpacity(0.85),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 56.0),
+                          child: Builder(
+                            builder: (ctx2) {
+                              final isOnline = ctx2.select(
+                                (AppState s) => s.isOnline,
+                              );
+                              final dests = <NavigationDestination>[
+                                _buildNavDest(
+                                  Icons.home_outlined,
+                                  Icons.home,
+                                  'home',
+                                ),
+                                _buildNavDest(
+                                  Icons.favorite_border,
+                                  Icons.favorite,
+                                  'favorites',
+                                ),
+                                _buildNavDest(
+                                  Icons.auto_awesome_outlined,
+                                  Icons.auto_awesome,
+                                  'updates',
+                                ),
+                                _buildNavDest(
+                                  Icons.extension_outlined,
+                                  Icons.extension,
+                                  'plugins',
+                                ),
+                              ];
+                              if (!isOnline)
+                                dests.add(
+                                  _buildNavDest(
+                                    Icons.cloud_off,
+                                    Icons.cloud_off,
+                                    'offline',
+                                  ),
+                                );
+                              return NavigationBar(
+                                elevation: 0,
+                                backgroundColor: Colors.transparent,
+                                height: height,
+                                selectedIndex: _selectedIndex,
+                                onDestinationSelected: (i) {
+                                  _onItemTapped(i);
+                                },
+                                labelBehavior:
+                                    NavigationDestinationLabelBehavior
+                                        .alwaysHide,
+                                indicatorColor: colorScheme.primaryContainer,
+                                destinations: dests,
+                              );
                             },
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 16,
-                child: SafeArea(
-                  top: false,
-                  child: Center(
-                    child: AnimatedSlide(
-                      duration: animDuration,
-                      offset: _navVisible || alwaysVisible ? Offset.zero : const Offset(0, 1.4),
-                      curve: Curves.easeInOut,
-                      child: AnimatedOpacity(
-                        duration: animDuration,
-                        opacity: _navVisible || alwaysVisible ? 1.0 : 0.0,
-                        curve: Curves.easeInOut,
-                        child: AnimatedPhysicalModel(
-                          duration: animDuration,
-                          shape: BoxShape.rectangle,
-                          elevation: _navVisible || alwaysVisible ? 8 : 0,
-                          color: Theme.of(context).colorScheme.surface,
-                          shadowColor: Colors.black54,
-                          borderRadius: BorderRadius.circular(dynamicRadius),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(dynamicRadius),
+
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
                             child: SizedBox(
-                              width: navWidth,
-                              child: NavigationBar(
-                                height: dynamicHeight,
-                                backgroundColor: Theme.of(context).colorScheme.surface,
-                                selectedIndex: _selectedIndex,
-                                onDestinationSelected: _onItemTapped,
-                                labelBehavior: labelBehavior,
-                                destinations: [
-                                  NavigationDestination(
-                                    icon: Icon(Icons.home),
-                                    label: 'home'.translate,
-                                  ),
-                                  NavigationDestination(
-                                    icon: Icon(Icons.favorite),
-                                    label: 'favorites'.translate,
-                                  ),
-                                  NavigationDestination(
-                                    icon: Icon(Icons.update),
-                                    label: 'updates'.translate,
-                                  ),
-                                  NavigationDestination(
-                                    icon: Icon(Icons.extension),
-                                    label: 'plugins'.translate,
-                                  ),
-                                ],
+                              width: 44,
+                              height: 44,
+                              child: _buildGlassIconButton(
+                                icon: Icons.settings_outlined,
+                                onPressed: () => _openSettings(context),
                               ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  NavigationDestination _buildNavDest(
+    IconData icon,
+    IconData activeIcon,
+    String label,
+  ) {
+    return NavigationDestination(
+      icon: Icon(icon),
+      selectedIcon: Icon(
+        activeIcon,
+        color: Theme.of(context).colorScheme.onPrimaryContainer,
+      ),
+      label: label.translate,
+      tooltip: label.translate,
+    );
+  }
+
+  void _openSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => SettingsScreen(
+              onLocaleChanged: (locale) async {
+                await I18n.updateLocate(locale);
+                if (mounted) setState(() {});
+              },
+            ),
       ),
     );
   }

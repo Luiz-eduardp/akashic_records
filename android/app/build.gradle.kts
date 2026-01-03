@@ -1,8 +1,6 @@
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
+    // NOTE: Google Services plugin will be applied conditionally below
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -59,4 +57,11 @@ flutter {
 dependencies {
     // Required for desugaring (Java 8+ APIs used by some libraries)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+// Apply Google Services plugin only if `google-services.json` exists
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    println("google-services.json not found in android/app — skipping Google Services plugin.")
 }

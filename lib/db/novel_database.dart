@@ -20,11 +20,12 @@ class NovelDatabase {
   Future<void> _initDb() async {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, 'akashic_records.db');
-    _database = await openDatabase(
-      path,
-      version: 3,
-      onCreate: (db, version) async {
-        await db.execute('''
+    try {
+      _database = await openDatabase(
+        path,
+        version: 3,
+        onCreate: (db, version) async {
+          await db.execute('''
             CREATE TABLE IF NOT EXISTS novels (
               id TEXT PRIMARY KEY,
               pluginId TEXT,
@@ -42,54 +43,13 @@ class NovelDatabase {
               lastReadChapterId TEXT
             )
           ''');
-        await db.execute('''
+          await db.execute('''
               CREATE TABLE IF NOT EXISTS plugins (
                 id TEXT PRIMARY KEY,
                 enabled INTEGER DEFAULT 1,
                 prefs TEXT
               )
             ''');
-        await db.execute('''
-              CREATE TABLE IF NOT EXISTS local_epubs (
-                id TEXT PRIMARY KEY,
-                filePath TEXT,
-                title TEXT,
-                author TEXT,
-                description TEXT,
-                coverPath TEXT,
-                chapters TEXT,
-                importedAt TEXT
-              )
-            ''');
-        await db.execute('''
-              CREATE TABLE IF NOT EXISTS settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-              )
-            ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute(
-            'ALTER TABLE novels ADD COLUMN isFavorite INTEGER DEFAULT 0',
-          );
-          await db.execute('ALTER TABLE novels ADD COLUMN lastChecked TEXT');
-          await db.execute(
-            'ALTER TABLE novels ADD COLUMN lastKnownChapterCount INTEGER DEFAULT 0',
-          );
-          await db.execute(
-            'ALTER TABLE novels ADD COLUMN lastReadChapterId TEXT',
-          );
-        }
-        if (oldVersion < 3) {
-          await db.execute('''
-              CREATE TABLE IF NOT EXISTS settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-              )
-            ''');
-        }
-        if (oldVersion < 4) {
           await db.execute('''
               CREATE TABLE IF NOT EXISTS local_epubs (
                 id TEXT PRIMARY KEY,
@@ -102,9 +62,228 @@ class NovelDatabase {
                 importedAt TEXT
               )
             ''');
+            await db.execute('''
+                CREATE TABLE IF NOT EXISTS saved_chapters (
+                  novelId TEXT,
+                  chapterId TEXT,
+                  title TEXT,
+                  content TEXT,
+                  savedAt TEXT,
+                  PRIMARY KEY (novelId, chapterId)
+                )
+              ''');
+          await db.execute('''
+              CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+              )
+            ''');
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            await db.execute(
+              'ALTER TABLE novels ADD COLUMN isFavorite INTEGER DEFAULT 0',
+            );
+            await db.execute('ALTER TABLE novels ADD COLUMN lastChecked TEXT');
+            await db.execute(
+              'ALTER TABLE novels ADD COLUMN lastKnownChapterCount INTEGER DEFAULT 0',
+            );
+            await db.execute(
+              'ALTER TABLE novels ADD COLUMN lastReadChapterId TEXT',
+            );
+          }
+          if (oldVersion < 3) {
+            await db.execute('''
+              CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+              )
+            ''');
+          }
+          if (oldVersion < 4) {
+            await db.execute('''
+              CREATE TABLE IF NOT EXISTS local_epubs (
+                id TEXT PRIMARY KEY,
+                filePath TEXT,
+                title TEXT,
+                author TEXT,
+                description TEXT,
+                coverPath TEXT,
+                chapters TEXT,
+                importedAt TEXT
+              )
+            ''');
+              await db.execute('''
+                CREATE TABLE IF NOT EXISTS saved_chapters (
+                  novelId TEXT,
+                  chapterId TEXT,
+                  title TEXT,
+                  content TEXT,
+                  savedAt TEXT,
+                  PRIMARY KEY (novelId, chapterId)
+                )
+              ''');
+          }
+        },
+      );
+    } catch (e) {
+      try {
+        await deleteDatabase(path);
+      } catch (_) {}
+      try {
+        _database = await openDatabase(
+          path,
+          version: 3,
+          onCreate: (db, version) async {
+            await db.execute('''
+                CREATE TABLE IF NOT EXISTS novels (
+                  id TEXT PRIMARY KEY,
+                  pluginId TEXT,
+                  title TEXT,
+                  coverImageUrl TEXT,
+                  author TEXT,
+                  description TEXT,
+                  genres TEXT,
+                  status INTEGER,
+                  shouldShowNumberOfChapters INTEGER,
+                  chapters TEXT,
+                  isFavorite INTEGER DEFAULT 0,
+                  lastChecked TEXT,
+                  lastKnownChapterCount INTEGER DEFAULT 0,
+                  lastReadChapterId TEXT
+                )
+              ''');
+            await db.execute('''
+                  CREATE TABLE IF NOT EXISTS plugins (
+                    id TEXT PRIMARY KEY,
+                    enabled INTEGER DEFAULT 1,
+                    prefs TEXT
+                  )
+                ''');
+            await db.execute('''
+                  CREATE TABLE IF NOT EXISTS local_epubs (
+                    id TEXT PRIMARY KEY,
+                    filePath TEXT,
+                    title TEXT,
+                    author TEXT,
+                    description TEXT,
+                    coverPath TEXT,
+                    chapters TEXT,
+                    importedAt TEXT
+                  )
+                ''');
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS saved_chapters (
+                    novelId TEXT,
+                    chapterId TEXT,
+                    title TEXT,
+                    content TEXT,
+                    savedAt TEXT,
+                    PRIMARY KEY (novelId, chapterId)
+                  )
+                ''');
+            await db.execute('''
+                  CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                  )
+                ''');
+          },
+          onUpgrade: (db, oldVersion, newVersion) async {
+            if (oldVersion < 2) {
+              await db.execute(
+                'ALTER TABLE novels ADD COLUMN isFavorite INTEGER DEFAULT 0',
+              );
+              await db.execute(
+                'ALTER TABLE novels ADD COLUMN lastChecked TEXT',
+              );
+              await db.execute(
+                'ALTER TABLE novels ADD COLUMN lastKnownChapterCount INTEGER DEFAULT 0',
+              );
+              await db.execute(
+                'ALTER TABLE novels ADD COLUMN lastReadChapterId TEXT',
+              );
+            }
+            if (oldVersion < 3) {
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                  )
+                ''');
+            }
+            if (oldVersion < 4) {
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS local_epubs (
+                    id TEXT PRIMARY KEY,
+                    filePath TEXT,
+                    title TEXT,
+                    author TEXT,
+                    description TEXT,
+                    coverPath TEXT,
+                    chapters TEXT,
+                    importedAt TEXT
+                  )
+                ''');
+            }
+          },
+        );
+      } catch (e2) {
+        try {
+          _database = await openDatabase(
+            inMemoryDatabasePath,
+            version: 3,
+            onCreate: (db, version) async {
+              await db.execute('''
+                CREATE TABLE IF NOT EXISTS novels (
+                  id TEXT PRIMARY KEY,
+                  pluginId TEXT,
+                  title TEXT,
+                  coverImageUrl TEXT,
+                  author TEXT,
+                  description TEXT,
+                  genres TEXT,
+                  status INTEGER,
+                  shouldShowNumberOfChapters INTEGER,
+                  chapters TEXT,
+                  isFavorite INTEGER DEFAULT 0,
+                  lastChecked TEXT,
+                  lastKnownChapterCount INTEGER DEFAULT 0,
+                  lastReadChapterId TEXT
+                )
+              ''');
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS plugins (
+                    id TEXT PRIMARY KEY,
+                    enabled INTEGER DEFAULT 1,
+                    prefs TEXT
+                  )
+                ''');
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS local_epubs (
+                    id TEXT PRIMARY KEY,
+                    filePath TEXT,
+                    title TEXT,
+                    author TEXT,
+                    description TEXT,
+                    coverPath TEXT,
+                    chapters TEXT,
+                    importedAt TEXT
+                  )
+                ''');
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                  )
+                ''');
+            },
+          );
+        } catch (e3) {
+          rethrow;
         }
-      },
-    );
+      }
+    }
   }
 
   Future<void> setPluginEnabled(String id, bool enabled) async {
@@ -293,6 +472,86 @@ class NovelDatabase {
       map['chapters'] = json.decode(map['chapters'] as String);
       return map;
     }).toList();
+  }
+
+  Future<void> saveChapterOffline({
+    required String novelId,
+    required String chapterId,
+    required String title,
+    required String content,
+    required String savedAt,
+  }) async {
+    final db = _database!;
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS saved_chapters (
+        novelId TEXT,
+        chapterId TEXT,
+        title TEXT,
+        content TEXT,
+        savedAt TEXT,
+        PRIMARY KEY (novelId, chapterId)
+      )
+    ''');
+    await db.insert('saved_chapters', {
+      'novelId': novelId,
+      'chapterId': chapterId,
+      'title': title,
+      'content': content,
+      'savedAt': savedAt,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<Map<String, dynamic>>> getSavedChaptersForNovel(String novelId) async {
+    final db = _database!;
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS saved_chapters (
+        novelId TEXT,
+        chapterId TEXT,
+        title TEXT,
+        content TEXT,
+        savedAt TEXT,
+        PRIMARY KEY (novelId, chapterId)
+      )
+    ''');
+    final rows = await db.query(
+      'saved_chapters',
+      where: 'novelId = ?',
+      whereArgs: [novelId],
+      orderBy: 'savedAt DESC',
+    );
+    return rows.map((r) => Map<String, dynamic>.from(r)).toList();
+  }
+
+  Future<Map<String, dynamic>?> getSavedChapter(String novelId, String chapterId) async {
+    final db = _database!;
+    final rows = await db.query(
+      'saved_chapters',
+      where: 'novelId = ? AND chapterId = ?',
+      whereArgs: [novelId, chapterId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return Map<String, dynamic>.from(rows.first);
+  }
+
+  Future<void> deleteSavedChapter(String novelId, String chapterId) async {
+    final db = _database!;
+    await db.delete(
+      'saved_chapters',
+      where: 'novelId = ? AND chapterId = ?',
+      whereArgs: [novelId, chapterId],
+    );
+  }
+
+  Future<bool> isChapterSaved(String novelId, String chapterId) async {
+    final db = _database!;
+    final rows = await db.query(
+      'saved_chapters',
+      where: 'novelId = ? AND chapterId = ?',
+      whereArgs: [novelId, chapterId],
+      limit: 1,
+    );
+    return rows.isNotEmpty;
   }
 
   Future<void> deleteLocalEpub(String id) async {

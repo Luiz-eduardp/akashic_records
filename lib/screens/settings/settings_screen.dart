@@ -12,6 +12,8 @@ import 'package:version/version.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'dart:io';
 import 'storage_manager_screen.dart';
+import 'package:akashic_records/screens/backups_screen.dart';
+import 'package:akashic_records/screens/offline_library_screen.dart';
 
 const double kCardPadding = 16.0;
 const double kSectionSpacing = 12.0;
@@ -297,6 +299,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'data_management'.translate,
               children: [
                 ListTile(
+                  leading: const Icon(Icons.cloud_off_outlined),
+                  title: Text('offline_library'.translate),
+                  subtitle: Text('manage_offline_chapters'.translate),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const OfflineLibraryScreen(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
                   leading: const Icon(Icons.storage),
                   title: Text('storage_manager_title'.translate),
                   subtitle: Text('storage_manager_sub'.translate),
@@ -306,6 +321,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       MaterialPageRoute(
                         builder: (_) => const StorageManagerScreen(),
                       ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.backup),
+                  title: Text('backup_manager'.translate),
+                  subtitle: Text('backup_manager_sub'.translate),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const BackupsScreen()),
                     );
                   },
                 ),

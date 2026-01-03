@@ -14,6 +14,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:akashic_records/screens/reader/reader_subheader.dart';
 import 'package:akashic_records/screens/reader/reader_config_modal.dart';
+import 'package:akashic_records/widgets/reader_controls_bar.dart';
 import 'package:akashic_records/services/reader_tts.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -270,18 +271,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void _startTimers() {
     _currentTime = _formatTime(DateTime.now());
     _timeTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
       setState(() => _currentTime = _formatTime(DateTime.now()));
     });
     _updateBattery();
-    _batteryTimer = Timer.periodic(
-      const Duration(minutes: 1),
-      (_) => _updateBattery(),
-    );
+    _batteryTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (!mounted) return;
+      _updateBattery();
+    });
   }
 
   Future<void> _updateBattery() async {
     try {
       final level = await _battery.batteryLevel;
+      if (!mounted) return;
       setState(() => _batteryLevel = level);
     } catch (_) {}
   }
@@ -466,46 +469,34 @@ class _ReaderScreenState extends State<ReaderScreen> {
             isFullscreen
                 ? null
                 : AppBar(
+                  title: Text(novel.title, overflow: TextOverflow.ellipsis),
+                  centerTitle: false,
                   actions: [
                     IconButton(
-                      tooltip: 'Previous',
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: _goToPrevious,
-                    ),
-                    IconButton(
-                      tooltip: 'TTS play/pause',
-                      icon: Icon(_ttsPlaying ? Icons.pause : Icons.play_arrow),
+                      tooltip: 'Fullscreen',
+                      icon: Icon(
+                        (_prefs['fullscreen'] as bool?) == true
+                            ? Icons.fullscreen_exit
+                            : Icons.fullscreen,
+                      ),
                       onPressed: () async {
-                        try {
-                          if (_ttsPlaying) {
-                            await _tts.pause();
-                            _ttsUserRequested = false;
-                            setState(() => _ttsPlaying = false);
-                            _showTtsNotification(false);
-                          } else {
-                            _ttsUserRequested = true;
-                            await _startTtsForCurrentChapter(
-                              userInitiated: true,
-                            );
-                            setState(() => _ttsPlaying = true);
-                          }
-                        } catch (e) {}
+                        final current =
+                            (_prefs['fullscreen'] as bool?) ?? false;
+                        final newVal = !current;
+                        await _setFullscreenMode(newVal);
+                        setState(() {
+                          _prefs['fullscreen'] = newVal;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              newVal
+                                  ? 'fullscreen_enabled'.translate
+                                  : 'fullscreen_disabled'.translate,
+                            ),
+                          ),
+                        );
                       },
-                    ),
-                    IconButton(
-                      tooltip: 'Chapters',
-                      icon: const Icon(Icons.list),
-                      onPressed: _openChapterSelector,
-                    ),
-                    IconButton(
-                      tooltip: 'Reader settings',
-                      icon: const Icon(Icons.settings),
-                      onPressed: _openConfigModal,
-                    ),
-                    IconButton(
-                      tooltip: 'Next',
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: _goToNext,
                     ),
                   ],
                 ),
@@ -546,6 +537,52 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     child: WebViewWidget(controller: _controller!),
                   ),
                 ),
+              ),
+              SizedBox(height: 8),
+              ReaderControlsBar(
+                onPrev: _goToPrevious,
+                onNext: _goToNext,
+                onOpenChapters: _openChapterSelector,
+                onOpenSettings: () => _openConfigModal(fullModal: true),
+                onSave: () async {
+                  try {
+                    final chapter = novel.chapters[selectedChapter];
+                    final appState = Provider.of<AppState>(
+                      context,
+                      listen: false,
+                    );
+                    final already = await appState.isChapterSaved(
+                      novel.id,
+                      chapter.id,
+                    );
+                    if (already) {
+                      await appState.deleteSavedChapter(novel.id, chapter.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Removed from offline')),
+                      );
+                    } else {
+                      await appState.saveChapterOffline(novel.id, chapter);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Saved for offline reading')),
+                      );
+                    }
+                  } catch (_) {}
+                },
+                onToggleTts: () async {
+                  try {
+                    if (_ttsPlaying) {
+                      await _tts.pause();
+                      _ttsUserRequested = false;
+                      setState(() => _ttsPlaying = false);
+                      _showTtsNotification(false);
+                    } else {
+                      _ttsUserRequested = true;
+                      await _startTtsForCurrentChapter(userInitiated: true);
+                      setState(() => _ttsPlaying = true);
+                    }
+                  } catch (e) {}
+                },
+                ttsPlaying: _ttsPlaying,
               ),
             ],
           ),
@@ -803,6 +840,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
 ''';
     final html = '$base$scrollJs</body></html>';
     await _controller!.loadHtmlString(html);
+
+    Future.delayed(const Duration(milliseconds: 100), () async {
+      try {
+        await _controller!.runJavaScript('window.scrollTo(0,0);');
+      } catch (_) {}
+    });
 
     try {
       final enabledScripts =

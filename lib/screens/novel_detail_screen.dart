@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/db/novel_database.dart';
 import 'package:akashic_records/services/plugin_registry.dart';
@@ -8,6 +9,7 @@ import 'package:akashic_records/widgets/skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
+import 'package:akashic_records/services/download_queue_service.dart';
 import 'dart:async';
 
 class NovelDetailScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
   bool _loadingDetails = false;
   bool _loadingReadStates = true;
   Timer? _searchDebounce;
+  final Map<String, DownloadStatus> _downloadStatus = {};
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -39,6 +42,22 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     filtered = List.from(chapters);
     _loadReadStates();
     _ensureDetails();
+    _setupDownloadQueueListener();
+  }
+
+  void _setupDownloadQueueListener() {
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.setOnQueueUpdated(() {
+      if (mounted) {
+        setState(() {
+          for (final item in appState.downloadQueue.queue) {
+            if (item.novelId == (novel ?? widget.novel).id) {
+              _downloadStatus[item.chapter.id] = item.status;
+            }
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -54,10 +73,13 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     try {
       final db = await NovelDatabase.getInstance();
       final set = await db.getReadChaptersForNovel((novel ?? widget.novel).id);
-      if (mounted) setState(() => readChapters = set);
+      if (mounted) {
+        setState(() {
+          readChapters = set;
+          _loadingReadStates = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() => readChapters = {});
-    } finally {
       if (mounted) setState(() => _loadingReadStates = false);
     }
   }
@@ -93,362 +115,422 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
 
       if (full != null) {
         novel ??= current;
-        if (full.title.isNotEmpty) novel!.title = full.title;
-        if (full.coverImageUrl.isNotEmpty)
-          novel!.coverImageUrl = full.coverImageUrl;
-        if (full.author.isNotEmpty) novel!.author = full.author;
-        if (full.description.isNotEmpty) novel!.description = full.description;
-        if (full.genres.isNotEmpty) novel!.genres = full.genres;
+        novel!.title = full.title.isNotEmpty ? full.title : novel!.title;
+        novel!.coverImageUrl =
+            full.coverImageUrl.isNotEmpty
+                ? full.coverImageUrl
+                : novel!.coverImageUrl;
+        novel!.author = full.author.isNotEmpty ? full.author : novel!.author;
+        novel!.description =
+            full.description.isNotEmpty ? full.description : novel!.description;
+        novel!.genres = full.genres.isNotEmpty ? full.genres : novel!.genres;
 
-        final existingById = <String, Chapter>{};
-        for (final c in novel!.chapters) {
-          existingById[c.id] = c;
-        }
-
-        final merged = <Chapter>[];
-        for (final c in full.chapters) {
-          final existing = existingById[c.id];
-          if (existing != null) {
-            c.content =
-                (existing.content != null && existing.content!.isNotEmpty)
-                    ? existing.content
-                    : c.content;
-            c.chapterNumber = c.chapterNumber ?? existing.chapterNumber;
-          }
-          merged.add(c);
-        }
+        final existingById = {for (var c in novel!.chapters) c.id: c};
+        final merged =
+            full.chapters.map((c) {
+              final existing = existingById[c.id];
+              if (existing != null) {
+                c.content =
+                    (existing.content?.isNotEmpty ?? false)
+                        ? existing.content
+                        : c.content;
+                c.chapterNumber ??= existing.chapterNumber;
+              }
+              return c;
+            }).toList();
 
         novel!.chapters = merged;
-        chapters = List.from(novel!.chapters);
+        chapters = List.from(merged);
         _applyFilters();
 
         final db = await NovelDatabase.getInstance();
-        await db.upsertNovel(novel ?? widget.novel);
-      } else {
-        _applyFilters();
+        await db.upsertNovel(novel!);
       }
     } catch (e) {
-      debugPrint(
-        'Failed to fetch full novel details for ${(novel ?? widget.novel).id}: $e',
-      );
-      _applyFilters();
+      debugPrint('Error fetching details: $e');
     } finally {
       if (mounted) setState(() => _loadingDetails = false);
     }
   }
 
   Future<void> _handleFavoriteToggle() async {
+    HapticFeedback.mediumImpact();
     final appState = Provider.of<AppState>(context, listen: false);
     final currentNovel = novel ?? widget.novel;
-    final id = currentNovel.id;
-    final wasFavorite = currentNovel.isFavorite;
 
     try {
-      if (!wasFavorite) {
-        final toSave = novel ?? widget.novel;
-        toSave.isFavorite = true;
-        await appState.addOrUpdateNovel(toSave);
+      if (!currentNovel.isFavorite) {
+        currentNovel.isFavorite = true;
+        await appState.addOrUpdateNovel(currentNovel);
       } else {
-        await appState.toggleFavorite(id);
+        await appState.toggleFavorite(currentNovel.id);
       }
 
-      final updated = appState.localNovels.firstWhere(
-        (n) => n.id == id,
-        orElse: () => currentNovel,
-      );
-
       setState(() {
-        novel = updated;
+        novel = appState.localNovels.firstWhere(
+          (n) => n.id == currentNovel.id,
+          orElse: () => currentNovel,
+        );
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            updated.isFavorite
+            novel!.isFavorite
                 ? 'added_to_favorites'.translate
                 : 'removed_from_favorites'.translate,
           ),
-          duration: const Duration(milliseconds: 1500),
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
         ),
       );
-    } catch (e) {
+    } catch (_) {}
+  }
+
+  int _getContinueReadingIndex() {
+    final currentNovel = novel ?? widget.novel;
+    if (currentNovel.lastReadChapterId == null) return 0;
+    final idx = chapters.indexWhere(
+      (c) => c.id == currentNovel.lastReadChapterId,
+    );
+    return idx != -1 ? idx : 0;
+  }
+
+  Future<void> _downloadAllChapters() async {
+    final currentNovel = novel ?? widget.novel;
+    final appState = Provider.of<AppState>(context, listen: false);
+
+    int count = 0;
+    for (final ch in chapters) {
+      await appState.addChapterToDownloadQueue(currentNovel.id, ch);
+      count++;
+    }
+
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${'failed_update_favorite'.translate}: $e')),
+        SnackBar(
+          content: Text('$count capítulos adicionados à fila'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
       );
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currentNovel = novel ?? widget.novel;
+    final isLoading = _loadingDetails || _loadingReadStates;
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.large(
+            title: Text(currentNovel.title),
+            pinned: true,
+            actions: [
+              if (chapters.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.cloud_download_outlined),
+                  tooltip: 'download_all_chapters'.translate,
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder:
+                          (ctx) => AlertDialog(
+                            title: const Text('Confirmar'),
+                            content: Text(
+                              'Baixar todos os ${chapters.length} capítulos?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  _downloadAllChapters();
+                                },
+                                child: const Text('Confirmar'),
+                              ),
+                            ],
+                          ),
+                    );
+                  },
+                ),
+              IconButton(
+                icon: Icon(
+                  currentNovel.isFavorite
+                      ? Icons.bookmark
+                      : Icons.bookmark_border,
+                  color:
+                      currentNovel.isFavorite
+                          ? theme.colorScheme.primary
+                          : null,
+                ),
+                onPressed: _handleFavoriteToggle,
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                NovelHeader(novel: currentNovel, loading: _loadingDetails),
+                _buildReadingProgress(theme),
+              ],
+            ),
+          ),
+
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverChapterToolbarDelegate(
+              child: _buildChapterToolbar(context),
+            ),
+          ),
+
+          if (isLoading && chapters.isEmpty)
+            SliverFillRemaining(child: _buildLoadingSkeleton())
+          else if (filtered.isEmpty)
+            SliverFillRemaining(
+              child: Center(child: Text('no_chapters_found'.translate)),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+              sliver: ChapterList(
+                sliver: true,
+                chapters: filtered,
+                readChapters: readChapters,
+                novelId: currentNovel.id,
+                downloadStatus: _downloadStatus,
+                onDownload: (ch) async {
+                  final appState = Provider.of<AppState>(
+                    context,
+                    listen: false,
+                  );
+                  await appState.addChapterToDownloadQueue(currentNovel.id, ch);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Baixando "${ch.title}"...'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                onDownloadAll: (chaps) async {
+                  final appState = Provider.of<AppState>(
+                    context,
+                    listen: false,
+                  );
+                  int count = 0;
+                  for (final ch in chaps) {
+                    await appState.addChapterToDownloadQueue(
+                      currentNovel.id,
+                      ch,
+                    );
+                    count++;
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$count capítulos adicionados à fila'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                onCancelDownload: (chapterId) async {
+                  final appState = Provider.of<AppState>(
+                    context,
+                    listen: false,
+                  );
+                  await appState.removeFromDownloadQueue(
+                    currentNovel.id,
+                    chapterId,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Download cancelado'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                onTap: (ch, index) async {
+                  final absIdx = chapters.indexWhere((c) => c.id == ch.id);
+                  await Navigator.pushNamed(
+                    context,
+                    '/reader',
+                    arguments: {
+                      'novel': currentNovel,
+                      'chapterIndex': absIdx != -1 ? absIdx : 0,
+                    },
+                  );
+                  _loadReadStates();
+                },
+                onLongPressToggleRead: (ch, index) async {
+                  HapticFeedback.lightImpact();
+                  final appState = Provider.of<AppState>(
+                    context,
+                    listen: false,
+                  );
+                  await appState.setChapterRead(
+                    currentNovel.id,
+                    ch.id,
+                    !readChapters.contains(ch.id),
+                  );
+                  _loadReadStates();
+                },
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton:
+          chapters.isNotEmpty
+              ? FloatingActionButton.extended(
+                onPressed: () {
+                  final idx = _getContinueReadingIndex();
+                  Navigator.pushNamed(
+                    context,
+                    '/reader',
+                    arguments: {'novel': currentNovel, 'chapterIndex': idx},
+                  ).then((_) => _loadReadStates());
+                },
+                icon: const Icon(Icons.play_arrow),
+                label: Text('continue_reading'.translate),
+              )
+              : null,
+    );
+  }
+
+  Widget _buildReadingProgress(ThemeData theme) {
+    if (chapters.isEmpty) return const SizedBox.shrink();
+    final progress = readChapters.length / chapters.length;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${'progress'.translate}: ${readChapters.length}/${chapters.length}',
+                style: theme.textTheme.labelMedium,
+              ),
+              Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
+                style: theme.textTheme.labelMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          LinearProgressIndicator(
+            value: progress,
+            borderRadius: BorderRadius.circular(4),
+            minHeight: 6,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildChapterToolbar(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
+      color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(
-          bottom: BorderSide(color: theme.dividerColor.withOpacity(0.3)),
-        ),
-      ),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
+            child: SearchBar(
               controller: _searchController,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search, size: 20),
-                hintText: 'search_chapters_hint'.translate,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHigh,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                isDense: true,
+              hintText: 'search_chapters_hint'.translate,
+              elevation: WidgetStateProperty.all(0),
+              backgroundColor: WidgetStateProperty.all(
+                theme.colorScheme.surfaceContainerHigh,
+              ),
+              padding: WidgetStateProperty.all(
+                const EdgeInsets.symmetric(horizontal: 12),
               ),
               onChanged: (v) {
                 _searchDebounce?.cancel();
-                _searchDebounce = Timer(const Duration(milliseconds: 200), () {
+                _searchDebounce = Timer(const Duration(milliseconds: 300), () {
                   setState(() {
                     _search = v;
                     _applyFilters();
                   });
                 });
               },
+              leading: const Icon(Icons.search, size: 20),
             ),
           ),
-          const SizedBox(width: 8),
-
-          Tooltip(
-            message:
-                _asc ? 'sort_ascending'.translate : 'sort_descending'.translate,
-            child: IconButton(
-              icon: Icon(
-                _asc ? Icons.sort_by_alpha : Icons.sort_by_alpha_sharp,
-                color: theme.colorScheme.primary,
-              ),
-              onPressed: () {
-                setState(() {
-                  _asc = !_asc;
-                  _applyFilters();
-                });
-              },
-            ),
+          const SizedBox(width: 12),
+          IconButton.filledTonal(
+            icon: Icon(_asc ? Icons.sort_by_alpha : Icons.sort_by_alpha_sharp),
+            onPressed: () {
+              setState(() {
+                _asc = !_asc;
+                _applyFilters();
+              });
+            },
           ),
-
-          Tooltip(
-            message: 'mark_all_read'.translate,
-            child: IconButton(
-              icon: Icon(Icons.done_all, color: theme.colorScheme.secondary),
-              onPressed: () async {
-                final appState = Provider.of<AppState>(context, listen: false);
-                for (final ch in chapters) {
-                  await appState.setChapterRead(
-                    (novel ?? widget.novel).id,
-                    ch.id,
-                    true,
-                  );
-                }
-                await _loadReadStates();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('marked_all_chapters_read'.translate),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
+          IconButton.filledTonal(
+            icon: const Icon(Icons.done_all),
+            onPressed: () => _markAllRead(context),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _markAllRead(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: Text('mark_all_read'.translate),
+            content: Text('confirm_mark_all_read'.translate),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('cancel'.translate),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('confirm'.translate),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm == true) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      for (final ch in chapters) {
+        await appState.setChapterRead((novel ?? widget.novel).id, ch.id, true);
+      }
+      _loadReadStates();
+    }
   }
 
   Widget _buildLoadingSkeleton() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
-    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
-
     return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          NovelHeader(novel: novel ?? widget.novel, loading: true),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: List.generate(
+          10,
+          (index) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: LoadingSkeleton.rect(
-              height: 48,
-              baseColor: baseColor,
-              highlightColor: highlightColor,
-              borderRadius: BorderRadius.circular(30),
+              height: 60,
+              width: double.infinity,
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
-
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 8,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (ctx, i) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          LoadingSkeleton.rect(
-                            height: 16,
-                            baseColor: baseColor,
-                            highlightColor: highlightColor,
-                            width: i.isEven ? double.infinity : 200,
-                          ),
-                          const SizedBox(height: 6),
-                          LoadingSkeleton.rect(
-                            height: 12,
-                            width: 150,
-                            baseColor: baseColor,
-                            highlightColor: highlightColor,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    LoadingSkeleton.rect(
-                      width: 24,
-                      height: 24,
-                      baseColor: baseColor,
-                      highlightColor: highlightColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isLoading = _loadingDetails || _loadingReadStates;
-    final currentNovel = novel ?? widget.novel;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          currentNovel.title,
-          style: Theme.of(context).textTheme.titleLarge,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
-        actions: [
-          if (!isLoading)
-            IconButton(
-              tooltip: 'favorites'.translate,
-              icon: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder:
-                    (child, animation) =>
-                        ScaleTransition(scale: animation, child: child),
-                child: Icon(
-                  currentNovel.isFavorite
-                      ? Icons.bookmark
-                      : Icons.bookmark_border,
-                  key: ValueKey<bool>(currentNovel.isFavorite),
-                  color:
-                      currentNovel.isFavorite
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.onSurface,
-                  size: 28,
-                ),
-              ),
-              onPressed: _handleFavoriteToggle,
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: CustomScrollView(
-        slivers: [
-          SliverList(
-            delegate: SliverChildListDelegate([
-              NovelHeader(novel: currentNovel, loading: _loadingDetails),
-            ]),
-          ),
-
-          if (!isLoading)
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverChapterToolbarDelegate(
-                child: _buildChapterToolbar(context),
-              ),
-            ),
-
-          if (isLoading)
-            SliverList(
-              delegate: SliverChildListDelegate([_buildLoadingSkeleton()]),
-            )
-          else if (filtered.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Text(
-                    'no_chapters_found'.translate,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              sliver: ChapterList(
-                sliver: true,
-                chapters: filtered,
-                readChapters: readChapters,
-                novelId: currentNovel.id,
-                onTap: (ch, index) async {
-                  final absoluteIndex = currentNovel.chapters.indexWhere(
-                    (c) => c.id == ch.id,
-                  );
-
-                  await Navigator.pushNamed(
-                    context,
-                    '/reader',
-                    arguments: {
-                      'novel': currentNovel,
-                      'chapterIndex': absoluteIndex >= 0 ? absoluteIndex : 0,
-                    },
-                  );
-                  await _loadReadStates();
-                },
-                onLongPressToggleRead: (ch, index) async {
-                  final appState = Provider.of<AppState>(
-                    context,
-                    listen: false,
-                  );
-                  final isRead = readChapters.contains(ch.id);
-                  await appState.setChapterRead(
-                    currentNovel.id,
-                    ch.id,
-                    !isRead,
-                  );
-                  await _loadReadStates();
-                },
-              ),
-            ),
-        ],
       ),
     );
   }
@@ -456,14 +538,12 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
 
 class _SliverChapterToolbarDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
-
   _SliverChapterToolbarDelegate({required this.child});
 
   @override
-  double get minExtent => 64.0;
-
+  double get minExtent => 70.0;
   @override
-  double get maxExtent => 64.0;
+  double get maxExtent => 70.0;
 
   @override
   Widget build(
@@ -471,14 +551,9 @@ class _SliverChapterToolbarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: child,
-    );
+    return Material(elevation: overlapsContent ? 4 : 0, child: child);
   }
 
   @override
-  bool shouldRebuild(_SliverChapterToolbarDelegate oldDelegate) {
-    return oldDelegate.child != child;
-  }
+  bool shouldRebuild(_SliverChapterToolbarDelegate oldDelegate) => true;
 }

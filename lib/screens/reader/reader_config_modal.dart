@@ -106,10 +106,12 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
             ? (temp['fontWeight'] as num).toInt()
             : ((temp['fontBold'] ?? false) ? 700 : 400);
     final bold = (temp['fontBold'] ?? false) as bool;
-  int weightIdx = (weightVal ~/ 100) - 1;
-  if (weightIdx < 0) weightIdx = 0;
-  if (weightIdx >= FontWeight.values.length) weightIdx = FontWeight.values.length - 1;
-  final resolvedWeight = bold ? FontWeight.bold : FontWeight.values[weightIdx];
+    int weightIdx = (weightVal ~/ 100) - 1;
+    if (weightIdx < 0) weightIdx = 0;
+    if (weightIdx >= FontWeight.values.length)
+      weightIdx = FontWeight.values.length - 1;
+    final resolvedWeight =
+        bold ? FontWeight.bold : FontWeight.values[weightIdx];
     Color? color;
     try {
       if (temp['fontColor'] != null) {
@@ -200,6 +202,18 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
     return base;
   }
 
+  Color _parseHexColor(String? hex, {Color fallback = Colors.transparent}) {
+    try {
+      if (hex == null) return fallback;
+      var h = hex.replaceFirst('#', '');
+      if (h.length == 6) h = 'ff$h';
+      final intVal = int.parse(h, radix: 16);
+      return Color(intVal);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -207,6 +221,81 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Expanded(
+                  child: Text(
+                    'reader_settings_title'.translate,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _apply();
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('ok'.translate),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+            child: Builder(
+              builder: (ctx) {
+                final presets = _presetThemes();
+                final presetIndex =
+                    (temp['presetIndex'] is num)
+                        ? (temp['presetIndex'] as num).toInt()
+                        : 0;
+                final preset =
+                    presets.isNotEmpty
+                        ? presets[presetIndex % presets.length]
+                        : {'bg': '#FFFFFF', 'fg': '#000000'};
+                final bgHex = temp['bgColor'] ?? (preset['bg'] ?? '#FFFFFF');
+                final bgColor = _parseHexColor(
+                  bgHex,
+                  fallback: Theme.of(context).colorScheme.background,
+                );
+                return Container(
+                  width: double.infinity,
+                  height: 120,
+                  margin: const EdgeInsets.only(bottom: 8.0, top: 8.0),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: Text(
+                    'The quick brown fox jumps over the lazy dog',
+                    style: _previewStyle(),
+                  ),
+                );
+              },
+            ),
+          ),
           TabBar(
             tabs: [
               Tab(text: 'settings'.translate),
@@ -237,15 +326,7 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                             children: [
                               Text('preview'.translate),
                               const SizedBox(height: 8),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(12),
-                                color: Theme.of(context).colorScheme.background,
-                                child: Text(
-                                  'The quick brown fox jumps over the lazy dog',
-                                  style: _previewStyle(),
-                                ),
-                              ),
+                              const SizedBox.shrink(),
                             ],
                           ),
                         ),
@@ -256,19 +337,6 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(child: Text('', style: const TextStyle())),
-                            IconButton(
-                              icon: const Icon(Icons.check),
-                              onPressed: () {
-                                _apply();
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
                         ),
                         const SizedBox(height: 8),
                         Text('alignment'.translate),
@@ -674,7 +742,20 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                                         ),
                                       ),
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.black12),
+                                      border: Border.all(
+                                        color:
+                                            (temp['bgColor'] == bg &&
+                                                    temp['fontColor'] == fg)
+                                                ? Theme.of(
+                                                  context,
+                                                ).colorScheme.primary
+                                                : Colors.black12,
+                                        width:
+                                            (temp['bgColor'] == bg &&
+                                                    temp['fontColor'] == fg)
+                                                ? 2
+                                                : 1,
+                                      ),
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
@@ -715,90 +796,228 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            ElevatedButton(
-                              onPressed: () async {
-                                final initial =
-                                    temp['fontColor'] != null
-                                        ? Color(
-                                          int.parse(
-                                            (temp['fontColor'] as String)
-                                                .replaceFirst('#', '0xff'),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final initial =
+                                        temp['fontColor'] != null
+                                            ? Color(
+                                              int.parse(
+                                                (temp['fontColor'] as String)
+                                                    .replaceFirst('#', '0xff'),
+                                              ),
+                                            )
+                                            : Colors.black;
+                                    Color picked = initial;
+                                    await showDialog(
+                                      context: context,
+                                      builder: (ctx) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'select_text_color'.translate,
                                           ),
-                                        )
-                                        : Colors.black;
-                                Color picked = initial;
-                                await showDialog(
-                                  context: context,
-                                  builder: (ctx) {
-                                    return AlertDialog(
-                                      title: Text(
-                                        'select_text_color'.translate,
-                                      ),
-                                      content: SingleChildScrollView(
-                                        child: ColorPicker(
-                                          pickerColor: initial,
-                                          onColorChanged: (c) => picked = c,
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed:
-                                              () => Navigator.of(ctx).pop(),
-                                          child: Text('ok'.translate),
-                                        ),
-                                      ],
+                                          content: SingleChildScrollView(
+                                            child: ColorPicker(
+                                              pickerColor: initial,
+                                              onColorChanged: (c) => picked = c,
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.of(ctx).pop(),
+                                              child: Text('ok'.translate),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     );
+                                    setState(() {
+                                      temp['fontColor'] =
+                                          '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                                    });
+                                    _apply();
                                   },
-                                );
-                                setState(() {
-                                  temp['fontColor'] =
-                                      '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-                                });
-                                _apply();
-                              },
-                              child: Text('choose_text_color'.translate),
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          temp['fontColor'] != null
+                                              ? Color(
+                                                int.parse(
+                                                  (temp['fontColor'] as String)
+                                                      .replaceFirst(
+                                                        '#',
+                                                        '0xff',
+                                                      ),
+                                                ),
+                                              )
+                                              : Colors.black,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.black26),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    final initial =
+                                        temp['fontColor'] != null
+                                            ? Color(
+                                              int.parse(
+                                                (temp['fontColor'] as String)
+                                                    .replaceFirst('#', '0xff'),
+                                              ),
+                                            )
+                                            : Colors.black;
+                                    Color picked = initial;
+                                    await showDialog(
+                                      context: context,
+                                      builder: (ctx) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'select_text_color'.translate,
+                                          ),
+                                          content: SingleChildScrollView(
+                                            child: ColorPicker(
+                                              pickerColor: initial,
+                                              onColorChanged: (c) => picked = c,
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.of(ctx).pop(),
+                                              child: Text('ok'.translate),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                    setState(() {
+                                      temp['fontColor'] =
+                                          '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                                    });
+                                    _apply();
+                                  },
+                                  child: Text('choose_text_color'.translate),
+                                ),
+                              ],
                             ),
                             const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: () async {
-                                final initial =
-                                    temp['bgColor'] != null
-                                        ? Color(
-                                          int.parse(
-                                            (temp['bgColor'] as String)
-                                                .replaceFirst('#', '0xff'),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final initial =
+                                        temp['bgColor'] != null
+                                            ? Color(
+                                              int.parse(
+                                                (temp['bgColor'] as String)
+                                                    .replaceFirst('#', '0xff'),
+                                              ),
+                                            )
+                                            : Colors.white;
+                                    Color picked = initial;
+                                    await showDialog(
+                                      context: context,
+                                      builder: (ctx) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'select_bg_color'.translate,
                                           ),
-                                        )
-                                        : Colors.white;
-                                Color picked = initial;
-                                await showDialog(
-                                  context: context,
-                                  builder: (ctx) {
-                                    return AlertDialog(
-                                      title: Text('select_bg_color'.translate),
-                                      content: SingleChildScrollView(
-                                        child: ColorPicker(
-                                          pickerColor: initial,
-                                          onColorChanged: (c) => picked = c,
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed:
-                                              () => Navigator.of(ctx).pop(),
-                                          child: Text('ok'.translate),
-                                        ),
-                                      ],
+                                          content: SingleChildScrollView(
+                                            child: ColorPicker(
+                                              pickerColor: initial,
+                                              onColorChanged: (c) => picked = c,
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.of(ctx).pop(),
+                                              child: Text('ok'.translate),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     );
+                                    setState(() {
+                                      temp['bgColor'] =
+                                          '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                                    });
+                                    _apply();
                                   },
-                                );
-                                setState(() {
-                                  temp['bgColor'] =
-                                      '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-                                });
-                                _apply();
-                              },
-                              child: Text('choose_bg_color'.translate),
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          temp['bgColor'] != null
+                                              ? Color(
+                                                int.parse(
+                                                  (temp['bgColor'] as String)
+                                                      .replaceFirst(
+                                                        '#',
+                                                        '0xff',
+                                                      ),
+                                                ),
+                                              )
+                                              : Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.black26),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    final initial =
+                                        temp['bgColor'] != null
+                                            ? Color(
+                                              int.parse(
+                                                (temp['bgColor'] as String)
+                                                    .replaceFirst('#', '0xff'),
+                                              ),
+                                            )
+                                            : Colors.white;
+                                    Color picked = initial;
+                                    await showDialog(
+                                      context: context,
+                                      builder: (ctx) {
+                                        return AlertDialog(
+                                          title: Text(
+                                            'select_bg_color'.translate,
+                                          ),
+                                          content: SingleChildScrollView(
+                                            child: ColorPicker(
+                                              pickerColor: initial,
+                                              onColorChanged: (c) => picked = c,
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.of(ctx).pop(),
+                                              child: Text('ok'.translate),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                    setState(() {
+                                      temp['bgColor'] =
+                                          '#${picked.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                                    });
+                                    _apply();
+                                  },
+                                  child: Text('choose_bg_color'.translate),
+                                ),
+                              ],
                             ),
                             const SizedBox(width: 8),
                             ChoiceChip(
