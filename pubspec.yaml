@@ -2,7 +2,7 @@ name: akashic_records
 description: A novel reader application.
 publish_to: "none"
 
-version: 2.2.3+1
+version: 2.2.4+1
 
 environment:
   sdk: ^3.7.0
@@ -27,6 +27,7 @@ dependencies:
   dio: ^5.8.0+1
   dio_cookie_manager: ^3.2.0
   path_provider: ^2.1.5
+  connectivity_plus: ^4.0.1
   sqflite: ^2.2.8
   path: ^1.8.3
   flutter_colorpicker: ^1.1.0

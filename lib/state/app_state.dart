@@ -1,10 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:akashic_records/db/novel_database.dart';
+import 'package:akashic_records/services/backup_service.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/services/plugin_registry.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/services/download_queue_service.dart';
 
 class AppState extends ChangeNotifier {
   late NovelDatabase _db;
@@ -20,6 +25,10 @@ class AppState extends ChangeNotifier {
   int navAnimationMs = 250;
   String? customDns;
   String? customUserAgent;
+  bool isOnline = true;
+  StreamSubscription<ConnectivityResult>? _connectivitySub;
+  late DownloadQueueService _downloadQueue;
+  VoidCallback? _onQueueUpdated;
 
   List<Novel> _localNovels = [];
 
@@ -30,7 +39,13 @@ class AppState extends ChangeNotifier {
 
   Future<void> initialize() async {
     _db = await NovelDatabase.getInstance();
+    _initializeConnectivity();
+    _downloadQueue = DownloadQueueService();
     _localNovels = await _db.getAllNovels();
+    try {
+      final backupSvc = BackupService();
+      await backupSvc.performDailyBackup();
+    } catch (_) {}
     try {
       final saved = await _db.getSetting('app_locale');
       if (saved != null && saved.isNotEmpty) {
@@ -128,6 +143,39 @@ class AppState extends ChangeNotifier {
       if (ua != null && ua.isNotEmpty) customUserAgent = ua;
     } catch (_) {}
     notifyListeners();
+  }
+
+  void _initializeConnectivity() {
+    final conn = Connectivity();
+    try {
+      conn
+          .checkConnectivity()
+          .then((r) {
+            isOnline = r != ConnectivityResult.none;
+            notifyListeners();
+          })
+          .catchError((_) {
+            isOnline = true;
+            notifyListeners();
+          });
+    } catch (_) {
+      isOnline = true;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      _connectivitySub = conn.onConnectivityChanged.listen((r) {
+        final newVal = r != ConnectivityResult.none;
+        if (newVal != isOnline) {
+          isOnline = newVal;
+          notifyListeners();
+        }
+      }, onError: (_) {});
+    } catch (_) {
+      isOnline = true;
+      notifyListeners();
+    }
   }
 
   Future<void> loadLatestReleaseInfo() async {
@@ -276,9 +324,11 @@ class AppState extends ChangeNotifier {
   Future<void> addOrUpdateNovel(Novel novel) async {
     await _db.upsertNovel(novel);
     try {
-      print(
-        'addOrUpdateNovel: saving novel ${novel.id} fav=${novel.isFavorite}',
-      );
+      if (kDebugMode) {
+        debugPrint(
+          'addOrUpdateNovel: saving novel ${novel.id} fav=${novel.isFavorite}',
+        );
+      }
     } catch (_) {}
     await refreshLocalNovels();
   }
@@ -290,14 +340,17 @@ class AppState extends ChangeNotifier {
     novel.isFavorite = value ?? !novel.isFavorite;
     await _db.upsertNovel(novel);
     try {
-      print('toggleFavorite: toggled ${novel.id} -> ${novel.isFavorite}');
+      if (kDebugMode)
+        debugPrint(
+          'toggleFavorite: toggled ${novel.id} -> ${novel.isFavorite}',
+        );
     } catch (_) {}
     await refreshLocalNovels();
   }
 
-  Future<void> refreshLocalNovels() async {
+  Future<void> refreshLocalNovels({bool notify = true}) async {
     _localNovels = await _db.getAllNovels();
-    notifyListeners();
+    if (notify) notifyListeners();
   }
 
   Future<void> setChapterRead(
@@ -313,51 +366,49 @@ class AppState extends ChangeNotifier {
   Future<Map<String, int>> checkForUpdates() async {
     final Map<String, int> updates = {};
     final favorites = favoriteNovels;
-
     const int maxConcurrent = 4;
-    final queue = List<Novel>.from(favorites);
-    final List<Future<void>> workers = [];
 
-    Future<void> worker() async {
-      while (queue.isNotEmpty) {
-        final novel = queue.removeAt(0);
-        final PluginService? service = PluginRegistry.get(novel.pluginId);
-        if (service == null) continue;
-        try {
-          final enabled = await getPluginState(service.name);
-          if (!enabled) continue;
-          final latest = await service
-              .parseNovel(novel.id)
-              .timeout(const Duration(seconds: 15));
-          final latestCount = latest.chapters.length;
-          final known = novel.lastKnownChapterCount;
-          if (latestCount > known) {
-            final newChapters = latest.chapters.sublist(known);
-            final db = await NovelDatabase.getInstance();
-            final readSet = await db.getReadChaptersForNovel(novel.id);
-            int newUnread = 0;
-            for (final ch in newChapters) {
-              if (!readSet.contains(ch.id)) newUnread++;
+    final chunks = List<List<Novel>>.generate(maxConcurrent, (_) => []);
+    for (int i = 0; i < favorites.length; i++) {
+      chunks[i % maxConcurrent].add(favorites[i]);
+    }
+
+    final workers =
+        chunks.map((chunk) async {
+          for (final novel in chunk) {
+            final PluginService? service = PluginRegistry.get(novel.pluginId);
+            if (service == null) continue;
+            try {
+              final enabled = await getPluginState(service.name);
+              if (!enabled) continue;
+              final latest = await service
+                  .parseNovel(novel.id)
+                  .timeout(const Duration(seconds: 15));
+              final latestCount = latest.chapters.length;
+              final known = novel.lastKnownChapterCount;
+              if (latestCount > known) {
+                final newChapters = latest.chapters.sublist(known);
+                final db = await NovelDatabase.getInstance();
+                final readSet = await db.getReadChaptersForNovel(novel.id);
+                int newUnread = 0;
+                for (final ch in newChapters) {
+                  if (!readSet.contains(ch.id)) newUnread++;
+                }
+                updates[novel.id] = newUnread > 0 ? newUnread : 0;
+                novel.lastKnownChapterCount = latestCount;
+              }
+              novel.lastChecked = DateTime.now().toIso8601String();
+              await _db.upsertNovel(novel);
+            } catch (e) {
+              if (kDebugMode)
+                debugPrint('Error checking updates for ${novel.id}: $e');
             }
-            updates[novel.id] = newUnread > 0 ? newUnread : 0;
-            novel.lastKnownChapterCount = latestCount;
           }
-          novel.lastChecked = DateTime.now().toIso8601String();
-          await _db.upsertNovel(novel);
-        } catch (e) {
-          print('Error checking updates for ${novel.id}: $e');
-        }
-      }
-    }
-
-    for (int i = 0; i < maxConcurrent; i++) {
-      workers.add(worker());
-    }
+        }).toList();
 
     await Future.wait(workers);
 
-    _localNovels = await _db.getAllNovels();
-    notifyListeners();
+    await refreshLocalNovels();
     return updates;
   }
 
@@ -373,18 +424,130 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> setCustomDns(String? dns) async {
-    customDns = dns!;
+    customDns = dns;
     try {
-      await _db.setSetting('custom_dns', dns);
+      if (dns == null || dns.isEmpty) {
+        await _db.setSetting('custom_dns', '');
+      } else {
+        await _db.setSetting('custom_dns', dns);
+      }
     } catch (_) {}
     notifyListeners();
   }
 
   Future<void> setCustomUserAgent(String? ua) async {
-    customUserAgent = ua!;
+    customUserAgent = ua;
     try {
-      await _db.setSetting('custom_user_agent', ua);
+      if (ua == null || ua.isEmpty) {
+        await _db.setSetting('custom_user_agent', '');
+      } else {
+        await _db.setSetting('custom_user_agent', ua);
+      }
     } catch (_) {}
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    try {
+      _connectivitySub?.cancel();
+    } catch (_) {}
+    super.dispose();
+  }
+
+  Future<void> saveChapterOffline(String novelId, Chapter chapter) async {
+    try {
+      await _db.saveChapterOffline(
+        novelId: novelId,
+        chapterId: chapter.id,
+        title: chapter.title,
+        content: chapter.content ?? '',
+        savedAt: DateTime.now().toIso8601String(),
+      );
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> deleteSavedChapter(String novelId, String chapterId) async {
+    try {
+      await _db.deleteSavedChapter(novelId, chapterId);
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<bool> isChapterSaved(String novelId, String chapterId) async {
+    try {
+      return await _db.isChapterSaved(novelId, chapterId);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getSavedChaptersForNovel(
+    String novelId,
+  ) async {
+    try {
+      return await _db.getSavedChaptersForNovel(novelId);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> getSavedChapter(
+    String novelId,
+    String chapterId,
+  ) async {
+    try {
+      final saved = await _db.getSavedChaptersForNovel(novelId);
+      return saved.firstWhere(
+        (ch) => ch['chapterId'] == chapterId,
+        orElse: () => {},
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  DownloadQueueService get downloadQueue => _downloadQueue;
+
+  void setOnQueueUpdated(VoidCallback? callback) {
+    _onQueueUpdated = callback;
+  }
+
+  Future<void> addChapterToDownloadQueue(String novelId, Chapter chapter) async {
+    _downloadQueue.addToQueue(novelId, chapter);
+    _notifyQueueUpdated();
+    await _processDownloadQueue();
+  }
+
+  Future<void> removeFromDownloadQueue(String novelId, String chapterId) async {
+    _downloadQueue.removeFromQueue(novelId, chapterId);
+    _notifyQueueUpdated();
+  }
+
+  Future<void> _processDownloadQueue() async {
+    try {
+      await _downloadQueue.processQueue((novelId) {
+        return _localNovels.firstWhere(
+          (n) => n.id == novelId,
+          orElse: () => Novel(
+            id: novelId,
+            title: '',
+            coverImageUrl: '',
+            author: '',
+            description: '',
+            chapters: [],
+            pluginId: '',
+            genres: [],
+          ),
+        );
+      });
+    } catch (_) {}
+    _notifyQueueUpdated();
+  }
+
+  void _notifyQueueUpdated() {
+    _onQueueUpdated?.call();
     notifyListeners();
   }
 }
