@@ -60,77 +60,7 @@ class _ShellScreenState extends State<ShellScreen> {
 
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        elevation: 0,
-        actions: [
-          Builder(
-            builder: (ctx) {
-              final pendingCount = ctx.select(
-                (AppState s) => s.downloadQueue.pendingCount,
-              );
-              final downloadingCount = ctx.select(
-                (AppState s) => s.downloadQueue.downloadingCount,
-              );
-              final totalActive = pendingCount + downloadingCount;
-              
-              return totalActive > 0
-                  ? Stack(
-                    children: [
-                      SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.cloud_download_outlined,
-                          ),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Downloads: $downloadingCount em andamento, $pendingCount na fila',
-                                ),
-                                behavior:
-                                    SnackBarBehavior.floating,
-                                duration: const Duration(
-                                  seconds: 2,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.orange,
-                            borderRadius:
-                                BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            totalActive.toString(),
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight:
-                                      FontWeight.bold,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                  : const SizedBox.shrink();
-            },
-          ),
-        ],
-      ),
-      body: NotificationListener<ScrollNotification>(
+ body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
           if (alwaysVisible) return false;
           if (notification is ScrollUpdateNotification) {

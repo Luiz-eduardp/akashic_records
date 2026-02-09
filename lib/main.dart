@@ -13,6 +13,9 @@ import 'package:akashic_records/screens/favorites_screen.dart';
 import 'package:akashic_records/screens/updates_screen.dart';
 import 'package:akashic_records/screens/plugins_screen.dart';
 import 'package:akashic_records/screens/backups_screen.dart';
+import 'package:akashic_records/theme/app_theme.dart';
+import 'package:akashic_records/theme/app_colors.dart';
+import 'package:akashic_records/theme/app_text_styles.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,15 +45,8 @@ class MyApp extends StatelessWidget {
           ],
           debugShowCheckedModeBanner: false,
           themeMode: state.themeMode,
-          theme: ThemeData(
-            useMaterial3: true,
-            colorSchemeSeed: state.accentColor,
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            colorSchemeSeed: state.accentColor,
-          ),
+          theme: AppTheme.lightTheme(accentColor: state.accentColor),
+          darkTheme: AppTheme.darkTheme(accentColor: state.accentColor),
           builder: (context, child) {
             final widget = child ?? const SizedBox.shrink();
             return Stack(
@@ -63,12 +59,12 @@ class MyApp extends StatelessWidget {
                     right: 0,
                     child: SafeArea(
                       child: Container(
-                        color: Colors.amber.shade700,
+                        color: AppColors.warning,
                         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                         child: Center(
                           child: Text(
                             'Offline mode: some features may be unavailable',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87),
+                            style: AppTextStyles.bodyMedium(Colors.black87),
                           ),
                         ),
                       ),

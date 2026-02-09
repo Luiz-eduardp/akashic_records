@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/services/download_queue_service.dart';
+import 'package:akashic_records/i18n/i18n.dart';
 
 typedef ChapterTap = void Function(Chapter chapter, int index);
 typedef ChapterLongPress = void Function(Chapter chapter, int index);
@@ -134,22 +135,22 @@ class _ChapterListState extends State<ChapterList> {
                                 showDialog(
                                   context: context,
                                   builder: (dialogCtx) => AlertDialog(
-                                    title: const Text('Cancelar Download'),
+                                    title: Text('cancel_download'.translate),
                                     content: Text(
-                                      'Cancelar o download de "${ch.title}"?',
+                                      'cancel_download_chapter'.translate.replaceAll('{chapter}', ch.title),
                                     ),
                                     actions: [
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.pop(dialogCtx),
-                                        child: const Text('Não'),
+                                        child: Text('no_button'.translate),
                                       ),
                                       TextButton(
                                         onPressed: () {
                                           Navigator.pop(dialogCtx);
                                           widget.onCancelDownload?.call(ch.id);
                                         },
-                                        child: const Text('Sim'),
+                                        child: Text('yes_button'.translate),
                                       ),
                                     ],
                                   ),

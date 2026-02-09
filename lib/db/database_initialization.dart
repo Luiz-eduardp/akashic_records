@@ -1,0 +1,92 @@
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import 'database_tables.dart';
+
+class DatabaseInitialization {
+  static const int currentVersion = 4;
+
+  static Future<Database> initializeDatabase() async {
+    final databasesPath = await getDatabasesPath();
+    final path = join(databasesPath, 'akashic_records.db');
+
+    try {
+      return await _openDatabase(path);
+    } catch (_) {
+      await _deleteAndRecreate(path);
+      try {
+        return await _openDatabase(path);
+      } catch (_) {
+        return await _openInMemoryDatabase();
+      }
+    }
+  }
+
+  static Future<Database> _openDatabase(String path) {
+    return openDatabase(
+      path,
+      version: currentVersion,
+      onCreate: _createTables,
+      onUpgrade: _upgradeTables,
+    );
+  }
+
+  static Future<Database> _openInMemoryDatabase() {
+    return openDatabase(
+      inMemoryDatabasePath,
+      version: currentVersion,
+      onCreate: _createTables,
+    );
+  }
+
+  static Future<void> _deleteAndRecreate(String path) async {
+    try {
+      await deleteDatabase(path);
+    } catch (_) {}
+  }
+
+  static Future<void> _createTables(Database db, int version) async {
+    await db.execute(DatabaseTables.createNovelTable);
+    await db.execute(DatabaseTables.createPluginsTable);
+    await db.execute(DatabaseTables.createLocalEpubsTable);
+    await db.execute(DatabaseTables.createSavedChaptersTable);
+    await db.execute(DatabaseTables.createSettingsTable);
+    await db.execute(DatabaseTables.createChapterReadsTable);
+  }
+
+  static Future<void> _upgradeTables(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    if (oldVersion < 2) await _migrateToV2(db);
+    if (oldVersion < 3) await _migrateToV3(db);
+    if (oldVersion < 4) await _migrateToV4(db);
+  }
+
+  static Future<void> _migrateToV2(Database db) async {
+    try {
+      await db.execute(
+        'ALTER TABLE novels ADD COLUMN isFavorite INTEGER DEFAULT 0',
+      );
+      await db.execute('ALTER TABLE novels ADD COLUMN lastChecked TEXT');
+      await db.execute(
+        'ALTER TABLE novels ADD COLUMN lastKnownChapterCount INTEGER DEFAULT 0',
+      );
+      await db.execute('ALTER TABLE novels ADD COLUMN lastReadChapterId TEXT');
+    } catch (_) {}
+  }
+
+  static Future<void> _migrateToV3(Database db) async {
+    try {
+      await db.execute(DatabaseTables.createSettingsTable);
+    } catch (_) {}
+  }
+
+  static Future<void> _migrateToV4(Database db) async {
+    try {
+      await db.execute(DatabaseTables.createLocalEpubsTable);
+      await db.execute(DatabaseTables.createSavedChaptersTable);
+      await db.execute(DatabaseTables.createChapterReadsTable);
+    } catch (_) {}
+  }
+}
