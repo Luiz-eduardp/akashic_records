@@ -37,14 +37,19 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
       final db = await NovelDatabase.getInstance();
       final readSet = await db.getReadChaptersForNovel(novel.id);
       int unread = 0;
-      for (final ch in novel.chapters) {
-        if (!readSet.contains(ch.id)) unread++;
+      if (novel.chapters.isNotEmpty) {
+        for (final ch in novel.chapters) {
+          if (!readSet.contains(ch.id)) unread++;
+        }
       }
       counts[novel.id] = unread;
     }
 
     if (mounted) {
-      setState(() => _unreadCounts.addAll(counts));
+      setState(() {
+        _unreadCounts.clear();
+        _unreadCounts.addAll(counts);
+      });
     }
   }
 
@@ -83,7 +88,9 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
       0,
       (sum, n) => sum + (n.chapters.length),
     );
-    final totalRead = (totalChapters - totalUnread).clamp(0, totalChapters);
+    final totalRead = totalChapters > totalUnread 
+        ? (totalChapters - totalUnread).clamp(0, totalChapters)
+        : 0;
     final percentRead = totalChapters > 0 ? (totalRead / totalChapters) : 0.0;
     final nextIdx = favs.indexWhere((n) => (_unreadCounts[n.id] ?? 0) > 0);
     final Novel? nextNovel = nextIdx != -1 ? favs[nextIdx] : null;
@@ -95,8 +102,14 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
         edgeOffset: 120,
         child: CustomScrollView(
           slivers: [
-            SliverAppBar.large(
+            SliverAppBar(
               title: Text('favorites_updates'.translate),
+              centerTitle: true,
+              pinned: true,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(15),
+                child: const SizedBox(height: 15),
+              ),
               actions: [
                 if (totalUnread > 0)
                   Padding(
@@ -148,23 +161,39 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
-                      child: Column(
+                  child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Progress',
+                            'progress'.translate,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          LinearProgressIndicator(
+                            value: percentRead,
+                            minHeight: 8,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                           const SizedBox(height: 8),
-                          LinearProgressIndicator(value: percentRead),
-                          const SizedBox(height: 8),
-                          Text(
-                            totalChapters > 0
-                                ? '$totalRead/$totalChapters ${'chapters_read'.translate} (${(percentRead * 100).toStringAsFixed(0)}%)'
-                                : '0/0 ${'chapters_read'.translate}',
-                            style: theme.textTheme.bodySmall,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                totalChapters > 0
+                                    ? '$totalRead/$totalChapters ${'chapters_read'.translate}'
+                                    : '0/0 ${'chapters_read'.translate}',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              Text(
+                                '${(percentRead * 100).toStringAsFixed(0)}%',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
                           if (nextNovel != null) ...[
                             const SizedBox(height: 8),
@@ -191,18 +220,32 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    LinearProgressIndicator(
-                                      value: pctNext,
-                                      color: theme.colorScheme.primary
-                                          .withOpacity(0.8),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      chaptersForNext > 0
-                                          ? '$readForNext/$chaptersForNext ${'chapters_read'.translate} (${(pctNext * 100).toStringAsFixed(0)}%)'
-                                          : '',
-                                      style: theme.textTheme.bodySmall,
-                                    ),
+                            LinearProgressIndicator(
+                              value: pctNext,
+                              color: theme.colorScheme.primary
+                                  .withOpacity(0.8),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  chaptersForNext > 0
+                                      ? '$readForNext/$chaptersForNext ${'chapters_read'.translate}'
+                                      : '',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                                Text(
+                                  chaptersForNext > 0
+                                      ? '${(pctNext * 100).toStringAsFixed(0)}%'
+                                      : '',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
                                   ],
                                 );
                               },
@@ -222,8 +265,7 @@ class _UpdatesScreenState extends State<UpdatesScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent:
-                        MediaQuery.of(context).size.width > 600 ? 500 : 400,
+                    maxCrossAxisExtent: MediaQuery.of(context).size.width < 600 ? 350 : 500,
                     mainAxisExtent: 110,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
@@ -293,19 +335,32 @@ class UpdateCard extends StatelessWidget {
         side: BorderSide(
           color:
               unreadCount > 0
-                  ? colorScheme.primary.withOpacity(0.5)
+                  ? colorScheme.primary.withOpacity(0.6)
                   : colorScheme.outlineVariant,
           width: unreadCount > 0 ? 2 : 1,
         ),
       ),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => NovelDetailScreen(novel: novel)),
-          ).then((_) => onRefresh());
-        },
-        child: Row(
+      child: Container(
+        decoration: unreadCount > 0
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    colorScheme.primary.withOpacity(0.05),
+                    Colors.transparent,
+                  ],
+                ),
+              )
+            : null,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => NovelDetailScreen(novel: novel)),
+            ).then((_) => onRefresh());
+          },
+          child: Row(
           children: [
             SizedBox(
               width: 80,
@@ -324,7 +379,7 @@ class UpdateCard extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       novel.title,
@@ -340,6 +395,7 @@ class UpdateCard extends StatelessWidget {
                       novel.author,
                       style: theme.textTheme.bodySmall,
                       maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -367,6 +423,7 @@ class UpdateCard extends StatelessWidget {
               ),
           ],
         ),
+      ),
       ),
     );
   }

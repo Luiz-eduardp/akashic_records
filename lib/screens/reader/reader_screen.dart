@@ -449,8 +449,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
 
     if (_controller == null) {
-      return const Center(
-        child: Text('Erro ao inicializar o WebViewController'),
+      return Center(
+        child: Text('error_initializing_webview'.translate),
       );
     }
 
@@ -558,12 +558,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     if (already) {
                       await appState.deleteSavedChapter(novel.id, chapter.id);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Removed from offline')),
+                        SnackBar(content: Text('removed_from_offline'.translate)),
                       );
                     } else {
                       await appState.saveChapterOffline(novel.id, chapter);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Saved for offline reading')),
+                        SnackBar(content: Text('saved_for_offline'.translate)),
                       );
                     }
                   } catch (_) {}
@@ -887,6 +887,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       await db.setChapterRead(novel.id, chapter.id, true);
       try {
         novel.lastReadChapterId = chapter.id;
+        novel.lastReadAt = DateTime.now().toIso8601String();
 
         if (novel.pluginId == 'local_epub') {
           try {

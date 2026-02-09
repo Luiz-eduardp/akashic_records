@@ -78,8 +78,8 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
   }
 
   Widget _buildNovelGridItem(Novel novel) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    final theme = Theme.of(context);
+    return GestureDetector(
       onTap: () async {
         Navigator.push(
           context,
@@ -91,54 +91,62 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child:
-                  novel.coverImageUrl.isNotEmpty
-                      ? Image.network(
-                        novel.coverImageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (_, __, ___) => Container(
-                              color:
-                                  Theme.of(context).colorScheme.surfaceVariant,
-                              child: Center(
-                                child: Icon(
-                                  Icons.book_outlined,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                ),
-                              ),
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  Container(
+                    color: theme.colorScheme.surfaceVariant,
+                    child: novel.coverImageUrl.isNotEmpty
+                        ? Image.network(
+                          novel.coverImageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Icon(
+                              Icons.book_outlined,
+                              color: theme.colorScheme.onSurfaceVariant,
+                              size: 32,
                             ),
-                      )
-                      : Container(
-                        color: Theme.of(context).colorScheme.surfaceVariant,
-                        child: Center(
+                          ),
+                        )
+                        : Center(
                           child: Icon(
                             Icons.book_outlined,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
+                            size: 32,
                           ),
                         ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.3),
+                        ],
                       ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             novel.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           Text(
             novel.author,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],

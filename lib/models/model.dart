@@ -13,6 +13,7 @@ class Novel {
   late NovelStatus status;
   bool isFavorite = false;
   String? lastChecked;
+  String? lastReadAt;
   int lastKnownChapterCount = 0;
   String? lastReadChapterId;
 
@@ -34,6 +35,7 @@ class Novel {
     downloads,
     this.isFavorite = false,
     this.lastChecked,
+    this.lastReadAt,
     this.lastKnownChapterCount = 0,
     this.lastReadChapterId,
   });
@@ -54,6 +56,7 @@ class Novel {
       'genres': genres,
       'isFavorite': isFavorite ? 1 : 0,
       'lastChecked': lastChecked,
+      'lastReadAt': lastReadAt,
       'lastKnownChapterCount': lastKnownChapterCount,
       'lastReadChapterId': lastReadChapterId,
     };
@@ -83,6 +86,7 @@ class Novel {
               ? (map['isFavorite'] as int) == 1
               : (map['isFavorite'] == true)),
       lastChecked: map['lastChecked'] as String?,
+      lastReadAt: map['lastReadAt'] as String?,
       lastKnownChapterCount: map['lastKnownChapterCount'] as int? ?? 0,
       lastReadChapterId: map['lastReadChapterId'] as String?,
     );

@@ -102,12 +102,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
+          SliverAppBar(
             title: Text(
               'favorites'.translate,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            centerTitle: false,
+            centerTitle: true,
+            pinned: true,
+          ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 15),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -137,8 +141,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 200,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: MediaQuery.of(context).size.width < 600 ? 180 : 200,
                   mainAxisExtent: 310,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
@@ -160,11 +164,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final hasRead = novel.lastReadChapterId != null;
 
     double progress = 0;
-    if (novel.numberOfChapters > 0 && hasRead) {
+    if (novel.chapters.isNotEmpty && hasRead) {
       final lastIdx = novel.chapters.indexWhere(
         (c) => c.id == novel.lastReadChapterId,
       );
-      progress = (lastIdx + 1) / novel.numberOfChapters;
+      if (lastIdx >= 0) {
+        progress = (lastIdx + 1) / novel.chapters.length;
+      }
     }
 
     return Dismissible(
@@ -201,20 +207,31 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       ),
                     ),
                   ),
-                  if (hasRead)
+                  if (hasRead && progress > 0)
                     Positioned(
                       bottom: 0,
                       left: 0,
                       right: 0,
                       child: Container(
-                        height: 4,
-                        color: theme.colorScheme.primaryContainer.withOpacity(
-                          0.5,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withOpacity(0.4),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(12),
+                            bottomRight: Radius.circular(12),
+                          ),
                         ),
                         child: FractionallySizedBox(
                           alignment: Alignment.centerLeft,
-                          widthFactor: progress.clamp(0.05, 1.0),
-                          child: Container(color: theme.colorScheme.primary),
+                          widthFactor: progress.clamp(0.0, 1.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(12),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -223,8 +240,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     right: 8,
                     child: FloatingActionButton.small(
                       heroTag: 'play_${novel.id}',
+                      backgroundColor: theme.colorScheme.primary,
                       onPressed: () => _continueReading(context, novel),
-                      child: Icon(hasRead ? Icons.play_arrow : Icons.menu_book),
+                      child: Icon(
+                        hasRead ? Icons.play_arrow : Icons.menu_book,
+                        color: theme.colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ],
@@ -244,9 +265,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.secondary,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (hasRead && progress > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${(progress * 100).toStringAsFixed(0)}%',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -272,6 +304,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               color: theme.colorScheme.outline,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
           if (_query.isEmpty)
             Padding(
@@ -279,6 +312,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               child: Text(
                 'explore_to_add_favorites'.translate,
                 style: theme.textTheme.bodySmall,
+                textAlign: TextAlign.center,
               ),
             ),
         ],

@@ -2,7 +2,7 @@ name: akashic_records
 description: A novel reader application.
 publish_to: "none"
 
-version: 2.2.4+1
+version: 2.2.5+1
 
 environment:
   sdk: ^3.7.0
@@ -72,3 +72,4 @@ flutter:
   uses-material-design: true
   assets:
     - lib/assets/i18n/locale/
+    - lib/assets/

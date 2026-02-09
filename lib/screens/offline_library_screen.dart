@@ -294,8 +294,8 @@ class _OfflineNovelCardState extends State<_OfflineNovelCard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar exclusão'),
-        content: Text('Deletar "$title"?'),
+        title: Text('confirm_deletion'.translate),
+        content: Text('delete_item'.translate.replaceAll('{item}', title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -322,8 +322,8 @@ class _OfflineNovelCardState extends State<_OfflineNovelCard> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar exclusão'),
-        content: Text('Deletar todos os capítulos salvos de "${novel.title}"?'),
+        title: Text('confirm_deletion'.translate),
+        content: Text('delete_all_offline_chapters'.translate.replaceAll('{title}', novel.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),

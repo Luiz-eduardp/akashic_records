@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:version/version.dart';
 import 'package:android_intent_plus/android_intent.dart';
+import 'package:akashic_records/theme/app_text_styles.dart';
 import 'dart:io';
 import 'storage_manager_screen.dart';
 import 'package:akashic_records/screens/backups_screen.dart';
@@ -59,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: context.titleLarge.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -90,7 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         centerTitle: true,
         title: Text(
           'settings'.translate,
-          style: Theme.of(context).textTheme.headlineSmall,
+          style: context.headlineSmall,
         ),
       ),
       body: SingleChildScrollView(
@@ -251,21 +252,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: DropdownButton<String?>(
                         value: appState.customDns,
                         items: [
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: null,
-                            child: Text('System Default'),
+                            child: Text('dns_system_default'.translate),
                           ),
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: '1.1.1.1',
-                            child: Text('Cloudflare (1.1.1.1)'),
+                            child: Text('dns_cloudflare'.translate),
                           ),
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: '8.8.8.8',
-                            child: Text('Google (8.8.8.8)'),
+                            child: Text('dns_google'.translate),
                           ),
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: '9.9.9.9',
-                            child: Text('Quad9 (9.9.9.9)'),
+                            child: Text('dns_quad9'.translate),
                           ),
                         ],
                         onChanged: (v) async => await appState.setCustomDns(v),
@@ -279,8 +280,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         decoration: InputDecoration(
                           labelText: 'custom_user_agent'.translate,
-                          hintText: 'e.g. MyApp/1.0',
+                          hintText: 'custom_user_agent_hint'.translate,
                           border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.web),
                         ),
                         onChanged: (v) async {
                           await appState.setCustomUserAgent(
@@ -293,6 +295,213 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
+            ),
+
+            _buildSettingsSection(
+              title: 'health_status'.translate,
+              children: [
+                FutureBuilder<void>(
+                  future: Future.delayed(const Duration(milliseconds: 100)),
+                  builder: (ctx, snap) {
+                    final isHealthy = appState.database.isHealthy;
+                    final lastError = appState.database.lastHealthError;
+                    
+                    return Column(
+                      children: [
+                        ListTile(
+                          leading: Icon(
+                            isHealthy ? Icons.favorite : Icons.favorite_border,
+                            color: isHealthy ? Colors.green : Colors.red,
+                          ),
+                          title: Text('database_status'.translate),
+                          subtitle: Text(
+                            isHealthy
+                                ? 'database_healthy'.translate
+                                : 'database_unhealthy'.translate,
+                          ),
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  isHealthy
+                                      ? Colors.green.withOpacity(0.2)
+                                      : Colors.red.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              isHealthy ? 'OK' : 'ERROR',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isHealthy ? Colors.green : Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (lastError != null)
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 8.0,
+                                ),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border:
+                                    Border.all(
+                                      color: Colors.red.withOpacity(0.3),
+                                    ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'last_error'.translate,
+                                    style: context.labelSmall,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    lastError,
+                                    style: context.bodySmall.copyWith(
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.health_and_safety, size: 18),
+                              label: Text('run_health_check'.translate),
+                              onPressed: () async {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'health_check_running'.translate,
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                                try {
+                                  await appState.database.optimize();
+                                  if (!mounted) return;
+                                  setState(() {});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'health_check_completed'.translate,
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'health_check_failed: $e',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.withOpacity(0.2),
+                              ),
+                              icon: const Icon(Icons.cleaning_services, size: 18),
+                              label: Text('cleanup_old_data'.translate),
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder:
+                                      (ctx) => AlertDialog(
+                                        title: Text(
+                                          'confirm_cleanup'.translate,
+                                        ),
+                                        content: Text(
+                                          'cleanup_30_days_warning'
+                                              .translate,
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () => Navigator.pop(ctx, false),
+                                            child: Text('cancel'.translate),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed:
+                                                () => Navigator.pop(ctx, true),
+                                            child: Text('proceed'.translate),
+                                          ),
+                                        ],
+                                      ),
+                                );
+                                if (confirmed == true && mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'cleanup_running'.translate,
+                                          ),
+                                          duration:
+                                              const Duration(seconds: 3),
+                                        ),
+                                      );
+                                  try {
+                                    await appState.database.pruneOldData();
+                                    if (!mounted) return;
+                                    setState(() {});
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'cleanup_completed'
+                                                  .translate,
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                  } catch (e) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'cleanup_failed: $e',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
 
             _buildSettingsSection(

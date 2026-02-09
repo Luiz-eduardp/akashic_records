@@ -153,59 +153,6 @@ class _NovelHeaderState extends State<NovelHeader> {
               ),
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          Card(
-            elevation: 2,
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 12.0,
-                horizontal: 16.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  loading
-                      ? LoadingSkeleton.rect(
-                        height: 24,
-                        width: double.infinity,
-                        baseColor: baseColor,
-                        highlightColor: highlightColor,
-                      )
-                      : Text(
-                        novel.title,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                  const SizedBox(height: 6),
-                  if (!loading)
-                    if (novel.author.isNotEmpty)
-                      Text(
-                        '${'by'.translate} ${novel.author}',
-                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                          color: Theme.of(context).colorScheme.secondary,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      )
-                    else
-                      Container(
-                        height: 16,
-                        width: 120,
-                        color: Colors.transparent,
-                      )
-                  else
-                    LoadingSkeleton.rect(
-                      height: 18,
-                      width: 150,
-                      baseColor: baseColor,
-                      highlightColor: highlightColor,
-                    ),
-                ],
-              ),
-            ),
-          ),
-
           const SizedBox(height: 16),
 
           loading

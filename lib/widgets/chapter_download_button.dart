@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/services/download_queue_service.dart';
+import 'package:akashic_records/i18n/i18n.dart';
+import 'package:akashic_records/theme/app_colors.dart';
 
 class ChapterDownloadButton extends StatelessWidget {
   final Chapter chapter;
@@ -73,20 +75,20 @@ class ChapterDownloadButton extends StatelessWidget {
           height: 20,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isDarkMode ? Colors.blue[300]! : Colors.blue,
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              AppColors.info,
             ),
           ),
         );
       case DownloadStatus.completed:
-        return Icon(Icons.cloud_done, size: 20, color: Colors.green[600]);
+        return const Icon(Icons.cloud_done, size: 20, color: AppColors.success);
       case DownloadStatus.failed:
-        return Icon(Icons.cloud_off, size: 20, color: Colors.red[600]);
+        return const Icon(Icons.cloud_off, size: 20, color: AppColors.error);
       case null:
         return Icon(
           Icons.cloud_download_outlined,
           size: 20,
-          color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+          color: isDarkMode ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
         );
     }
   }
@@ -99,19 +101,19 @@ class ChapterDownloadButton extends StatelessWidget {
           context: context,
           builder:
               (ctx) => AlertDialog(
-                title: const Text('Cancelar Download'),
-                content: Text('Cancelar o download de "${chapter.title}"?'),
+                title: Text('cancel_download'.translate),
+                content: Text('cancel_download_chapter'.translate.replaceAll('{chapter}', chapter.title)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Não'),
+                    child: Text('no_button'.translate),
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.pop(ctx);
                       onCancel?.call();
                     },
-                    child: const Text('Sim'),
+                    child: Text('yes_button'.translate),
                   ),
                 ],
               ),

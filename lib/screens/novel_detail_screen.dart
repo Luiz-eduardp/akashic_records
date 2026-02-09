@@ -31,6 +31,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
   bool _loadingReadStates = true;
   Timer? _searchDebounce;
   final Map<String, DownloadStatus> _downloadStatus = {};
+  VoidCallback? _queueListener;
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -47,7 +48,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
 
   void _setupDownloadQueueListener() {
     final appState = Provider.of<AppState>(context, listen: false);
-    appState.setOnQueueUpdated(() {
+    _queueListener = () {
       if (mounted) {
         setState(() {
           for (final item in appState.downloadQueue.queue) {
@@ -57,13 +58,18 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
           }
         });
       }
-    });
+    };
+    appState.setOnQueueUpdated(_queueListener!);
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    if (_queueListener != null) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      appState.setOnQueueUpdated(null);
+    }
     super.dispose();
   }
 
@@ -187,6 +193,35 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     } catch (_) {}
   }
 
+  void _showDownloadAllDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: Text('confirm'.translate),
+            content: Text(
+              'confirm_download_all'.translate.replaceFirst(
+                '%d',
+                chapters.length.toString(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('cancel'.translate),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _downloadAllChapters();
+                },
+                child: Text('confirm'.translate),
+              ),
+            ],
+          ),
+    );
+  }
+
   int _getContinueReadingIndex() {
     final currentNovel = novel ?? widget.novel;
     if (currentNovel.lastReadChapterId == null) return 0;
@@ -194,6 +229,62 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
       (c) => c.id == currentNovel.lastReadChapterId,
     );
     return idx != -1 ? idx : 0;
+  }
+
+  Future<void> _handleDownloadChapter(Chapter ch) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final currentNovel = novel ?? widget.novel;
+    await appState.addChapterToDownloadQueue(currentNovel.id, ch);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'downloading_chapter'.translate.replaceFirst('%s', ch.title),
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleDownloadMultiple(List<Chapter> chaps) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final currentNovel = novel ?? widget.novel;
+    int count = 0;
+    for (final ch in chaps) {
+      await appState.addChapterToDownloadQueue(currentNovel.id, ch);
+      count++;
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'chapters_added_to_queue'.translate.replaceFirst(
+              '%d',
+              count.toString(),
+            ),
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleCancelDownload(String chapterId) async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final currentNovel = novel ?? widget.novel;
+    await appState.removeFromDownloadQueue(currentNovel.id, chapterId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('download_cancelled'.translate),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   Future<void> _downloadAllChapters() async {
@@ -209,7 +300,12 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$count capítulos adicionados à fila'),
+          content: Text(
+            'chapters_added_to_queue'.translate.replaceFirst(
+              '%d',
+              count.toString(),
+            ),
+          ),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -226,39 +322,20 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
+          SliverAppBar(
             title: Text(currentNovel.title),
+            centerTitle: true,
             pinned: true,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(15),
+              child: const SizedBox(height: 15),
+            ),
             actions: [
               if (chapters.isNotEmpty)
                 IconButton(
                   icon: const Icon(Icons.cloud_download_outlined),
                   tooltip: 'download_all_chapters'.translate,
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder:
-                          (ctx) => AlertDialog(
-                            title: const Text('Confirmar'),
-                            content: Text(
-                              'Baixar todos os ${chapters.length} capítulos?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text('Cancelar'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  _downloadAllChapters();
-                                },
-                                child: const Text('Confirmar'),
-                              ),
-                            ],
-                          ),
-                    );
-                  },
+                  onPressed: () => _showDownloadAllDialog(),
                 ),
               IconButton(
                 icon: Icon(
@@ -307,58 +384,10 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                 readChapters: readChapters,
                 novelId: currentNovel.id,
                 downloadStatus: _downloadStatus,
-                onDownload: (ch) async {
-                  final appState = Provider.of<AppState>(
-                    context,
-                    listen: false,
-                  );
-                  await appState.addChapterToDownloadQueue(currentNovel.id, ch);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Baixando "${ch.title}"...'),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
-                onDownloadAll: (chaps) async {
-                  final appState = Provider.of<AppState>(
-                    context,
-                    listen: false,
-                  );
-                  int count = 0;
-                  for (final ch in chaps) {
-                    await appState.addChapterToDownloadQueue(
-                      currentNovel.id,
-                      ch,
-                    );
-                    count++;
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('$count capítulos adicionados à fila'),
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                onCancelDownload: (chapterId) async {
-                  final appState = Provider.of<AppState>(
-                    context,
-                    listen: false,
-                  );
-                  await appState.removeFromDownloadQueue(
-                    currentNovel.id,
-                    chapterId,
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Download cancelado'),
-                      behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
+                onDownload: (ch) async => _handleDownloadChapter(ch),
+                onDownloadAll: (chaps) async => _handleDownloadMultiple(chaps),
+                onCancelDownload:
+                    (chapterId) async => _handleCancelDownload(chapterId),
                 onTap: (ch, index) async {
                   final absIdx = chapters.indexWhere((c) => c.id == ch.id);
                   await Navigator.pushNamed(
