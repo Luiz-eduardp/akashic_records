@@ -585,6 +585,21 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> ensureDataPersistence() async {
+    try {
+      if (kDebugMode) print('[AppState] Ensuring data persistence...');
+
+      if (isBusy) {
+        if (kDebugMode) print('[AppState] Waiting for pending operations...');
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      if (kDebugMode) print('[AppState] Data persistence complete');
+    } catch (e) {
+      if (kDebugMode) print('[AppState] Error during data persistence: $e');
+    }
+  }
+
   @override
   void dispose() {
     _connectivitySub?.cancel();

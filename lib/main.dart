@@ -16,6 +16,7 @@ import 'package:akashic_records/screens/backups_screen.dart';
 import 'package:akashic_records/theme/app_theme.dart';
 import 'package:akashic_records/theme/app_colors.dart';
 import 'package:akashic_records/theme/app_text_styles.dart';
+import 'package:akashic_records/services/app_lifecycle_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,9 @@ void main() async {
   registerDefaultPlugins();
   final appState = AppState();
   await appState.initialize();
+
+  WidgetsBinding.instance.addObserver(AppLifecycleHandler(appState));
+
   runApp(ChangeNotifierProvider.value(value: appState, child: const MyApp()));
 }
 
@@ -60,7 +64,10 @@ class MyApp extends StatelessWidget {
                     child: SafeArea(
                       child: Container(
                         color: AppColors.warning,
-                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 12,
+                        ),
                         child: Center(
                           child: Text(
                             'Offline mode: some features may be unavailable',
@@ -79,14 +86,14 @@ class MyApp extends StatelessWidget {
             '/backups': (ctx) => const BackupsScreen(),
             '/settings':
                 (ctx) => SettingsScreen(
-                      onLocaleChanged: (locale) async {
-                        await I18n.updateLocate(locale);
-                        await Provider.of<AppState>(
-                          ctx,
-                          listen: false,
-                        ).setLocale(locale);
-                      },
-                    ),
+                  onLocaleChanged: (locale) async {
+                    await I18n.updateLocate(locale);
+                    await Provider.of<AppState>(
+                      ctx,
+                      listen: false,
+                    ).setLocale(locale);
+                  },
+                ),
             '/reader': (ctx) => const ReaderScreen(),
             '/favorites': (ctx) => const FavoritesScreen(),
             '/local_epubs': (ctx) => const LocalEpubsScreen(),
