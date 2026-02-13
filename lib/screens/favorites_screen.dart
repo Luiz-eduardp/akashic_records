@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
-import 'package:akashic_records/widgets/optimized_network_image.dart';
+import 'package:akashic_records/widgets/novel_grid_card.dart';
+import 'package:akashic_records/db/novel_database.dart';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:akashic_records/screens/novel_detail_screen.dart';
 
@@ -19,11 +20,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   String _query = '';
+  final Map<String, int> _unreadCounts = {};
+  int _lastFavCount = -1;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshUnreadCounts());
   }
 
   @override
@@ -56,7 +60,29 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => NovelDetailScreen(novel: novel)),
-    );
+    ).then((_) => _refreshUnreadCounts());
+  }
+
+  Future<void> _refreshUnreadCounts() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    final Map<String, int> counts = {};
+    final db = await NovelDatabase.getInstance();
+    for (final novel in appState.favoriteNovels) {
+      final readSet = await db.getReadChaptersForNovel(novel.id);
+      int unread = 0;
+      if (novel.chapters.isNotEmpty) {
+        for (final ch in novel.chapters) {
+          if (!readSet.contains(ch.id)) unread++;
+        }
+      }
+      counts[novel.id] = unread;
+    }
+    if (!mounted) return;
+    setState(() {
+      _unreadCounts.clear();
+      _unreadCounts.addAll(counts);
+      _lastFavCount = appState.favoriteNovels.length;
+    });
   }
 
   void _continueReading(BuildContext context, dynamic novel) {
@@ -80,6 +106,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Future<void> _removeFromFavorites(BuildContext context, dynamic novel) async {
     final appState = Provider.of<AppState>(context, listen: false);
     await appState.toggleFavorite(novel.id);
+    await _refreshUnreadCounts();
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -99,6 +126,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final favs = context.select((AppState s) => s.favoriteNovels);
     final results = _filterFavs(favs);
 
+    if (favs.length != _lastFavCount) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _refreshUnreadCounts(),
+      );
+    }
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -110,9 +143,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             centerTitle: true,
             pinned: true,
           ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 15),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 15)),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -141,15 +172,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: MediaQuery.of(context).size.width < 600 ? 180 : 200,
-                  mainAxisExtent: 310,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisExtent: 360,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
                 ),
                 delegate: SliverChildBuilderDelegate((ctx, i) {
                   final n = results[i];
-                  return _buildNovelGridCard(context, n);
+                  return _buildNovelGridCard(context, n, i);
                 }, childCount: results.length),
               ),
             ),
@@ -159,129 +190,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  Widget _buildNovelGridCard(BuildContext context, dynamic novel) {
-    final theme = Theme.of(context);
-    final hasRead = novel.lastReadChapterId != null;
-
-    double progress = 0;
-    if (novel.chapters.isNotEmpty && hasRead) {
-      final lastIdx = novel.chapters.indexWhere(
-        (c) => c.id == novel.lastReadChapterId,
-      );
-      if (lastIdx >= 0) {
-        progress = (lastIdx + 1) / novel.chapters.length;
-      }
-    }
-
-    return Dismissible(
-      key: Key('fav_${novel.id}'),
-      direction: DismissDirection.up,
-      onDismissed: (_) => _removeFromFavorites(context, novel),
-      child: GestureDetector(
-        onTap: () => _goToDetails(context, novel),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: OptimizedNetworkImage(
-                      novel.coverImageUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      placeholder: Container(
-                        color: theme.colorScheme.surfaceVariant,
-                      ),
-                    ),
-                  ),
-                  if (hasRead && progress > 0)
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withOpacity(0.4),
-                          borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(12),
-                            bottomRight: Radius.circular(12),
-                          ),
-                        ),
-                        child: FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: progress.clamp(0.0, 1.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: FloatingActionButton.small(
-                      heroTag: 'play_${novel.id}',
-                      backgroundColor: theme.colorScheme.primary,
-                      onPressed: () => _continueReading(context, novel),
-                      child: Icon(
-                        hasRead ? Icons.play_arrow : Icons.menu_book,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              novel.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              novel.author,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            if (hasRead && progress > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${(progress * 100).toStringAsFixed(0)}%',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+  Widget _buildNovelGridCard(BuildContext context, dynamic novel, int index) {
+    return NovelGridCard(
+      novel: novel,
+      dismissible: true,
+      heroTag: 'cover_${novel.id}_$index',
+      unreadCount: _unreadCounts[novel.id] ?? 0,
+      onTap: () => _goToDetails(context, novel),
+      onContinue: () => _continueReading(context, novel),
+      onRemove: () => _removeFromFavorites(context, novel),
     );
   }
 

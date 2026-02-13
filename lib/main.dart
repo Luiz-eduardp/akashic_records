@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/i18n/i18n.dart';
@@ -10,7 +11,6 @@ import 'package:akashic_records/screens/local_epubs/local_epubs_screen.dart';
 import 'package:akashic_records/screens/settings/settings_screen.dart';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
 import 'package:akashic_records/screens/favorites_screen.dart';
-import 'package:akashic_records/screens/updates_screen.dart';
 import 'package:akashic_records/screens/plugins_screen.dart';
 import 'package:akashic_records/screens/backups_screen.dart';
 import 'package:akashic_records/theme/app_theme.dart';
@@ -20,6 +20,7 @@ import 'package:akashic_records/services/app_lifecycle_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = true;
   await I18n.initialize(defaultLocale: const Locale('en'));
   registerDefaultPlugins();
   final appState = AppState();
@@ -97,7 +98,6 @@ class MyApp extends StatelessWidget {
             '/reader': (ctx) => const ReaderScreen(),
             '/favorites': (ctx) => const FavoritesScreen(),
             '/local_epubs': (ctx) => const LocalEpubsScreen(),
-            '/updates': (ctx) => const UpdatesScreen(),
             '/plugins': (ctx) => const PluginsScreen(),
           },
         );

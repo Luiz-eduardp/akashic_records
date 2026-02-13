@@ -25,6 +25,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
     'es': 'spanish'.translate,
     'Unknown': 'unknown'.translate,
     'all': 'all'.translate,
+    'cross plugin': 'cross_plugin'.translate,
   };
 
   @override
