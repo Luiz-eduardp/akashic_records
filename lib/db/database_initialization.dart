@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 import 'database_tables.dart';
 
 class DatabaseInitialization {
-  static const int currentVersion = 4;
+  static const int currentVersion = 5;
 
   static Future<Database> initializeDatabase() async {
     final databasesPath = await getDatabasesPath();
@@ -61,6 +61,7 @@ class DatabaseInitialization {
     if (oldVersion < 2) await _migrateToV2(db);
     if (oldVersion < 3) await _migrateToV3(db);
     if (oldVersion < 4) await _migrateToV4(db);
+    if (oldVersion < 5) await _migrateToV5(db);
   }
 
   static Future<void> _migrateToV2(Database db) async {
@@ -72,6 +73,7 @@ class DatabaseInitialization {
       await db.execute(
         'ALTER TABLE novels ADD COLUMN lastKnownChapterCount INTEGER DEFAULT 0',
       );
+      await db.execute('ALTER TABLE novels ADD COLUMN lastReadAt TEXT');
       await db.execute('ALTER TABLE novels ADD COLUMN lastReadChapterId TEXT');
     } catch (_) {}
   }
@@ -87,6 +89,12 @@ class DatabaseInitialization {
       await db.execute(DatabaseTables.createLocalEpubsTable);
       await db.execute(DatabaseTables.createSavedChaptersTable);
       await db.execute(DatabaseTables.createChapterReadsTable);
+    } catch (_) {}
+  }
+
+  static Future<void> _migrateToV5(Database db) async {
+    try {
+      await db.execute('ALTER TABLE novels ADD COLUMN lastReadAt TEXT');
     } catch (_) {}
   }
 }

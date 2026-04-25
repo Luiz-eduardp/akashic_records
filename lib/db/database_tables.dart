@@ -20,6 +20,7 @@ abstract class DatabaseTables {
       chapters TEXT,
       isFavorite INTEGER DEFAULT 0,
       lastChecked TEXT,
+      lastReadAt TEXT,
       lastKnownChapterCount INTEGER DEFAULT 0,
       lastReadChapterId TEXT
     )

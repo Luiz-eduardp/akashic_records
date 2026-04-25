@@ -18,9 +18,8 @@ import 'package:akashic_records/services/plugins/spanish/novelsligera_service.da
 import 'package:akashic_records/services/plugins/spanish/skynovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/centralnovel_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/illusia_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
-import 'package:akashic_records/services/cross_plugin_loader.dart';
-import 'dart:developer' as developer;
 
 void registerDefaultPlugins() {
   try {
@@ -41,6 +40,9 @@ void registerDefaultPlugins() {
   } catch (_) {}
   try {
     PluginRegistry.register(CentralNovel());
+  } catch (_) {}
+  try {
+    PluginRegistry.register(Illusia());
   } catch (_) {}
   try {
     PluginRegistry.register(LightNovelBrasil());
@@ -98,49 +100,5 @@ void registerDefaultPlugins() {
     debugPrint('Failed to register SkyNovels: $e');
   }
 
-  _registerCrossPluginsSync();
 }
 
-void _registerCrossPluginsSync() {
-  try {
-    developer.log('Loading cross plugin list from JSON...');
-    const listUrl =
-        'https://raw.githubusercontent.com/lnreader/lnreader-plugins/plugins/v3.0.0/.dist/plugins.min.json';
-
-    _loadPluginsAsync(listUrl);
-  } catch (e) {
-    developer.log('Error in sync plugin registration: $e');
-  }
-}
-
-Future<void> _loadPluginsAsync(String listUrl) async {
-  try {
-    developer.log('Starting async plugin loading from: $listUrl');
-    final loader = CrossPluginLoader();
-
-    final plugins = await loader.loadPluginList(listUrl);
-    developer.log('Loaded ${plugins.length} plugins from JSON');
-
-    int successCount = 0;
-    int failCount = 0;
-
-    for (final plugin in plugins) {
-      try {
-        developer.log('Registering plugin: ${plugin.name} (${plugin.site})');
-        final service = loader.createPluginMetadata(plugin, listUrl);
-        PluginRegistry.register(service);
-        successCount++;
-        developer.log('✓ Registered: ${plugin.name}');
-      } catch (e) {
-        failCount++;
-        developer.log('✗ Failed to register ${plugin.name}: $e');
-      }
-    }
-
-    developer.log(
-      'Plugin loading complete: $successCount success, $failCount failed',
-    );
-  } catch (e) {
-    developer.log('Error loading plugins async: $e');
-  }
-}

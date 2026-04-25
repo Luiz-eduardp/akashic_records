@@ -255,5 +255,6 @@
   "proceed": "متابعة",
   "cleanup_running": "جاري تشغيل التنظيف...",
   "cleanup_completed": "اكتمل التنظيف بنجاح",
-  "cleanup_failed": "فشل التنظيف"
+  "cleanup_failed": "فشل التنظيف",
+  "appearance": "Appearance"
 }

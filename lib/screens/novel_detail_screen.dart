@@ -165,24 +165,28 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     final currentNovel = novel ?? widget.novel;
 
     try {
-      if (!currentNovel.isFavorite) {
-        currentNovel.isFavorite = true;
-        await appState.addOrUpdateNovel(currentNovel);
+      final existingNovel = appState.getNovelById(currentNovel.id);
+      final shouldFavorite = !currentNovel.isFavorite;
+
+      if (existingNovel != null) {
+        await appState.toggleFavorite(
+          currentNovel.id,
+          value: shouldFavorite,
+        );
       } else {
-        await appState.toggleFavorite(currentNovel.id);
+        currentNovel.isFavorite = shouldFavorite;
+        await appState.addOrUpdateNovel(currentNovel);
       }
 
+      final updatedNovel = appState.getNovelById(currentNovel.id);
       setState(() {
-        novel = appState.localNovels.firstWhere(
-          (n) => n.id == currentNovel.id,
-          orElse: () => currentNovel,
-        );
+        novel = updatedNovel ?? currentNovel;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            novel!.isFavorite
+            (updatedNovel ?? currentNovel).isFavorite
                 ? 'added_to_favorites'.translate
                 : 'removed_from_favorites'.translate,
           ),
@@ -357,8 +361,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
             child: Column(
               children: [
                 NovelHeader(novel: currentNovel, loading: _loadingDetails),
-                _buildReadingProgress(theme),
-              ],
+                const SizedBox(height: 16),],
             ),
           ),
 
@@ -435,38 +438,7 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     );
   }
 
-  Widget _buildReadingProgress(ThemeData theme) {
-    if (chapters.isEmpty) return const SizedBox.shrink();
-    final progress = readChapters.length / chapters.length;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${'progress'.translate}: ${readChapters.length}/${chapters.length}',
-                style: theme.textTheme.labelMedium,
-              ),
-              Text(
-                '${(progress * 100).toStringAsFixed(0)}%',
-                style: theme.textTheme.labelMedium,
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: progress,
-            borderRadius: BorderRadius.circular(4),
-            minHeight: 6,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildChapterToolbar(BuildContext context) {
     final theme = Theme.of(context);

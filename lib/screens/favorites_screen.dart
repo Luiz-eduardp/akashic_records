@@ -64,6 +64,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _refreshUnreadCounts() async {
+    if (!mounted) return;
     final appState = Provider.of<AppState>(context, listen: false);
     final Map<String, int> counts = {};
     final db = await NovelDatabase.getInstance();
