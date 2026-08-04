@@ -18,6 +18,7 @@ import 'package:akashic_records/services/plugins/spanish/novelsligera_service.da
 import 'package:akashic_records/services/plugins/spanish/skynovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/centralnovel_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/illusia_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
 
 void registerDefaultPlugins() {
@@ -39,6 +40,9 @@ void registerDefaultPlugins() {
   } catch (_) {}
   try {
     PluginRegistry.register(CentralNovel());
+  } catch (_) {}
+  try {
+    PluginRegistry.register(Illusia());
   } catch (_) {}
   try {
     PluginRegistry.register(LightNovelBrasil());
@@ -95,4 +99,6 @@ void registerDefaultPlugins() {
   } catch (e) {
     debugPrint('Failed to register SkyNovels: $e');
   }
+
 }
+

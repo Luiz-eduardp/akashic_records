@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/services/plugin_registry.dart';
 import 'package:akashic_records/models/plugin_service.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/novel_detail_screen.dart';
+import 'package:akashic_records/widgets/optimized_network_image.dart';
 
 const double kCoverWidth = 120.0;
 const double kCoverHeight = 180.0;
@@ -27,12 +29,14 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
   void initState() {
     super.initState();
     _service = PluginRegistry.get(widget.pluginName);
+    developer.log('PluginBrowserScreen initState: pluginName=${widget.pluginName}, service=${_service.runtimeType}');
     _loadPopular();
   }
 
   Future<void> _loadPopular() async {
     if (_service == null || _loading) return;
 
+    developer.log('_loadPopular: starting');
     if (_searchCtrl.text.isNotEmpty) {
       _searchCtrl.clear();
     }
@@ -43,13 +47,15 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
     });
 
     try {
-      final list = await _service!.popularNovels(1);
-      setState(() => _novels = list);
+      final list = await _service!.popularNovels(1, context: context);
+      developer.log('_loadPopular: got ${list.length} novels');
+      _setNovelCollections(list);
     } catch (e) {
+      developer.log('_loadPopular: error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${'failed_load_popular'.translate}: $e')),
       );
-      setState(() => _novels = []);
+      _clearNovels();
     } finally {
       setState(() => _loading = false);
     }
@@ -66,12 +72,12 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
 
     try {
       final list = await _service!.searchNovels(term, 1);
-      setState(() => _novels = list);
+      _setNovelCollections(list);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${'failed_search'.translate}: $e')),
       );
-      setState(() => _novels = []);
+      _clearNovels();
     } finally {
       setState(() => _loading = false);
     }
@@ -86,70 +92,57 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
           MaterialPageRoute(builder: (ctx) => NovelDetailScreen(novel: novel)),
         );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Stack(
-                children: [
-                  Container(
-                    color: theme.colorScheme.surfaceVariant,
-                    child: novel.coverImageUrl.isNotEmpty
-                        ? Image.network(
-                          novel.coverImageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
-                            child: Icon(
-                              Icons.book_outlined,
-                              color: theme.colorScheme.onSurfaceVariant,
-                              size: 32,
-                            ),
-                          ),
-                        )
-                        : Center(
-                          child: Icon(
-                            Icons.book_outlined,
-                            color: theme.colorScheme.onSurfaceVariant,
-                            size: 32,
-                          ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (ctx) => NovelDetailScreen(novel: novel)),
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: kCoverHeight,
+                    width: double.infinity,
+                    child: OptimizedNetworkImage(
+                      novel.coverImageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: Center(
+                        child: Icon(
+                          Icons.book_outlined,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          size: 32,
                         ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.3),
-                        ],
                       ),
                     ),
                   ),
-                ],
+                ),
+              const SizedBox(height: 8),
+              Text(
+                novel.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+              Text(
+                novel.author,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            novel.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(
-            novel.author,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -223,42 +216,80 @@ class _PluginBrowserScreenState extends State<PluginBrowserScreen> {
           if (_loading) const LinearProgressIndicator(minHeight: 3.0),
 
           Expanded(
-            child:
-                _novels.isEmpty && !_loading
-                    ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Text(
-                          _currentFilter == 'search'
-                              ? 'no_search_results'.translate
-                              : 'no_popular_novels_found'.translate,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.outline,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    )
-                    : GridView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 16.0,
-                            mainAxisSpacing: 16.0,
-                            childAspectRatio: 0.55,
-                          ),
-                      itemCount: _novels.length,
-                      itemBuilder: (ctx, i) {
-                        return _buildNovelGridItem(_novels[i]);
-                      },
-                    ),
+            child: _buildStandardContent(),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildStandardContent() {
+    final theme = Theme.of(context);
+    if (_novels.isEmpty && !_loading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Text(
+            _currentFilter == 'search'
+                ? 'no_search_results'.translate
+                : 'no_popular_novels_found'.translate,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshCurrentFilter,
+      child: LayoutBuilder(builder: (ctx, constraints) {
+        final width = constraints.maxWidth;
+        int crossAxisCount = 3;
+        if (width < 600) crossAxisCount = 2;
+        else if (width < 1000) crossAxisCount = 3;
+        else crossAxisCount = 4;
+
+        final childAspect = kCoverWidth / kCoverHeight;
+
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16.0,
+            mainAxisSpacing: 16.0,
+            childAspectRatio: childAspect,
+          ),
+          itemCount: _novels.length,
+          itemBuilder: (ctx, i) {
+            return _buildNovelGridItem(_novels[i]);
+          },
+        );
+      }),
+    );
+  }
+
+  Future<void> _refreshCurrentFilter() async {
+    if (_currentFilter == 'popular') {
+      await _loadPopular();
+    } else if (_currentFilter == 'search') {
+      await _search(_searchCtrl.text);
+    }
+  }
+
+  void _setNovelCollections(List<Novel> novels) {
+    setState(() {
+      _novels = novels;
+    });
+  }
+
+  void _clearNovels() {
+    setState(() {
+      _novels = [];
+    });
   }
 }

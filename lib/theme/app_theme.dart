@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'google_fonts_safe.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
@@ -117,7 +117,7 @@ class AppTheme {
         space: 16,
       ),
 
-      textTheme: GoogleFonts.outfitTextTheme().copyWith(
+      textTheme: outfitTextThemeSafe().copyWith(
         displayLarge: AppTextStyles.displayLarge(AppColors.lightText),
         displayMedium: AppTextStyles.displayMedium(AppColors.lightText),
         displaySmall: AppTextStyles.displaySmall(AppColors.lightText),
@@ -257,9 +257,7 @@ class AppTheme {
         space: 16,
       ),
 
-      textTheme: GoogleFonts.outfitTextTheme(
-        ThemeData.dark().textTheme,
-      ).copyWith(
+      textTheme: outfitTextThemeSafe(ThemeData.dark().textTheme).copyWith(
         displayLarge: AppTextStyles.displayLarge(AppColors.darkText),
         displayMedium: AppTextStyles.displayMedium(AppColors.darkText),
         displaySmall: AppTextStyles.displaySmall(AppColors.darkText),

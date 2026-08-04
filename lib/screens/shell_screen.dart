@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/screens/home_screen.dart';
 import 'package:akashic_records/screens/favorites_screen.dart';
-import 'package:akashic_records/screens/updates_screen.dart';
 import 'package:akashic_records/screens/plugins_screen.dart';
 import 'package:akashic_records/screens/settings/settings_screen.dart';
 import 'package:akashic_records/screens/offline_library_screen.dart';
@@ -27,7 +26,6 @@ class _ShellScreenState extends State<ShellScreen> {
   List<Widget> _basePages() => const [
     HomeScreen(),
     FavoritesScreen(),
-    UpdatesScreen(),
     PluginsScreen(),
   ];
 
@@ -204,11 +202,6 @@ class _ShellScreenState extends State<ShellScreen> {
                                   Icons.favorite_border,
                                   Icons.favorite,
                                   'favorites',
-                                ),
-                                _buildNavDest(
-                                  Icons.auto_awesome_outlined,
-                                  Icons.auto_awesome,
-                                  'updates',
                                 ),
                                 _buildNavDest(
                                   Icons.extension_outlined,

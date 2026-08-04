@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'google_fonts_safe.dart';
 import 'app_colors.dart';
 
 class AppTextStyles {
@@ -10,7 +10,7 @@ class AppTextStyles {
     double? letterSpacing,
     double? height,
   ) {
-    return GoogleFonts.outfit(
+        return outfitSafe(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -89,33 +89,33 @@ class AppTextStyles {
   static TextStyle hintText(Color color) =>
       _baseFontStyle(14, FontWeight.w400, color, 0.25, 1.43);
 
-  static TextStyle readerBodyLight(double fontSize) => GoogleFonts.lora(
-    fontSize: fontSize,
-    fontWeight: FontWeight.w400,
-    color: AppColors.readerTextLight,
-    height: 1.6,
-  );
+    static TextStyle readerBodyLight(double fontSize) => loraSafe(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w400,
+        color: AppColors.readerTextLight,
+        height: 1.6,
+    );
 
-  static TextStyle readerBodyDark(double fontSize) => GoogleFonts.lora(
-    fontSize: fontSize,
-    fontWeight: FontWeight.w400,
-    color: AppColors.readerTextDark,
-    height: 1.6,
-  );
+    static TextStyle readerBodyDark(double fontSize) => loraSafe(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w400,
+        color: AppColors.readerTextDark,
+        height: 1.6,
+    );
 
-  static TextStyle readerChapterTitle(Color color) => GoogleFonts.lora(
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    color: color,
-    height: 1.2,
-  );
+    static TextStyle readerChapterTitle(Color color) => loraSafe(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        color: color,
+        height: 1.2,
+    );
 
-  static TextStyle readerBookTitle(Color color) => GoogleFonts.lora(
-    fontSize: 24,
-    fontWeight: FontWeight.w600,
-    color: color,
-    height: 1.3,
-  );
+    static TextStyle readerBookTitle(Color color) => loraSafe(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: color,
+        height: 1.3,
+    );
 }
 
 extension TextStylesExtension on BuildContext {

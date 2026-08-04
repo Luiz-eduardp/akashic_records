@@ -61,6 +61,7 @@ dependencies:
   android_intent_plus: ^6.0.0
   flutter_tts: ^3.5.0
   flutter_local_notifications: ^19.4.2
+  flutter_js: ^0.8.7
 
 dev_dependencies:
   flutter_test:
