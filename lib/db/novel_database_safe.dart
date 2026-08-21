@@ -182,6 +182,7 @@ class NovelDatabase {
     required String coverPath,
     required List<Map<String, dynamic>> chapters,
     required String importedAt,
+    String format = 'epub',
   }) => _runWithTimeout(
     () => epubs.upsertLocalEpub(
       id: id,
@@ -192,6 +193,7 @@ class NovelDatabase {
       coverPath: coverPath,
       chapters: chapters,
       importedAt: importedAt,
+      format: format,
     ),
   );
 
@@ -201,6 +203,28 @@ class NovelDatabase {
     } catch (e) {
       _handleError('getAllLocalEpubs', e);
       return [];
+    }
+  }
+
+  Future<void> saveReadingProgress({
+    required String documentId,
+    String? chapterId,
+    double progressPercent = 0.0,
+  }) =>
+      _runWithTimeout(
+        () => epubs.saveReadingProgress(
+          documentId: documentId,
+          chapterId: chapterId,
+          progressPercent: progressPercent,
+        ),
+      );
+
+  Future<Map<String, double>> getReadingProgressMap() async {
+    try {
+      return await _runWithTimeout(() => epubs.getReadingProgressMap());
+    } catch (e) {
+      _handleError('getReadingProgressMap', e);
+      return {};
     }
   }
 

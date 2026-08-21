@@ -5,6 +5,10 @@ abstract class DatabaseTables {
   static const String savedChapters = 'saved_chapters';
   static const String settings = 'settings';
   static const String chapterReads = 'chapter_reads';
+  static const String localDocuments = 'local_documents';
+  static const String readingProgress = 'reading_progress';
+  static const String annotations = 'annotations';
+  static const String readingStats = 'reading_stats';
 
   static const String createNovelTable = '''
     CREATE TABLE IF NOT EXISTS novels (
@@ -42,6 +46,7 @@ abstract class DatabaseTables {
       author TEXT,
       description TEXT,
       coverPath TEXT,
+      format TEXT DEFAULT 'epub',
       chapters TEXT,
       importedAt TEXT
     )
@@ -71,6 +76,54 @@ abstract class DatabaseTables {
       chapterId TEXT,
       read INTEGER,
       PRIMARY KEY (novelId, chapterId)
+    )
+  ''';
+
+  static const String createLocalDocumentsTable = '''
+    CREATE TABLE IF NOT EXISTS local_documents (
+      id TEXT PRIMARY KEY,
+      filePath TEXT,
+      title TEXT,
+      author TEXT,
+      description TEXT,
+      coverPath TEXT,
+      format TEXT DEFAULT 'epub',
+      fileSize INTEGER DEFAULT 0,
+      chapters TEXT,
+      importedAt TEXT
+    )
+  ''';
+
+  static const String createReadingProgressTable = '''
+    CREATE TABLE IF NOT EXISTS reading_progress (
+      documentId TEXT PRIMARY KEY,
+      chapterId TEXT,
+      pageIndex INTEGER DEFAULT 0,
+      scrollOffset REAL DEFAULT 0.0,
+      progressPercent REAL DEFAULT 0.0,
+      estimatedTimeLeftSeconds INTEGER DEFAULT 0,
+      lastReadAt TEXT
+    )
+  ''';
+
+  static const String createAnnotationsTable = '''
+    CREATE TABLE IF NOT EXISTS annotations (
+      id TEXT PRIMARY KEY,
+      novelId TEXT,
+      chapterId TEXT,
+      selectedText TEXT,
+      note TEXT,
+      colorHex TEXT,
+      createdAt TEXT
+    )
+  ''';
+
+  static const String createReadingStatsTable = '''
+    CREATE TABLE IF NOT EXISTS reading_stats (
+      date TEXT PRIMARY KEY,
+      secondsRead INTEGER DEFAULT 0,
+      wordsRead INTEGER DEFAULT 0,
+      chaptersCompleted INTEGER DEFAULT 0
     )
   ''';
 }

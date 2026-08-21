@@ -3,7 +3,7 @@ import 'package:akashic_records/db/novel_database.dart';
 
 class NovelManager {
   final NovelDatabase _db;
-  late List<Novel> _localNovels;
+  List<Novel> _localNovels = [];
 
   NovelManager(this._db);
 

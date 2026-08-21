@@ -5,7 +5,10 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class I18n {
-  static Locale currentLocate = const Locale('en');
+  static Locale currentLocale = const Locale('en');
+  static Locale get currentLocate => currentLocale;
+  static set currentLocate(Locale loc) => currentLocale = loc;
+
   static List<Locale> supportedLocales = const [
     Locale('en'),
     Locale('pt', 'BR'),
@@ -98,6 +101,14 @@ class I18n {
 extension TranslateExt on String {
   String get translate {
     return I18n._translations[this] as String? ?? this;
+  }
+
+  String translateParams(Map<String, dynamic> params) {
+    String res = I18n._translations[this] as String? ?? this;
+    params.forEach((key, val) {
+      res = res.replaceAll('{$key}', val.toString());
+    });
+    return res;
   }
 }
 

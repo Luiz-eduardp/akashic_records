@@ -18,6 +18,11 @@ import 'package:akashic_records/widgets/reader_controls_bar.dart';
 import 'package:akashic_records/services/reader_tts.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'package:akashic_records/screens/reader/parallel_reader_screen.dart';
+import 'package:akashic_records/services/reading_stats_service.dart';
+import 'package:akashic_records/widgets/annotation_dialog.dart';
+import 'package:akashic_records/screens/reader/annotations_manager_screen.dart';
+
 class ReaderScreen extends StatefulWidget {
   const ReaderScreen({super.key});
 
@@ -43,6 +48,76 @@ class _ReaderScreenState extends State<ReaderScreen> {
   String _currentTime = '';
   int _batteryLevel = -1;
   bool _isLoading = true;
+  double _rulerPosY = 180.0;
+  final ReadingStatsService _statsService = ReadingStatsService();
+  Timer? _sleepTimer;
+  int _sleepTimerMinutes = 0;
+
+  void _startSleepTimer(int minutes) {
+    _sleepTimer?.cancel();
+    setState(() => _sleepTimerMinutes = minutes);
+    if (minutes > 0) {
+      _sleepTimer = Timer(Duration(minutes: minutes), () async {
+        await _tts.pause();
+        if (mounted) {
+          setState(() {
+            _ttsPlaying = false;
+            _sleepTimerMinutes = 0;
+          });
+          _showTtsNotification(false);
+        }
+      });
+    }
+  }
+
+  void _showSleepTimerDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text('sleep_timer'.translate),
+        children: [5, 10, 15, 30, 45, 60].map((m) {
+          return SimpleDialogOption(
+            onPressed: () {
+              _startSleepTimer(m);
+              Navigator.pop(ctx);
+            },
+            child: Text('sleep_timer_minutes'.translateParams({'minutes': m.toString()})),
+          );
+        }).toList()
+          ..add(
+            SimpleDialogOption(
+              onPressed: () {
+                _startSleepTimer(0);
+                Navigator.pop(ctx);
+              },
+              child: Text('sleep_timer_off'.translate),
+            ),
+          ),
+      ),
+    );
+  }
+
+  void _handleTextSelectionMessage(String message) {
+    try {
+      final Map<String, dynamic> data = jsonDecode(message);
+      final text = data['text'] as String?;
+      if (text != null && text.trim().isNotEmpty) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (ctx) => AnnotationDialog(
+            novelId: novel.id,
+            chapterId: novel.chapters.isNotEmpty ? novel.chapters[selectedChapter].id : '',
+            selectedText: text.trim(),
+          ),
+        );
+      }
+    } catch (_) {}
+  }
 
   Future<void> _saveReaderPrefs() async {
     final appState = Provider.of<AppState>(context, listen: false);
@@ -166,11 +241,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
             _handleScrollMessage(msg.message);
           },
         );
+        _controller!.addJavaScriptChannel(
+          'TextSelection',
+          onMessageReceived: (msg) {
+            _handleTextSelectionMessage(msg.message);
+          },
+        );
       } catch (_) {}
       await _controller!.loadHtmlString(
         '<html><body><h2>Loading...</h2></body></html>',
       );
     }
+
+    await _statsService.init();
+    _statsService.startSession();
 
     _buildPresets();
     _startTimers();
@@ -316,9 +400,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
           if (novel != null && novel.chapters.isNotEmpty) {
             final chapter = novel.chapters[selectedChapter];
             final key = 'scroll_${novel.id}_${chapter.id}';
+            final totalCh = novel.chapters.length;
+            final overallProgress = totalCh > 0
+                ? ((selectedChapter + progress) / totalCh).clamp(0.0, 1.0)
+                : progress;
+
             NovelDatabase.getInstance().then((db) async {
               try {
                 await db.setSetting(key, progress.toString());
+                await db.saveReadingProgress(
+                  documentId: novel.id,
+                  chapterId: chapter.id,
+                  progressPercent: overallProgress,
+                );
               } catch (_) {}
             });
           }
@@ -473,6 +567,49 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   centerTitle: false,
                   actions: [
                     IconButton(
+                      tooltip: 'reading_ruler'.translate,
+                      icon: Icon(
+                        Icons.straighten_rounded,
+                        color: (_prefs['rulerEnabled'] == true)
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          final current = (_prefs['rulerEnabled'] == true);
+                          _prefs['rulerEnabled'] = !current;
+                        });
+                        _saveReaderPrefs();
+                      },
+                    ),
+                    IconButton(
+                      tooltip: 'annotations_title'.translate,
+                      icon: const Icon(Icons.format_quote_rounded),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AnnotationsManagerScreen(
+                              novelId: novel.id,
+                              novelTitle: novel.title,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      tooltip: 'Parallel Read',
+                      icon: const Icon(Icons.call_split_rounded),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ParallelReaderScreen(leftNovel: novel),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
                       tooltip: 'Fullscreen',
                       icon: Icon(
                         (_prefs['fullscreen'] as bool?) == true
@@ -487,15 +624,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
                         setState(() {
                           _prefs['fullscreen'] = newVal;
                         });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              newVal
-                                  ? 'fullscreen_enabled'.translate
-                                  : 'fullscreen_disabled'.translate,
-                            ),
-                          ),
-                        );
                       },
                     ),
                   ],
@@ -510,40 +638,67 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   batteryLevel: _batteryLevel,
                   progress: _scrollProgress,
                   accent: appState.accentColor,
+                  wpm: _statsService.currentWpm,
+                  sleepTimerMinutes: _sleepTimerMinutes,
                 ),
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.of(context).padding.bottom,
                   ),
-                  child: GestureDetector(
-                    onDoubleTap: () async {
-                      final current = (_prefs['fullscreen'] as bool?) ?? false;
-                      final newVal = !current;
-                      await _setFullscreenMode(newVal);
-                      setState(() {
-                        _prefs['fullscreen'] = newVal;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            newVal
-                                ? 'Tela cheia ativada'
-                                : 'Tela cheia desativada',
+                  child: Stack(
+                    children: [
+                      WebViewWidget(controller: _controller!),
+                      if ((_prefs['rulerEnabled'] ?? false) as bool)
+                        Positioned(
+                          top: _rulerPosY,
+                          left: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onVerticalDragUpdate: (details) {
+                              setState(() {
+                                _rulerPosY = (_rulerPosY + details.delta.dy)
+                                    .clamp(40.0, MediaQuery.of(context).size.height - 180.0);
+                              });
+                            },
+                            child: Container(
+                              height: ((_prefs['rulerHeight'] as num?)?.toDouble() ?? 48.0).clamp(24.0, 160.0),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(
+                                  ((_prefs['rulerOpacity'] as num?)?.toDouble() ?? 0.22).clamp(0.05, 0.8),
+                                ),
+                                border: Border.symmetric(
+                                  horizontal: BorderSide(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    width: 1.5,
+                                  ),
+                                ),
+                              ),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 16.0),
+                                  child: Icon(
+                                    Icons.drag_handle_rounded,
+                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      );
-                    },
-                    child: WebViewWidget(controller: _controller!),
+                    ],
                   ),
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               ReaderControlsBar(
                 onPrev: _goToPrevious,
                 onNext: _goToNext,
                 onOpenChapters: _openChapterSelector,
                 onOpenSettings: () => _openConfigModal(fullModal: true),
+                onSleepTimer: _showSleepTimerDialog,
                 onSave: () async {
                   try {
                     final chapter = novel.chapters[selectedChapter];
@@ -583,6 +738,21 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   } catch (e) {}
                 },
                 ttsPlaying: _ttsPlaying,
+                progress: _scrollProgress,
+                onScrub: (val) async {
+                  setState(() => _scrollProgress = val);
+                  try {
+                    await _controller!.runJavaScript(
+                      "window.scrollTo({top: (document.body.scrollHeight || document.documentElement.scrollHeight) * $val, behavior: 'auto'});",
+                    );
+                  } catch (_) {}
+                },
+                onParallelRead: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (ctx) => ParallelReaderScreen(leftNovel: novel)),
+                  );
+                },
               ),
             ],
           ),
@@ -680,10 +850,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final preset = _presets[presetIndex % _presets.length];
     final bg = preset['bg'] as String;
     final fg = preset['fg'] as String;
-    final fontSize =
+    final double fontSizeVal =
         (_prefs['fontSize'] is num)
-            ? (_prefs['fontSize'] as num).toDouble().toString()
-            : '18.0';
+            ? (_prefs['fontSize'] as num).toDouble()
+            : 18.0;
+    final fontSize = fontSizeVal.toStringAsFixed(1);
     final lineHeight =
         (_prefs['lineHeight'] is num)
             ? (_prefs['lineHeight'] as num).toDouble().toString()
@@ -743,22 +914,98 @@ class _ReaderScreenState extends State<ReaderScreen> {
       cssFontFamily = "'$fontFamily', serif";
     }
 
+    final hyphenation = _prefs['hyphenation'] == true;
+    final dropCaps = _prefs['drop_caps'] == true;
+    final paragraphIndent = _prefs['paragraph_indent'] == true;
+
     final css = '''
+      html, body, .reader-content, p, div, span, h1, h2, h3, h4, h5, h6 {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+      }
       $fontImport
-      html, body, .reader-content, .reader-content * {
+      html, body {
         background: $effectiveBg !important;
         color: ${fgRgba()} !important;
-        font-size: ${fontSize}px !important;
-        line-height: $lineHeight !important;
-        padding: ${padding}px !important;
-        font-family: $cssFontFamily !important;
-        font-weight: $weightVal !important;
+        margin: 0;
+        padding: 0;
         -webkit-text-size-adjust: 100% !important;
       }
-      body { margin:0; }
-      img { max-width: 100%; height: auto; }
+      .reader-content {
+        padding: ${padding}px !important;
+        font-family: $cssFontFamily !important;
+        font-size: ${fontSize}px !important;
+        line-height: $lineHeight !important;
+        color: ${fgRgba()} !important;
+        font-weight: $weightVal !important;
+      }
+      body { margin: 0; }
+      p, div { text-align: $align; margin-bottom: 1em; }
+      ${hyphenation ? 'p, div { hyphens: auto; -webkit-hyphens: auto; }' : ''}
+      ${paragraphIndent ? 'p { text-indent: 1.5em; margin-bottom: 0.4em; }' : ''}
+      ${dropCaps ? '.reader-content > p:first-of-type::first-letter { font-size: 3em; float: left; line-height: 0.8; margin-right: 8px; font-weight: bold; color: ' + (preset['accent'] ?? '#0EA5E9') + '; }' : ''}
+      h1, h2, h3, h4, h5, h6 {
+        font-weight: bold;
+        line-height: 1.25;
+        margin-top: 1.4em;
+        margin-bottom: 0.5em;
+        color: ${fgRgba()};
+      }
+      h1 { font-size: ${(fontSizeVal * 1.55).round()}px; }
+      h2 { font-size: ${(fontSizeVal * 1.35).round()}px; }
+      h3 { font-size: ${(fontSizeVal * 1.2).round()}px; }
+      h4, h5, h6 { font-size: ${(fontSizeVal * 1.05).round()}px; }
+      
+      blockquote {
+        border-left: 4px solid ${preset['accent'] ?? '#0EA5E9'};
+        margin: 1.2em 0;
+        padding: 0.5em 0 0.5em 1em;
+        opacity: 0.9;
+        font-style: italic;
+      }
+      
+      pre, code {
+        font-family: 'Roboto Mono', 'Fira Code', monospace !important;
+        font-size: ${(fontSizeVal * 0.9).round()}px !important;
+      }
+      pre {
+        background: rgba(128,128,128,0.1) !important;
+        padding: 14px !important;
+        border-radius: 12px !important;
+        overflow-x: auto;
+        margin: 1.2em 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      code {
+        background: rgba(128,128,128,0.12);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      
+      img {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 12px;
+        display: block;
+        margin: 1em auto;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.2em 0;
+      }
+      th, td {
+        border: 1px solid rgba(128,128,128,0.3);
+        padding: 8px 12px;
+        text-align: left;
+      }
+      th {
+        background: rgba(128,128,128,0.12);
+      }
+      
       a { color: ${preset['accent']}; }
-      p, div { text-align: $align; }
       .para { transition: filter 220ms ease, opacity 220ms ease; filter: blur(${focusMode ? focusBlur : 0}px); opacity: ${textAlpha.toStringAsFixed(3)}; }
       .para.focus { opacity: 1; filter: none; }
     ''';
@@ -833,6 +1080,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
       ticking = true;
     }
   }, {passive:true});
+  function checkSelection(){
+    try {
+      var sel = window.getSelection();
+      var txt = sel ? sel.toString().trim() : '';
+      if(txt.length > 2 && window.TextSelection) {
+        window.TextSelection.postMessage(JSON.stringify({text: txt}));
+      }
+    }catch(e){}
+  }
+  document.addEventListener('touchend', function(){ setTimeout(checkSelection, 350); });
+  document.addEventListener('mouseup', function(){ setTimeout(checkSelection, 350); });
   setTimeout(function(){ send(); if(${focusMode ? 'true' : 'false'}) updateFocus(); }, 500);
   setInterval(function(){ send(); if(${focusMode ? 'true' : 'false'}) updateFocus(); }, 1000);
 })();
@@ -1091,6 +1349,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void dispose() {
     _timeTimer?.cancel();
     _batteryTimer?.cancel();
+    _sleepTimer?.cancel();
+    _statsService.endSessionAndRecalculate();
     _setFullscreenMode(false);
     try {
       _stopTts();

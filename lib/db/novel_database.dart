@@ -7,6 +7,7 @@ import 'repositories/novel_repository.dart';
 import 'repositories/plugin_repository.dart';
 import 'repositories/chapter_repository.dart';
 import 'repositories/epub_repository.dart';
+import 'repositories/annotations_repository.dart';
 
 class NovelDatabase {
   static final NovelDatabase _instance = NovelDatabase._internal();
@@ -17,6 +18,7 @@ class NovelDatabase {
   late PluginRepository plugins;
   late ChapterRepository chapters;
   late EpubRepository epubs;
+  late AnnotationsRepository annotations;
 
   NovelDatabase._internal();
 
@@ -34,6 +36,7 @@ class NovelDatabase {
     plugins = PluginRepository(_database!);
     chapters = ChapterRepository(_database!);
     epubs = EpubRepository(_database!);
+    annotations = AnnotationsRepository(_database!);
   }
 
   Future<void> setSetting(String key, String value) =>
@@ -98,6 +101,7 @@ class NovelDatabase {
     required String coverPath,
     required List<Map<String, dynamic>> chapters,
     required String importedAt,
+    String format = 'epub',
   }) => epubs.upsertLocalEpub(
     id: id,
     filePath: filePath,
@@ -107,10 +111,24 @@ class NovelDatabase {
     coverPath: coverPath,
     chapters: chapters,
     importedAt: importedAt,
+    format: format,
   );
 
   Future<List<Map<String, dynamic>>> getAllLocalEpubs() =>
       epubs.getAllLocalEpubs();
+
+  Future<void> saveReadingProgress({
+    required String documentId,
+    String? chapterId,
+    double progressPercent = 0.0,
+  }) => epubs.saveReadingProgress(
+        documentId: documentId,
+        chapterId: chapterId,
+        progressPercent: progressPercent,
+      );
+
+  Future<Map<String, double>> getReadingProgressMap() =>
+      epubs.getReadingProgressMap();
 
   Future<void> deleteLocalEpub(String id) => epubs.deleteLocalEpub(id);
 

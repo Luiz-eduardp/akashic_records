@@ -20,8 +20,24 @@ import 'package:akashic_records/services/plugins/portuguese/blogdoamonnovels_ser
 import 'package:akashic_records/services/plugins/portuguese/centralnovel_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/illusia_service.dart';
 import 'package:akashic_records/services/plugins/portuguese/lightnovelbrasil_service.dart';
+import 'package:akashic_records/services/plugins/opds_plugins.dart';
+import 'package:akashic_records/services/plugins/english/lightnovelpub_service.dart';
+import 'package:akashic_records/services/plugins/english/freewebnovel_service.dart';
+import 'package:akashic_records/services/plugins/english/novelfull_service.dart';
+import 'package:akashic_records/services/plugins/chinese/shu69_service.dart';
+import 'package:akashic_records/services/plugins/english/ranobes_service.dart';
+import 'package:akashic_records/services/plugins/english/boxnovel_service.dart';
+import 'package:akashic_records/services/plugins/portuguese/empirenovels_service.dart';
+import 'package:akashic_records/services/plugins/spanish/tmonovelas_service.dart';
+import 'package:akashic_records/services/plugins/russian/rulate_service.dart';
+import 'package:akashic_records/services/lnreader_js_engine.dart';
 
 void registerDefaultPlugins() {
+  Future.microtask(() async {
+    try {
+      await LnReaderJsEngine.syncAndRegisterPlugins();
+    } catch (_) {}
+  });
   try {
     PluginRegistry.register(Syosetu());
   } catch (_) {}
@@ -100,5 +116,22 @@ void registerDefaultPlugins() {
     debugPrint('Failed to register SkyNovels: $e');
   }
 
+  try { PluginRegistry.register(LightNovelPub()); } catch (_) {}
+  try { PluginRegistry.register(FreeWebNovel()); } catch (_) {}
+  try { PluginRegistry.register(NovelFull()); } catch (_) {}
+  try { PluginRegistry.register(Shu69()); } catch (_) {}
+  try { PluginRegistry.register(Ranobes()); } catch (_) {}
+  try { PluginRegistry.register(BoxNovel()); } catch (_) {}
+  try { PluginRegistry.register(EmpireNovels()); } catch (_) {}
+  try { PluginRegistry.register(TmoNovelas()); } catch (_) {}
+  try { PluginRegistry.register(Rulate()); } catch (_) {}
+
+  try { PluginRegistry.register(StandardEbooksOpds()); } catch (_) {}
+  try { PluginRegistry.register(ProjectGutenbergOpds()); } catch (_) {}
+  try { PluginRegistry.register(FeedbooksOpds()); } catch (_) {}
+  try { PluginRegistry.register(ManyBooksOpds()); } catch (_) {}
+  try { PluginRegistry.register(InternetArchiveOpds()); } catch (_) {}
+  try { PluginRegistry.register(OapenOpds()); } catch (_) {}
+  try { PluginRegistry.register(CalibreCustomOpds()); } catch (_) {}
 }
 

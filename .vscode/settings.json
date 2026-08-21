@@ -8,5 +8,6 @@
         "**/Thumbs.db": true
     },
     "explorerExclude.backup": {},
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "explorerExcludeManager.backup": {}
 }

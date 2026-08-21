@@ -14,7 +14,6 @@ import 'managers/plugin_manager.dart';
 import 'managers/ui_settings_manager.dart';
 import 'managers/network_settings_manager.dart';
 import 'managers/reader_preferences_manager.dart';
-import 'managers/release_manager.dart';
 
 class AppState extends ChangeNotifier {
   late NovelDatabase _db;
@@ -24,9 +23,7 @@ class AppState extends ChangeNotifier {
   late UiSettingsManager _uiSettings;
   late NetworkSettingsManager _networkSettings;
   late ReaderPreferencesManager _readerPrefs;
-  late ReleaseManager _releaseManager;
 
-  bool showChangelog = true;
   bool isOnline = true;
   bool isBusy = false;
   StreamSubscription<ConnectivityResult>? _connectivitySub;
@@ -50,8 +47,6 @@ class AppState extends ChangeNotifier {
   String? get customUserAgent => _networkSettings.customUserAgent;
 
   Map<String, dynamic> get readerPrefs => _readerPrefs.prefs;
-  String? get latestReleaseTag => _releaseManager.latestReleaseTag;
-  String? get latestReleaseUrl => _releaseManager.latestReleaseUrl;
 
   DownloadQueueService get downloadQueue => _downloadQueue;
   NovelDatabase get database => _db;
@@ -69,7 +64,6 @@ class AppState extends ChangeNotifier {
         _uiSettings.initialize(),
         _networkSettings.initialize(),
         _readerPrefs.initialize(),
-        _releaseManager.loadLatestReleaseInfo(),
       ], eagerError: false);
 
       await _setupLocale();
@@ -98,7 +92,6 @@ class AppState extends ChangeNotifier {
     _uiSettings = UiSettingsManager(_db);
     _networkSettings = NetworkSettingsManager(_db);
     _readerPrefs = ReaderPreferencesManager(_db);
-    _releaseManager = ReleaseManager(_db);
   }
 
   Future<void> _setupLocale() async {
@@ -416,37 +409,6 @@ class AppState extends ChangeNotifier {
 
   Map<String, dynamic> getReaderPrefs() => _readerPrefs.getPreferences();
 
-  Future<void> loadLatestReleaseInfo() async {
-    try {
-      await _safeOperation(() => _releaseManager.loadLatestReleaseInfo());
-      notifyListeners();
-    } catch (e) {
-      _handleError('loadLatestReleaseInfo', e);
-    }
-  }
-
-  Future<void> saveLatestReleaseInfo(String tag, String url) async {
-    try {
-      await _safeOperation(
-        () => _releaseManager.saveLatestReleaseInfo(tag, url),
-      );
-      notifyListeners();
-    } catch (e) {
-      _handleError('saveLatestReleaseInfo', e);
-    }
-  }
-
-  bool shouldShowReleaseNotes(String tag) =>
-      _releaseManager.shouldShowReleaseNotes(tag);
-
-  Future<void> markReleaseNotesShown(String tag) async {
-    try {
-      await _safeOperation(() => _releaseManager.markReleaseNotesShown(tag));
-      notifyListeners();
-    } catch (e) {
-      _handleError('markReleaseNotesShown', e);
-    }
-  }
 
   void setOnQueueUpdated(VoidCallback? callback) {
     _onQueueUpdated = callback;
@@ -551,10 +513,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void markChangelogAsShown() {
-    showChangelog = false;
-    notifyListeners();
-  }
 
   Future<T> _safeOperation<T>(
     Future<T> Function() operation, {

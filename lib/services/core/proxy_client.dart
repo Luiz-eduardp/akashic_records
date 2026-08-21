@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:akashic_records/db/novel_database.dart';
+import 'package:akashic_records/services/cloudflare_cookie_manager.dart';
 
 class ProxyClient {
   final http.Client _client;
@@ -35,27 +38,44 @@ class ProxyClient {
     return null;
   }
 
-  ProxyClient([http.Client? client]) : _client = client ?? http.Client();
+  ProxyClient([http.Client? client])
+      : _client = client ??
+            IOClient(
+              HttpClient()
+                ..badCertificateCallback =
+                    (X509Certificate cert, String host, int port) => true,
+            );
 
-  Future<Map<String, String>> _defaultHeaders() async {
+  Future<Map<String, String>> _defaultHeaders(Uri targetUri) async {
     final db = await NovelDatabase.getInstance();
     final ua = await db.getSetting('custom_user_agent');
+    final cfManager = CloudflareCookieManager();
 
-    final headers = {
+    final urlStr = targetUri.toString();
+    final cfUa = cfManager.getUserAgent(urlStr);
+    final cfCookie = cfManager.getCookieHeader(urlStr);
+
+    final headers = <String, String>{
       'User-Agent':
-          ua != null && ua.isNotEmpty
+          cfUa ??
+          (ua != null && ua.isNotEmpty
               ? ua
-              : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+              : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'),
       'Accept-Language': 'en-US,en;q=0.9',
       'Accept':
-          'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Referer': 'https://www.google.com/',
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,application/epub+zip,application/pdf,*/*;q=0.8',
+      'Referer': '${targetUri.scheme}://${targetUri.host}/',
     };
+
+    if (cfCookie != null && cfCookie.isNotEmpty) {
+      headers['Cookie'] = cfCookie;
+    }
+
     return headers;
   }
 
   Future<http.Response> get(Uri uri, {Map<String, String>? headers}) async {
-    final defaultHeaders = await _defaultHeaders();
+    final defaultHeaders = await _defaultHeaders(uri);
     final merged = {...defaultHeaders, ...?headers};
 
     final db = await NovelDatabase.getInstance();
@@ -95,7 +115,7 @@ class ProxyClient {
     Object? body,
     Encoding? encoding,
   }) async {
-    final defaultHeaders = await _defaultHeaders();
+    final defaultHeaders = await _defaultHeaders(uri);
     final merged = {...defaultHeaders, ...?headers};
 
     final db = await NovelDatabase.getInstance();

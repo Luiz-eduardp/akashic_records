@@ -6,13 +6,11 @@ import 'package:akashic_records/i18n/i18n.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:akashic_records/screens/shell_screen.dart';
 import 'package:akashic_records/services/registry_init.dart';
-import 'package:akashic_records/screens/home_screen.dart';
-import 'package:akashic_records/screens/local_epubs/local_epubs_screen.dart';
+import 'package:akashic_records/screens/library_dashboard_screen.dart';
+import 'package:akashic_records/screens/settings/storage_and_backup_screen.dart';
 import 'package:akashic_records/screens/settings/settings_screen.dart';
 import 'package:akashic_records/screens/reader/reader_screen.dart';
-import 'package:akashic_records/screens/favorites_screen.dart';
 import 'package:akashic_records/screens/plugins_screen.dart';
-import 'package:akashic_records/screens/backups_screen.dart';
 import 'package:akashic_records/theme/app_theme.dart';
 import 'package:akashic_records/theme/app_colors.dart';
 import 'package:akashic_records/theme/app_text_styles.dart';
@@ -83,8 +81,8 @@ class MyApp extends StatelessWidget {
           },
           home: const ShellScreen(),
           routes: {
-            '/home': (ctx) => const HomeScreen(),
-            '/backups': (ctx) => const BackupsScreen(),
+            '/home': (ctx) => const LibraryDashboardScreen(),
+            '/backups': (ctx) => const StorageAndBackupScreen(),
             '/settings':
                 (ctx) => SettingsScreen(
                   onLocaleChanged: (locale) async {
@@ -96,8 +94,7 @@ class MyApp extends StatelessWidget {
                   },
                 ),
             '/reader': (ctx) => const ReaderScreen(),
-            '/favorites': (ctx) => const FavoritesScreen(),
-            '/local_epubs': (ctx) => const LocalEpubsScreen(),
+            '/local_epubs': (ctx) => const LibraryDashboardScreen(),
             '/plugins': (ctx) => const PluginsScreen(),
           },
         );

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/models/model.dart';
 import 'package:akashic_records/screens/novel_detail_screen.dart';
+import 'package:akashic_records/widgets/m3e/m3e_app_bar.dart';
 
 class ReadingHistoryScreen extends StatefulWidget {
   const ReadingHistoryScreen({super.key});
@@ -53,19 +54,17 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
     final theme = Theme.of(context);
     final appState = context.watch<AppState>();
 
-    List<Novel> novels =
-        List.of(
-          appState.localNovels,
-        ).where((n) => n.lastReadAt != null).toList();
+    List<Novel> novels = List.of(
+      appState.localNovels,
+    ).where((n) => n.lastReadAt != null).toList();
 
     if (_dateRange != null) {
-      novels =
-          novels.where((n) {
-            final dateTime = DateTime.tryParse(n.lastReadAt ?? '');
-            if (dateTime == null) return false;
-            return dateTime.isAfter(_dateRange!.start) &&
-                dateTime.isBefore(_dateRange!.end.add(const Duration(days: 1)));
-          }).toList();
+      novels = novels.where((n) {
+        final dateTime = DateTime.tryParse(n.lastReadAt ?? '');
+        if (dateTime == null) return false;
+        return dateTime.isAfter(_dateRange!.start) &&
+            dateTime.isBefore(_dateRange!.end.add(const Duration(days: 1)));
+      }).toList();
     }
 
     if (_selectedNovels.isNotEmpty) {
@@ -85,74 +84,63 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('reading_history'.translate),
-        centerTitle: false,
-        elevation: 0,
+      appBar: M3EAppBar(
+        title: 'reading_history'.translate,
+        subtitle: 'reading_history_desc'.translate,
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) => setState(() => _sortBy = value),
-            icon: const Icon(Icons.sort),
-            itemBuilder:
-                (BuildContext context) => <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
-                    value: 'recent',
-                    child: Row(
-                      spacing: 8,
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 18,
-                          color:
-                              _sortBy == 'recent'
-                                  ? theme.colorScheme.primary
-                                  : null,
-                        ),
-                        Text('sort_by_recent'.translate),
-                      ],
+            icon: const Icon(Icons.sort_rounded),
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'recent',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 18,
+                      color: _sortBy == 'recent' ? theme.colorScheme.primary : null,
                     ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'title',
-                    child: Row(
-                      spacing: 8,
-                      children: [
-                        Icon(
-                          Icons.abc,
-                          size: 18,
-                          color:
-                              _sortBy == 'title'
-                                  ? theme.colorScheme.primary
-                                  : null,
-                        ),
-                        Text('sort_by_title'.translate),
-                      ],
+                    const SizedBox(width: 8),
+                    Text('sort_by_recent'.translate),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'title',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.sort_by_alpha_rounded,
+                      size: 18,
+                      color: _sortBy == 'title' ? theme.colorScheme.primary : null,
                     ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'author',
-                    child: Row(
-                      spacing: 8,
-                      children: [
-                        Icon(
-                          Icons.person,
-                          size: 18,
-                          color:
-                              _sortBy == 'author'
-                                  ? theme.colorScheme.primary
-                                  : null,
-                        ),
-                        Text('sort_by_author'.translate),
-                      ],
+                    const SizedBox(width: 8),
+                    Text('sort_by_title'.translate),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'author',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline_rounded,
+                      size: 18,
+                      color: _sortBy == 'author' ? theme.colorScheme.primary : null,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text('sort_by_author'.translate),
+                  ],
+                ),
+              ),
+            ],
           ),
           IconButton(
             icon: Stack(
               alignment: Alignment.topRight,
               children: [
-                const Icon(Icons.filter_list),
+                const Icon(Icons.filter_list_rounded),
                 if (_hasActiveFilters())
                   Container(
                     width: 8,
@@ -165,7 +153,7 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
               ],
             ),
             onPressed: _toggleFilters,
-            tooltip: 'Filtros',
+            tooltip: 'filter_by_date'.translate,
           ),
         ],
       ),
@@ -174,10 +162,9 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            child:
-                _showFilters
-                    ? _buildFilterPanel(context, appState)
-                    : const SizedBox.shrink(),
+            child: _showFilters
+                ? _buildFilterPanel(context, appState)
+                : const SizedBox.shrink(),
           ),
           if (novels.isNotEmpty && _hasActiveFilters())
             Container(
@@ -195,7 +182,7 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${novels.length} resultado${novels.length != 1 ? 's' : ''}',
+                    '${novels.length} ${novels.length == 1 ? 'document_singular'.translate : 'documents_count'.translateParams({'count': novels.length})}',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w600,
@@ -211,7 +198,7 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
                       _filterAnimController.reverse();
                     },
                     child: Text(
-                      'Limpar filtros',
+                      'clear_selection'.translate,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w600,
@@ -223,57 +210,45 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
               ),
             ),
           Expanded(
-            child:
-                novels.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer
-                                  .withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.history_outlined,
-                              size: 64,
-                              color: theme.colorScheme.primary.withOpacity(0.4),
-                            ),
+            child: novels.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer.withOpacity(0.1),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(height: 24),
-                          Text(
-                            'reading_history_empty'.translate,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Icon(
+                            Icons.history_outlined,
+                            size: 64,
+                            color: theme.colorScheme.primary.withOpacity(0.4),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _hasActiveFilters()
-                                ? 'Nenhuma novel encontrada com esses filtros'
-                                : 'Comece a ler para ver seu histórico aqui',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'reading_history_empty'.translate,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
-                      ),
-                    )
-                    : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: novels.length,
-                      itemBuilder: (context, index) {
-                        final novel = novels[index];
-                        return AnimatedOpacity(
-                          opacity: 1.0,
-                          duration: Duration(milliseconds: 300 + (index * 50)),
-                          child: _buildHistoryCard(context, novel),
-                        );
-                      },
+                        ),
+                      ],
                     ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 96),
+                    itemCount: novels.length,
+                    itemBuilder: (context, index) {
+                      final novel = novels[index];
+                      return AnimatedOpacity(
+                        opacity: 1.0,
+                        duration: Duration(milliseconds: 300 + (index * 50)),
+                        child: _buildHistoryCard(context, novel),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -282,10 +257,6 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
 
   Widget _buildFilterPanel(BuildContext context, AppState appState) {
     final theme = Theme.of(context);
-    final allNovels =
-        List.of(
-          appState.localNovels,
-        ).where((n) => n.lastReadAt != null).toList();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -294,166 +265,81 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
         border: Border(bottom: BorderSide(color: theme.colorScheme.outline)),
       ),
       child: Column(
-        spacing: 16,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            spacing: 8,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Text(
+            'filter_by_date'.translate,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
             children: [
-              Text(
-                'Período',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        final picked = await showDateRangePicker(
-                          context: context,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                          initialDateRange: _dateRange,
-                        );
-                        if (picked != null) {
-                          setState(() => _dateRange = picked);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          border: Border.all(
-                            color:
-                                _dateRange != null
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.outline,
-                            width: _dateRange != null ? 2 : 1,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          spacing: 8,
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 18,
-                              color:
-                                  _dateRange != null
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.onSurfaceVariant,
-                            ),
-                            Expanded(
-                              child: Text(
-                                _dateRange == null
-                                    ? 'Selecione um período'
-                                    : '${_dateRange!.start.day}/${_dateRange!.start.month} - ${_dateRange!.end.day}/${_dateRange!.end.month}',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color:
-                                      _dateRange != null
-                                          ? theme.colorScheme.primary
-                                          : theme.colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                      initialDateRange: _dateRange,
+                    );
+                    if (picked != null) {
+                      setState(() => _dateRange = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      border: Border.all(
+                        color: _dateRange != null
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outline,
+                        width: _dateRange != null ? 2 : 1,
                       ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 18,
+                          color: _dateRange != null
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _dateRange == null
+                                ? 'filter_by_date'.translate
+                                : '${_dateRange!.start.day}/${_dateRange!.start.month} - ${_dateRange!.end.day}/${_dateRange!.end.month}',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: _dateRange != null
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  if (_dateRange != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setState(() => _dateRange = null),
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
+              if (_dateRange != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => setState(() => _dateRange = null),
+                  ),
+                ),
             ],
           ),
-          if (allNovels.isNotEmpty)
-            Column(
-              spacing: 8,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Novels',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (_selectedNovels.isNotEmpty)
-                      GestureDetector(
-                        onTap: () => setState(() => _selectedNovels.clear()),
-                        child: Text(
-                          'Limpar',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    spacing: 8,
-                    children: [
-                      for (final novel in allNovels)
-                        FilterChip(
-                          label: Text(
-                            novel.title,
-                            maxLines: 1,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          selected: _selectedNovels.contains(novel.id),
-                          onSelected: (selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedNovels.add(novel.id);
-                              } else {
-                                _selectedNovels.remove(novel.id);
-                              }
-                            });
-                          },
-                          avatar:
-                              _selectedNovels.contains(novel.id)
-                                  ? Icon(
-                                    Icons.check,
-                                    size: 16,
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.onSecondaryContainer,
-                                  )
-                                  : null,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
         ],
       ),
     );
@@ -461,289 +347,110 @@ class _ReadingHistoryScreenState extends State<ReadingHistoryScreen>
 
   Widget _buildHistoryCard(BuildContext context, Novel novel) {
     final theme = Theme.of(context);
-    final dateTime = DateTime.tryParse(novel.lastReadAt ?? '');
-    final formattedDate =
-        dateTime != null
-            ? '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year}'
-            : 'N/A';
-    final formattedTime =
-        dateTime != null
-            ? '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}'
-            : 'N/A';
+    final colorScheme = theme.colorScheme;
 
-    Chapter? lastChapter;
-    if (novel.lastReadChapterId != null) {
-      try {
-        lastChapter = novel.chapters.firstWhere(
-          (ch) => ch.id == novel.lastReadChapterId,
-        );
-      } catch (_) {
-        lastChapter = novel.chapters.isNotEmpty ? novel.chapters.last : null;
-      }
-    } else {
-      lastChapter = novel.chapters.isNotEmpty ? novel.chapters.last : null;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => NovelDetailScreen(novel: novel),
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withOpacity(0.3),
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => NovelDetailScreen(novel: novel),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (novel.coverImageUrl.isNotEmpty)
-                        Hero(
-                          tag: 'cover_${novel.id}',
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              novel.coverImageUrl,
-                              width: 60,
-                              height: 90,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (_, __, ___) => Container(
-                                    width: 60,
-                                    height: 90,
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.surfaceVariant,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(
-                                      Icons.book_outlined,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                      size: 32,
-                                    ),
-                                  ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 60,
+                  height: 84,
+                  child: novel.coverImageUrl.isNotEmpty
+                      ? Image.network(
+                          novel.coverImageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: colorScheme.primaryContainer,
+                            child: Icon(
+                              Icons.book_rounded,
+                              color: colorScheme.onPrimaryContainer,
                             ),
                           ),
-                        ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              novel.title,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                height: 1.2,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              novel.author,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              spacing: 6,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primaryContainer
-                                        .withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    '${novel.chapters.length} cap.',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color:
-                                          theme.colorScheme.onPrimaryContainer,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (lastChapter != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer.withOpacity(
-                          0.4,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 6,
-                        children: [
-                          Row(
-                            spacing: 6,
-                            children: [
-                              Icon(
-                                Icons.bookmark,
-                                size: 16,
-                                color: theme.colorScheme.primary,
-                              ),
-                              Text(
-                                'Último capítulo',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.onSecondaryContainer,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                        )
+                      : Container(
+                          color: colorScheme.primaryContainer,
+                          child: Icon(
+                            Icons.book_rounded,
+                            color: colorScheme.onPrimaryContainer,
                           ),
-                          Text(
-                            lastChapter.title,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-
-                  if (lastChapter?.content != null &&
-                      lastChapter!.content!.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant.withOpacity(
-                          0.3,
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _extractPreview(lastChapter.content!),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          height: 1.4,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      novel.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                  ],
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withOpacity(
-                        0.15,
+                    const SizedBox(height: 4),
+                    Text(
+                      novel.author.isNotEmpty ? novel.author : 'unknown_author'.translate,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      spacing: 12,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
-                        Row(
-                          spacing: 4,
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            ),
-                            Text(
-                              formattedDate,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 14,
+                          color: colorScheme.primary,
                         ),
-                        const SizedBox(
-                          height: 14,
-                          child: VerticalDivider(width: 1),
-                        ),
-                        Row(
-                          spacing: 4,
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: 14,
-                              color: theme.colorScheme.primary,
-                            ),
-                            Text(
-                              formattedTime,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 4),
+                        Text(
+                          novel.lastReadAt != null
+                              ? '${'last_read'.translate}: ${novel.lastReadAt}'
+                              : 'never'.translate,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
         ),
       ),
     );
-  }
-
-  String _extractPreview(String content) {
-    String text = content
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll(RegExp(r'&[^;]+;'), ' ');
-
-    text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
-
-    return text.length > 150 ? '${text.substring(0, 150)}...' : text;
   }
 }

@@ -370,6 +370,38 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'advanced_typography'.translate,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SwitchListTile(
+                          title: Text('hyphenation'.translate),
+                          value: temp['hyphenation'] == true,
+                          onChanged: (v) {
+                            setState(() => temp['hyphenation'] = v);
+                            _apply();
+                          },
+                        ),
+                        SwitchListTile(
+                          title: Text('drop_caps'.translate),
+                          value: temp['drop_caps'] == true,
+                          onChanged: (v) {
+                            setState(() => temp['drop_caps'] = v);
+                            _apply();
+                          },
+                        ),
+                        SwitchListTile(
+                          title: Text('paragraph_indent'.translate),
+                          value: temp['paragraph_indent'] == true,
+                          onChanged: (v) {
+                            setState(() => temp['paragraph_indent'] = v);
+                            _apply();
+                          },
+                        ),
                         const SizedBox(height: 12),
                         Text('font'.translate),
                         Wrap(
@@ -558,6 +590,51 @@ class _ReaderConfigModalState extends State<ReaderConfigModal> {
                             _apply();
                           },
                         ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Régua de Leitura',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Expanded(child: Text('Ativar Régua de Leitura')),
+                            Switch(
+                              value: (temp['rulerEnabled'] ?? false) as bool,
+                              onChanged: (v) {
+                                setState(() => temp['rulerEnabled'] = v);
+                                _apply();
+                              },
+                            ),
+                          ],
+                        ),
+                        if ((temp['rulerEnabled'] ?? false) as bool) ...[
+                          const SizedBox(height: 8),
+                          Text('Altura da Régua: ${(temp['rulerHeight'] ?? 48).round()}px'),
+                          Slider(
+                            min: 24,
+                            max: 160,
+                            value: (temp['rulerHeight'] ?? 48).toDouble(),
+                            onChanged: (v) {
+                              setState(() => temp['rulerHeight'] = v.round());
+                              _apply();
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Opacidade da Régua: ${((temp['rulerOpacity'] ?? 0.22) * 100).round()}%'),
+                          Slider(
+                            min: 0.10,
+                            max: 0.60,
+                            value: (temp['rulerOpacity'] ?? 0.22).toDouble(),
+                            onChanged: (v) {
+                              setState(() => temp['rulerOpacity'] = (v * 100).round() / 100.0);
+                              _apply();
+                            },
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         Text(
                           'tts_settings'.translate,

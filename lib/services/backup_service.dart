@@ -11,10 +11,49 @@ class BackupService {
   static const String _backupFolder = 'backups';
 
   Future<Directory> _ensureBackupDir() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final backupDir = Directory(join(dir.path, _backupFolder));
+    Directory? baseDir;
+    if (Platform.isAndroid) {
+      final docDir = Directory('/storage/emulated/0/Documents/AkashicRecords');
+      try {
+        if (!await docDir.exists()) {
+          await docDir.create(recursive: true);
+        }
+        baseDir = docDir;
+      } catch (_) {}
+    }
+    if (baseDir == null) {
+      final appDoc = await getApplicationDocumentsDirectory();
+      baseDir = Directory(join(appDoc.path, 'AkashicRecords'));
+    }
+    final backupDir = Directory(join(baseDir.path, _backupFolder));
     if (!await backupDir.exists()) await backupDir.create(recursive: true);
     return backupDir;
+  }
+
+  Future<String?> exportDatabaseToDocuments() async {
+    try {
+      final databasesPath = await getDatabasesPath();
+      final src = File(join(databasesPath, _dbName));
+      if (!await src.exists()) return null;
+
+      Directory targetDir;
+      if (Platform.isAndroid) {
+        targetDir = Directory('/storage/emulated/0/Documents/AkashicRecords');
+      } else {
+        final appDoc = await getApplicationDocumentsDirectory();
+        targetDir = Directory(join(appDoc.path, 'AkashicRecords'));
+      }
+      if (!await targetDir.exists()) {
+        await targetDir.create(recursive: true);
+      }
+
+      final destPath = join(targetDir.path, 'akashic_records.db');
+      await src.copy(destPath);
+      return destPath;
+    } catch (e) {
+      print('exportDatabaseToDocuments error: $e');
+      return null;
+    }
   }
 
   String _timestamp() {

@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:akashic_records/i18n/i18n.dart';
 import 'package:akashic_records/state/app_state.dart';
 import 'package:akashic_records/services/download_queue_service.dart';
+import 'package:akashic_records/screens/reader/annotations_manager_screen.dart';
 import 'dart:async';
 
 class NovelDetailScreen extends StatefulWidget {
@@ -62,13 +63,20 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
     appState.setOnQueueUpdated(_queueListener!);
   }
 
+  late AppState _appState;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _appState = Provider.of<AppState>(context, listen: false);
+  }
+
   @override
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
     if (_queueListener != null) {
-      final appState = Provider.of<AppState>(context, listen: false);
-      appState.setOnQueueUpdated(null);
+      _appState.setOnQueueUpdated(null);
     }
     super.dispose();
   }
@@ -341,6 +349,21 @@ class _NovelDetailScreenState extends State<NovelDetailScreen> {
                   tooltip: 'download_all_chapters'.translate,
                   onPressed: () => _showDownloadAllDialog(),
                 ),
+              IconButton(
+                icon: const Icon(Icons.format_quote_rounded),
+                tooltip: 'annotations_title'.translate,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AnnotationsManagerScreen(
+                        novelId: currentNovel.id,
+                        novelTitle: currentNovel.title,
+                      ),
+                    ),
+                  );
+                },
+              ),
               IconButton(
                 icon: Icon(
                   currentNovel.isFavorite
